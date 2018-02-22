@@ -1,0 +1,4 @@
+build/
+ext/
+CMakeSettings.json
+*.TMP

@@ -1,0 +1,53 @@
+#pragma once
+#include <exception>
+
+#include "fmt/format.h"
+#include "glad/glad.h"
+#include "al.h"
+
+namespace testogl {
+    class RuntimeException: public std::runtime_error {
+    public:
+        template <typename... T>
+        RuntimeException(const char *file, size_t line, const char *function, const char *format, const T &...args) :
+            std::runtime_error(fmt::format("Error near {0}:{1}, in function {2}; {3}", file, line, function, fmt::format(format, args...))) {}
+    };
+
+    static const char *get_gl_debug_type_name(GLenum type) {
+        switch (type) {
+        case GL_DEBUG_TYPE_ERROR:
+            return "ERROR";
+        case GL_DEBUG_TYPE_DEPRECATED_BEHAVIOR:
+            return "DEPRECATED_BEHAVIOR";
+        case GL_DEBUG_TYPE_UNDEFINED_BEHAVIOR:
+            return "UNDEFINED_BEHAVIOR";
+        case GL_DEBUG_TYPE_PORTABILITY:
+            return "PORTABILITY";
+        case GL_DEBUG_TYPE_PERFORMANCE:
+            return "PERFORMANCE";
+        case GL_DEBUG_TYPE_OTHER:
+            return "OTHER";
+        default:
+            return "<UNKNOWN>";
+        }
+    }
+
+    static const char *get_gl_debug_severity_name(GLenum severity) {
+        switch (severity) {
+        case GL_DEBUG_SEVERITY_NOTIFICATION:
+            return "NOTIFICATION";
+        case GL_DEBUG_SEVERITY_LOW:
+            return "LOW";
+        case GL_DEBUG_SEVERITY_MEDIUM:
+            return "MEDIUM";
+        case GL_DEBUG_SEVERITY_HIGH:
+            return "HIGH";
+        default:
+            return "<UNKNOWN>";
+        }
+    }
+}
+
+
+#define THROW_ERROR(fmt, ...) throw testogl::RuntimeException(__FILE__, __LINE__, __func__, fmt, __VA_ARGS__)
+
