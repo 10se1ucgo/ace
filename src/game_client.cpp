@@ -26,9 +26,9 @@ namespace ace {
         // fprintf(stderr, "%s: %s\n", msg, SDL_GetError());
     }
 
-    GameClient::GameClient(const std::string &caption, int w, int h, WINDOW style):
+    GameClient::GameClient(std::string caption, int w, int h, WINDOW style):
         net(nullptr),
-        scene(nullptr), tasks(*this) {
+        scene(nullptr), tasks(*this), window_title(std::move(caption)) {
 
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
             sdl_error("SDL_Init");
@@ -51,7 +51,7 @@ namespace ace {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
         
-        this->window = SDL_CreateWindow(caption.c_str(),
+        this->window = SDL_CreateWindow(window_title.c_str(),
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
             SDL_WINDOW_OPENGL | (style == WINDOW::WINDOWED ? 0 : SDL_WINDOW_FULLSCREEN)
         );
@@ -136,7 +136,7 @@ namespace ace {
     void GameClient::update_fps() {
         fps_counter.frames++;
         if (this->time - fps_counter.last_update >= 1) {
-            this->set_title(fmt::format("ACE: idk what it stands for yet (FPS: {})", fps_counter.frames));
+            SDL_SetWindowTitle(this->window, fmt::format("{} (FPS: {})", this->window_title, fps_counter.frames).c_str());
             fps_counter.frames = 0;
             fps_counter.last_update = this->time;
         }

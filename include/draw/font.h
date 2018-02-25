@@ -14,7 +14,7 @@
 
 namespace ace { namespace draw {
     struct Font {
-        Font(const std::string &name, int size, FT_Library ft);
+        Font(const std::string &name, int size, bool monochrome, FT_Library ft);
         void draw(const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
         void draw(const glm::mat4 &pv, ShaderProgram &s);
         glm::vec2 measure(const std::string &str, glm::vec2 scale) const;
@@ -44,7 +44,7 @@ namespace ace { namespace draw {
         FontManager();
         ~FontManager();
 
-        Font *get(const std::string &name, int size);
+        Font *get(const std::string &name, int size, bool antialias=true);
         void draw(const glm::mat4 &pv, ShaderProgram &s);
     private:
         FT_Library ftl;

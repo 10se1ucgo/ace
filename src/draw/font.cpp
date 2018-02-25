@@ -2,6 +2,8 @@
 #include <algorithm>
 #include "fmt/printf.h"
 
+#include FT_BITMAP_H
+
 namespace ace { namespace draw {
     namespace {
 #pragma pack(push, 1)
@@ -10,15 +12,29 @@ namespace ace { namespace draw {
             glm::vec3 color;
         };
 #pragma pack(pop)
+
+        // convert monochrome 1bpp bitmap to grayscale 8bpp
+        void unpack_monochrome_buffer(std::vector<uint8_t> &vec, const FT_GlyphSlot g) {
+            vec.resize(g->bitmap.width * g->bitmap.rows);
+            for (unsigned int x = 0; x < g->bitmap.rows; x++) {
+                for (int y = 0; y < g->bitmap.pitch; y++) {
+                    auto byte = g->bitmap.buffer[x * g->bitmap.pitch + y];
+                    auto row = x * g->bitmap.width + y * 8;
+                    for (auto bi = 0; bi < std::min(8, int(g->bitmap.width) - y * 8); bi++) {
+                        auto bit = byte & (1 << (7 - bi));
+                        vec[row + bi] = bool(bit) * 255;
+                    }
+                }
+            }
+        }
     }
 
-
-    Font::Font(const std::string &name, int size, FT_Library ft): width(0), height(0), size_(size) {
+    Font::Font(const std::string &name, int size, bool monochrome, FT_Library ft): width(0), height(0), size_(size) {
         FT_Face face;
         FT_New_Face(ft, name.c_str(), 0, &face);
         FT_Set_Pixel_Sizes(face, 0, size);
 
-        constexpr FT_Int32 flags = FT_LOAD_NO_BITMAP;
+        const FT_Int32 flags = FT_LOAD_NO_BITMAP | (monochrome ? FT_LOAD_TARGET_MONO : 0);
 
         FT_GlyphSlot g = face->glyph;
         for (int c = 0; c < 256; c++) {
@@ -54,12 +70,23 @@ namespace ace { namespace draw {
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
         glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
 
+        std::vector<uint8_t> bmpbuffer; // if using FT_LOAD_MONOCHROME;
         unsigned int x = 0;
         for (int c = 0; c < 256; c++) {
             if (FT_Load_Char(face, c, FT_LOAD_RENDER | flags)) {
                 continue;
             }
-            glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0, g->bitmap.width, g->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, g->bitmap.buffer);
+            auto buffer = g->bitmap.buffer;
+            if (monochrome) {
+                bmpbuffer.clear();
+                unpack_monochrome_buffer(bmpbuffer, g);
+                buffer = bmpbuffer.data();
+//                FT_Bitmap bmp;
+//                FT_Bitmap_Init(&bmp);
+//                FT_Bitmap_Convert(ft, &g->bitmap, &bmp, 1);
+//                buffer = bmp.buffer;
+            }
+            glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0, g->bitmap.width, g->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, buffer);
 
             chars[c].advance = { g->advance.x >> 6, g->advance.y >> 6 };
             chars[c].dim = { g->bitmap.width, g->bitmap.rows };
@@ -177,12 +204,13 @@ namespace ace { namespace draw {
         FT_Done_FreeType(ftl);
     }
 
-    Font *FontManager::get(const std::string &name, int size) {
+    Font *FontManager::get(const std::string &name, int size, bool antialias) {
         try {
             return fonts.at(name).get();
         } catch (std::out_of_range &) {
-            auto x = std::make_unique<Font>("font/" + name, size, this->ftl);
-            return fonts.insert({ fmt::format("{}{}", name, size), std::move(x) }).first->second.get();
+            auto x = std::make_unique<Font>("font/" + name, size, !antialias, this->ftl);
+            // yeah this is awful im sorry
+            return fonts.insert({ fmt::format("{}{}{}", name, size, !antialias), std::move(x) }).first->second.get();
         }
     }
 

@@ -42,7 +42,7 @@ namespace ace { namespace scene {
         void on_window_resize(int ow, int oh);
 
         void add_chat_message(const std::string &message, glm::vec3 color);
-        void add_killfeed_message(world::DrawPlayer &killer, world::DrawPlayer &victim, net::KILL kill_type);
+        void add_killfeed_message(const world::DrawPlayer &killer, const world::DrawPlayer &victim, net::KILL kill_type);
         
         void set_hit(glm::vec3 source);
 
@@ -68,7 +68,7 @@ namespace ace { namespace scene {
         void draw_chat();
 
         net::CHAT cur_chat_type{ net::CHAT::INVALID };
-        draw::Font *sys48, *sys8, *sys15;
+        draw::Font *sys48, *sys13, *sys15;
         std::deque<Message> chat_messages, killfeed;
 
         friend struct MapDisplay;

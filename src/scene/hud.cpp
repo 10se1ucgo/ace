@@ -5,7 +5,7 @@
 
 namespace ace { namespace scene {
     namespace {
-         void write_killer_weapon(world::DrawPlayer &killer, net::KILL kill_type, fmt::MemoryWriter &writer) {
+         void write_killer_weapon(const world::DrawPlayer &killer, net::KILL kill_type, fmt::MemoryWriter &writer) {
             switch (kill_type) {
             case net::KILL::HEADSHOT:
                 writer.write("(Headshot)");
@@ -23,45 +23,46 @@ namespace ace { namespace scene {
                 break;
             }
         }
-    }
 
-    glm::u8vec3 color_palette[] = {
-        {15, 15, 15}, {47, 47, 47}, {79, 79, 79}, {111, 111, 111}, {143, 143, 143}, {175, 175, 175}, {207, 207, 207}, {239, 239, 239},
-        {31, 0, 0}, {95, 0, 0}, {159, 0, 0}, {223, 0, 0}, {255, 31, 31}, {255, 95, 95}, {255, 159, 159}, {255, 223, 223},
-        {31, 15, 0}, {95, 47, 0}, {159, 79, 0}, {223, 111, 0}, {255, 143, 31}, {255, 175, 95}, {255, 207, 159}, {255, 239, 223},
-        {31, 31, 0}, {95, 95, 0}, {159, 159, 0}, {223, 223, 0}, {255, 255, 31}, {255, 255, 95}, {255, 255, 159}, {255, 255, 223},
-        {0, 31, 0}, {0, 95, 0}, {0, 159, 0}, {0, 223, 0}, {31, 255, 31}, {95, 255, 95}, {159, 255, 159}, {223, 255, 223},
-        {0, 31, 31}, {0, 95, 95}, {0, 159, 159}, {0, 223, 223}, {31, 255, 255}, {95, 255, 255}, {159, 255, 255}, {223, 255, 255},
-        {0, 0, 31}, {0, 0, 95}, {0, 0, 159}, {0, 0, 223}, {31, 31, 255}, {95, 95, 255}, {159, 159, 255}, {223, 223, 255},
-        {31, 0, 31}, {95, 0, 95}, {159, 0, 159}, {223, 0, 223}, {255, 31, 255}, {255, 95, 255}, {255, 159, 255}, {255, 223, 255}
-    };
+        glm::u8vec3 color_palette[] = {
+            { 15, 15, 15 },{ 47, 47, 47 },{ 79, 79, 79 },{ 111, 111, 111 },{ 143, 143, 143 },{ 175, 175, 175 },{ 207, 207, 207 },{ 239, 239, 239 },
+            { 31, 0, 0 },{ 95, 0, 0 },{ 159, 0, 0 },{ 223, 0, 0 },{ 255, 31, 31 },{ 255, 95, 95 },{ 255, 159, 159 },{ 255, 223, 223 },
+            { 31, 15, 0 },{ 95, 47, 0 },{ 159, 79, 0 },{ 223, 111, 0 },{ 255, 143, 31 },{ 255, 175, 95 },{ 255, 207, 159 },{ 255, 239, 223 },
+            { 31, 31, 0 },{ 95, 95, 0 },{ 159, 159, 0 },{ 223, 223, 0 },{ 255, 255, 31 },{ 255, 255, 95 },{ 255, 255, 159 },{ 255, 255, 223 },
+            { 0, 31, 0 },{ 0, 95, 0 },{ 0, 159, 0 },{ 0, 223, 0 },{ 31, 255, 31 },{ 95, 255, 95 },{ 159, 255, 159 },{ 223, 255, 223 },
+            { 0, 31, 31 },{ 0, 95, 95 },{ 0, 159, 159 },{ 0, 223, 223 },{ 31, 255, 255 },{ 95, 255, 255 },{ 159, 255, 255 },{ 223, 255, 255 },
+            { 0, 0, 31 },{ 0, 0, 95 },{ 0, 0, 159 },{ 0, 0, 223 },{ 31, 31, 255 },{ 95, 95, 255 },{ 159, 159, 255 },{ 223, 223, 255 },
+            { 31, 0, 31 },{ 95, 0, 95 },{ 159, 0, 159 },{ 223, 0, 223 },{ 255, 31, 255 },{ 255, 95, 255 },{ 255, 159, 255 },{ 255, 223, 255 }
+        };
 
-    draw::SpriteGroup *gen_palette(draw::SpriteManager &manager) {
-        const auto colors = sizeof(color_palette) / sizeof(color_palette[0]);
-        glm::u8vec4 pixels[colors * colors];
-        for (int i = 0; i < 8; i++) {
-            for (int j = 0; j < 8; j++) {
-                auto color = color_palette[i * 8 + j];
-                for (int x = i * 8 + 1; x < i * 8 + 7; x++) {
-                    for (int y = j * 8 + 1; y < j * 8 + 7; y++) {
-                        pixels[x * colors + y] = glm::u8vec4(color, 255);
+        draw::SpriteGroup *gen_palette(draw::SpriteManager &manager) {
+            const auto colors = sizeof(color_palette) / sizeof(color_palette[0]);
+            glm::u8vec4 pixels[colors * colors];
+            for (int i = 0; i < 8; i++) {
+                for (int j = 0; j < 8; j++) {
+                    auto color = color_palette[i * 8 + j];
+                    for (int x = i * 8 + 1; x < i * 8 + 7; x++) {
+                        for (int y = j * 8 + 1; y < j * 8 + 7; y++) {
+                            pixels[x * colors + y] = glm::u8vec4(color, 255);
+                        }
                     }
                 }
             }
+
+            return manager.get("palette", SDL_CreateRGBSurfaceFrom(pixels, colors, colors, 32, 4 * colors, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
         }
 
-        return manager.get("palette", SDL_CreateRGBSurfaceFrom(pixels, colors, colors, 32, 4 * colors, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
-    }
-
-    draw::SpriteGroup *gen_palret(draw::SpriteManager &manager) {
-        glm::u8vec4 pixels[8 * 8]{};
-        for(int i = 0; i < 7; i++) {
-            pixels[0 * 8 + i] = { 255, 255, 255, 255 };
-            pixels[(7 - i) * 8 + 0] = { 255, 255, 255, 255 };
-            pixels[i * 8 + 7] = { 255, 255, 255, 255 };
-            pixels[7 * 8 + (7 - i)] = { 255, 255, 255, 255 };
+        draw::SpriteGroup *gen_palret(draw::SpriteManager &manager) {
+            const auto siz = 8u;
+            glm::u8vec4 pixels[siz * siz]{};
+            for (int i = 0; i < 7; i++) {
+                pixels[0 * siz + i] = { 255, 255, 255, 255 };
+                pixels[(7 - i) * siz + 0] = { 255, 255, 255, 255 };
+                pixels[i * siz + 7] = { 255, 255, 255, 255 };
+                pixels[7 * siz + (7 - i)] = { 255, 255, 255, 255 };
+            }
+            return manager.get("paletteret", SDL_CreateRGBSurfaceFrom(pixels, siz, siz, 32, 4 * siz, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
         }
-        return manager.get("paletteret", SDL_CreateRGBSurfaceFrom(pixels, 8, 8, 32, 4 * 8, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
     }
 
     MapDisplay::MapDisplay(HUD& hud): hud(hud), big(&hud.scene.map.overview), marker(hud.sprites.get("player.bmp")) {
@@ -92,13 +93,13 @@ namespace ace { namespace scene {
         for(char c = 'A'; c <= 'H'; c++) {
             float x = (op.x + (32 + 64 * (c - 'A'))) * big.scale.x;
             float y = op.y;
-            this->hud.sys8->draw(std::string(1, c), glm::vec2{ x, y }, {1, 1, 1}, { 1, 1}, draw::Align::BOTTOM_CENTER);
+            this->hud.sys15->draw(std::string(1, c), glm::vec2{ x, y }, {1, 1, 1}, { 1, 1}, draw::Align::BOTTOM_CENTER);
         }
 
         for (int c = 1; c <= 8; c++) {
             float x = op.x;
             float y = op.y + (32 + 64 * (c - 1));
-            this->hud.sys8->draw(std::to_string(c), glm::vec2{ x, y }, { 1, 1, 1 }, { 1,1 }, draw::Align::BOTTOM_RIGHT);
+            this->hud.sys15->draw(std::to_string(c), glm::vec2{ x, y }, { 1, 1, 1 }, { 1,1 }, draw::Align::BOTTOM_RIGHT);
         }
     }
 
@@ -107,9 +108,9 @@ namespace ace { namespace scene {
         reticle(sprites.get("target.png")), pal(gen_palette(sprites)), palret(gen_palret(sprites)), hit_indicator(sprites.get("indicator.bmp")),
         weapon_sight(sprites.get("semi.png")), ammo_icon(sprites.get("semi.bmp")),
         map_display(*this),
-        sys48(scene.client.fonts.get("fixedsys.ttf", 48)),
-        sys8(scene.client.fonts.get("fixedsys.ttf", 15)),
-        sys15(scene.client.fonts.get("fixedsys.ttf", 15)) {
+        sys48(scene.client.fonts.get("fixedsys.ttf", 48, false)),
+        sys13(scene.client.fonts.get("fixedsys.ttf", 13, false)),
+        sys15(scene.client.fonts.get("fixedsys.ttf", 15, false)) {
        
         reticle.alignment = draw::Align::CENTER;
         hit_indicator.alignment = draw::Align::CENTER;
@@ -142,8 +143,7 @@ namespace ace { namespace scene {
 
         glm::vec2 p(this->last_hit - this->scene.ply->p);
         glm::vec2 o(this->scene.ply->f);
-        float angle = glm::degrees(glm::atan(glm::determinant(glm::mat2(o, p)), dot(o, p)));
-        this->hit_indicator.rotation = angle;
+        this->hit_indicator.rotation = glm::degrees(glm::atan(glm::determinant(glm::mat2(o, p)), dot(o, p)));
         this->hit_indicator.tint.a = std::max(0.0f, this->hit_indicator.tint.a - float(dt));
 
         
@@ -152,14 +152,12 @@ namespace ace { namespace scene {
     }
 
     void HUD::draw() {
-        if (this->scene.client.keyboard.keys[SDL_SCANCODE_F6]) return;
-
         glEnable(GL_BLEND);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
-        
+        if (this->scene.client.keyboard.keys[SDL_SCANCODE_F6]) return;
 
 
         if (!this->scene.ply->alive) {
@@ -279,7 +277,7 @@ namespace ace { namespace scene {
         }
     }
 
-    void HUD::add_killfeed_message(world::DrawPlayer &killer, world::DrawPlayer &victim, net::KILL kill_type) {
+    void HUD::add_killfeed_message(const world::DrawPlayer &killer, const world::DrawPlayer &victim, net::KILL kill_type) {
         fmt::MemoryWriter message;
         switch (kill_type) {
         case net::KILL::FALL:
@@ -333,13 +331,13 @@ namespace ace { namespace scene {
             int index = i - chat_messages.begin() + 1;
             glm::vec2 pos;
             pos.x = 25;
-            pos.y = (scene.client.height() - 16 * index) - 100;
-            this->sys15->draw(i->message, pos, i->color, { 1, 1 });
+            pos.y = (scene.client.height() - 15 * index) - 100;
+            this->sys13->draw(i->message, pos, i->color);
         }
 
         if (this->scene.client.text_input_active()) {
             const char *prefix = this->cur_chat_type == net::CHAT::ALL ? "(Global) " : "(Team): ";
-            this->sys15->draw(prefix + this->scene.client.input_buffer + "_", { 25, scene.client.height() - 100 });
+            this->sys13->draw(prefix + this->scene.client.input_buffer + "_", { 25, scene.client.height() - 100 });
         }
     }
 }}
