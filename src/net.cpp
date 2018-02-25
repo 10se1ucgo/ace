@@ -12,7 +12,6 @@ namespace net {
 //
 //    }
 
-
     uint8_t *inflate(uint8_t *data, size_t len) {
         z_stream infstream;
         infstream.zalloc = Z_NULL;
@@ -68,6 +67,25 @@ namespace net {
         }
     }
 
+    void BaseNetClient::connect(const char* host, int port) {
+        if (this->peer != nullptr) {
+            enet_peer_disconnect(this->peer, 0);
+        }
+
+        fmt::print("CONNECTING TO {}:{}\n", host, port);
+        ENetAddress address;
+        if (enet_address_set_host(&address, host) < 0) {
+            THROW_ERROR("RESOLUTION FAILIURE\n");
+        }
+        address.port = port;
+
+        this->peer = enet_host_connect(this->host, &address, 1, VERSION);
+
+        if (this->peer == nullptr) {
+            THROW_ERROR("FAILED TO ALLOCATE PEER\n");
+        }
+    }
+
     void BaseNetClient::send(const void *data, size_t len, enet_uint32 flags) const {
         if (this->peer == nullptr) THROW_ERROR("SENDING PACKET ON INVALID PEER\n");
 
@@ -94,6 +112,27 @@ namespace net {
         if(this->peer != nullptr)
             enet_peer_disconnect(this->peer, 0);
         fmt::print("~NetworkClient()\n");
+    }
+
+    void NetworkClient::connect(const std::string &host) {
+        auto proto_pos = host.find(':', 0);
+        auto ip_pos = proto_pos + 3; // `:\\` 
+        auto port_pos = host.find(':', ip_pos);
+        auto version_pos = host.find(':', port_pos + 1);
+//        fmt::print("PROTOCOL: !{}!\n", host.substr(0, proto_pos));
+//        fmt::print("IP: !{}!\n", std::stoi(host.substr(ip_pos, port_pos - ip_pos)));
+//        fmt::print("PORT: !{}!\n", host.substr(port_pos + 1, version_pos - (port_pos + 1)));
+        if(version_pos != std::string::npos) {
+            auto version = host.substr(version_pos + 1);
+            // fmt::print("VERSION: !{}!\n", host.substr(version_pos + 1));
+            if(version != "0.75") {
+                THROW_ERROR("Ace of Spades {} unsupported!\n", version);
+            }
+        }
+
+        uint32_t ip = std::stoul(host.substr(ip_pos, port_pos - ip_pos));
+        auto ip_str = fmt::format("{}.{}.{}.{}", ip >> 0 & 0xFF, ip >> 8 & 0xFF, ip >> 16 & 0xFF, ip >> 24 & 0xFF);
+        this->connect(ip_str.c_str(), std::stoi(host.substr(port_pos + 1, version_pos - (port_pos + 1))));
     }
 
     void NetworkClient::on_connect(const ENetEvent &event) {
@@ -159,24 +198,5 @@ namespace net {
 //        if(id != PACKET::PositionData && id != PACKET::OrientationData && id != PACKET::InputData && id != PACKET::WeaponInput)
 //            fmt::print("SENDING PACKET WITH ID {}\n", id);
         this->send(writer.vec.data(), writer.vec.size(), flags);
-    }
-
-    void NetworkClient::connect(const char *host, int port) {
-        if(this->peer != nullptr) {
-            enet_peer_disconnect(this->peer, 0);
-        }
-
-        fmt::print("CONNECTING TO {}:{}\n", host, port);
-        ENetAddress address;
-        if (enet_address_set_host(&address, host) < 0) {
-            THROW_ERROR("RESOLUTION FAILIURE\n");
-        }
-        address.port = port;
-
-        this->peer = enet_host_connect(this->host, &address, 1, VERSION);
-
-        if (this->peer == nullptr) {
-            THROW_ERROR("FAILED TO ALLOCATE PEER\n");
-        }
     }
 };

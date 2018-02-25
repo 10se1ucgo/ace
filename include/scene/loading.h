@@ -9,6 +9,7 @@ namespace ace { namespace scene {
     public:
         using Scene::Scene;
         LoadingScene(GameClient &client, const char *host, int port);
+        LoadingScene(GameClient &client, const std::string &address);
         ~LoadingScene();
 
         void draw() override;

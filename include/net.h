@@ -14,6 +14,7 @@ namespace net {
         ACE_NO_COPY_MOVE(BaseNetClient)
 
         void update(double dt);
+        void connect(const char *host, int port);
         void send(const void *data, size_t len, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
 
         virtual void on_connect(const ENetEvent &event) = 0;
@@ -29,19 +30,21 @@ namespace net {
         ~NetworkClient();
         ACE_NO_COPY_MOVE(NetworkClient)
 
-        ByteWriter map_writer;
-        std::vector<net::ExistingPlayer> players;
-        ace::GameClient &client;
-
-        bool connected;
-        DISCONNECT disconnect_reason;
+        using BaseNetClient::connect;
+        void connect(const std::string &host);
 
         void on_connect(const ENetEvent& event) final;
         void on_disconnect(const ENetEvent& event) final;
         void on_receive(const ENetEvent& event) final;
 
         void send_packet(PACKET id, Loader &pkt, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
-        void connect(const char *host, int port);
+        
+        ByteWriter map_writer;
+        std::vector<net::ExistingPlayer> players;
+        ace::GameClient &client;
+
+        bool connected;
+        DISCONNECT disconnect_reason;
     };
 
     inline const char *get_disconnect_reason(DISCONNECT reason) {

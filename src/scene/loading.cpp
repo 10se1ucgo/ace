@@ -7,6 +7,10 @@ namespace ace { namespace scene {
         client.net->connect(host, port);
     }
 
+    LoadingScene::LoadingScene(GameClient& client, const std::string& address): Scene(client) {
+        client.net->connect(address);
+    }
+
     LoadingScene::~LoadingScene() {
     }
 
