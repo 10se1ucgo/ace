@@ -6,13 +6,6 @@
 
 namespace ace { namespace draw {
     namespace {
-#pragma pack(push, 1)
-        struct Vertex {
-            glm::vec4 pos_tex;
-            glm::vec3 color;
-        };
-#pragma pack(pop)
-
         // convert monochrome 1bpp bitmap to grayscale 8bpp
         void unpack_monochrome_buffer(std::vector<uint8_t> &vec, const FT_GlyphSlot g) {
             vec.resize(g->bitmap.width * g->bitmap.rows);
@@ -52,9 +45,9 @@ namespace ace { namespace draw {
         glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, pos_tex)));
+        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, pos_tex)));
         glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void *>(offsetof(Vertex, color)));
+        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, color)));
         glEnableVertexAttribArray(0);
 
 
@@ -100,31 +93,7 @@ namespace ace { namespace draw {
     }
 
     void Font::draw(const glm::mat4 &pv, ShaderProgram &s) {
-        if (this->strings.empty()) return;
-
-        std::vector<Vertex> vertices;
-        vertices.reserve(6 * this->strings.size() * 25);
-
-        for(const auto &ds : this->strings) {
-            glm::vec2 p = ds.pos;
-            for(unsigned char c : ds.str) {
-                float x2 = p.x + chars[c].bearing.x * ds.scale.x;
-                float y2 = -p.y + chars[c].bearing.y * ds.scale.y;
-                float w = chars[c].dim.x * ds.scale.x;
-                float h = chars[c].dim.y * ds.scale.y;
-
-                p += glm::vec2(chars[c].advance) * ds.scale;
-
-                if (!w || !h) continue;
-
-                vertices.push_back({ {x2,     -y2    , chars[c].tx, 0}, ds.color });
-                vertices.push_back({ {x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0}, ds.color });
-                vertices.push_back({ {x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height)}, ds.color });
-                vertices.push_back({ {x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0}, ds.color });
-                vertices.push_back({ {x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height)}, ds.color });
-                vertices.push_back({ {x2 + w, -y2 + h, chars[c].tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height)}, ds.color });
-            }
-        }
+        if (this->vertices.empty()) return;
 
         s.uniform("mvp", pv);
 
@@ -132,14 +101,14 @@ namespace ace { namespace draw {
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
         glInvalidateBufferData(GL_ARRAY_BUFFER);
-        glBufferData(GL_ARRAY_BUFFER, vertices.size() * sizeof(Vertex), vertices.data(), GL_STREAM_DRAW);
+        glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(detail::GlyphVertex), this->vertices.data(), GL_STREAM_DRAW);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex);
 
-        glDrawArrays(GL_TRIANGLES, 0, vertices.size());
+        glDrawArrays(GL_TRIANGLES, 0, this->vertices.size());
 
-        this->strings.clear();
+        this->vertices.clear();
     }
 
     glm::vec2 Font::measure(const std::string& str, glm::vec2 scale) const {
@@ -180,20 +149,23 @@ namespace ace { namespace draw {
             break;
         }
 
-//        switch(alignment) {
-//        case Align::MIDDLE:
-//            pos.x -= this->measure(str, scale).x / 2.f;
-//            break;
-//        case Align::RIGHT:
-//            pos.x -= this->measure(str, scale).x;
-//            break;
-//        case Align::LEFT:
-//        default:
-//            break;
-//        }
+        for (unsigned char c : str) {
+            float x2 = pos.x + chars[c].bearing.x * scale.x;
+            float y2 = -pos.y + chars[c].bearing.y * scale.y;
+            float w = chars[c].dim.x * scale.x;
+            float h = chars[c].dim.y * scale.y;
 
+            pos += glm::vec2(chars[c].advance) * scale;
 
-        this->strings.emplace_back(str, pos, scale, color);
+            if (!w || !h) continue;
+
+            vertices.push_back({ { x2,     -y2    , chars[c].tx, 0 }, color });
+            vertices.push_back({ { x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
+            vertices.push_back({ { x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
+            vertices.push_back({ { x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
+            vertices.push_back({ { x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
+            vertices.push_back({ { x2 + w, -y2 + h, chars[c].tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height) }, color });
+        }
     }
 
     FontManager::FontManager() {
@@ -205,12 +177,13 @@ namespace ace { namespace draw {
     }
 
     Font *FontManager::get(const std::string &name, int size, bool antialias) {
+        auto n = fmt::format("{}{}{}", name, size, !antialias);
         try {
-            return fonts.at(name).get();
+            return fonts.at(n).get();
         } catch (std::out_of_range &) {
             auto x = std::make_unique<Font>("font/" + name, size, !antialias, this->ftl);
             // yeah this is awful im sorry
-            return fonts.insert({ fmt::format("{}{}{}", name, size, !antialias), std::move(x) }).first->second.get();
+            return fonts.insert({ std::move(n), std::move(x) }).first->second.get();
         }
     }
 

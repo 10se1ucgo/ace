@@ -25,15 +25,12 @@ namespace ace {
 
     class GameClient {
     public:
-        GameClient(const std::string &caption, int w = 800, int h = 600, WINDOW style = WINDOW::WINDOWED);
+        GameClient(std::string caption, int w = 800, int h = 600, WINDOW style = WINDOW::WINDOWED);
         ~GameClient();
         ACE_NO_COPY_MOVE(GameClient)
 
         void run();
 
-        void set_title(const std::string &caption) const {
-            SDL_SetWindowTitle(this->window, caption.c_str());
-        }
         std::pair<int, int> size() const { return { w, h }; }
         int width() const { return w; }
         int height() const { return h; }
@@ -80,6 +77,7 @@ namespace ace {
         bool quit = false;
         double time = 0.0;
         std::string input_buffer;
+        std::string window_title;
     private:
         int w, h;
         struct {
