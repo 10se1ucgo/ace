@@ -9,7 +9,7 @@
 #include "world/grenade.h"
 
 namespace ace { namespace scene {
-    GameScene::GameScene(GameClient &client, const net::StateData &state_data, const std::vector<net::ExistingPlayer> &players, std::string ply_name, uint8_t *buf) :
+    GameScene::GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name, uint8_t *buf) :
         Scene(client),
         shaders(*client.shaders),
         cam(*this, { 256, -50.f + 1, 256 }, { 0, 0, 1 }),
@@ -41,16 +41,16 @@ namespace ace { namespace scene {
         fmt::print("{} {} {}\n", state_data.pid, state_data.team1_name, state_data.team2_name);
 
         
-        for(auto &ply : players) {
-            auto *p = this->get_ply(ply.pid);
-            p->pid = ply.pid;
-            p->team = ply.team;
-            p->name = ply.name;
-            p->set_weapon(ply.weapon);
-            p->set_tool(ply.tool);
-            p->set_color(ply.color);
-            p->kills = ply.kills;
-        }
+//        for(auto &ply : players) {
+//            auto *p = this->get_ply(ply.pid);
+//            p->pid = ply.pid;
+//            p->team = ply.team;
+//            p->name = ply.name;
+//            p->set_weapon(ply.weapon);
+//            p->set_tool(ply.tool);
+//            p->set_color(ply.color);
+//            p->kills = ply.kills;
+//        }
 
         if(state_data.mode == 0) {
             auto &mode = state_data.state.ctf;
@@ -68,11 +68,14 @@ namespace ace { namespace scene {
         this->client.sound.play("intro.wav", {}, 100, true);
 
         cam.set_projection(75.0f, client.width(), client.height(), 0.1f, 128.f);
+
+        this->client.set_exclusive_mouse(true);
     }
 
     GameScene::~GameScene() {
         this->client.tasks.remove_loop(pd_upd);
         this->client.tasks.remove_loop(od_upd);
+        this->client.set_exclusive_mouse(false);
         fmt::print("~GameScene()\n");
     }
 
@@ -108,8 +111,10 @@ namespace ace { namespace scene {
         }
 
         this->shaders.billboard.bind();
-        this->shaders.billboard.uniform("cam_right", glm::vec3(glm::row(this->cam.view, 0)));
-        this->shaders.billboard.uniform("cam_up", glm::vec3(glm::row(this->cam.view, 1)));
+        this->shaders.billboard.uniform("cam_right", -this->cam.right);
+        this->shaders.billboard.uniform("cam_up", this->cam.up);
+//        fmt::print("CR: {} MAT: {}\n", to_string(this->cam.right), to_string(glm::vec3(glm::row(this->cam.view, 0))));
+//        fmt::print("CU: {} MAT: {}\n", to_string(this->cam.up), to_string(glm::vec3(glm::row(this->cam.view, 1))));
         this->billboards.draw(this->cam.matrix(), this->shaders.billboard);
 
 
@@ -199,8 +204,10 @@ namespace ace { namespace scene {
         this->set_zoom(false);
     }
 
-    void GameScene::on_packet(net::PACKET type, net::Loader *loader) {
+    void GameScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> ploader) {
         // this is bad I KNOW dont flame thanks :))
+        auto loader = ploader.get();
+
         switch(type) {
         case net::PACKET::CreatePlayer: {
             net::CreatePlayer *pkt = static_cast<net::CreatePlayer *>(loader);
@@ -212,6 +219,17 @@ namespace ace { namespace scene {
             ply->set_position(pkt->position.x, pkt->position.y, pkt->position.z);
             ply->name = pkt->name;
             ply->set_alive(true);
+        } break;
+        case net::PACKET::ExistingPlayer: {
+            net::ExistingPlayer *pkt = static_cast<net::ExistingPlayer *>(loader);
+            auto *ply = this->get_ply(pkt->pid);
+            ply->pid = pkt->pid;
+            ply->team = pkt->team;
+            ply->name = pkt->name;
+            ply->set_weapon(pkt->weapon);
+            ply->set_tool(pkt->tool);
+            ply->set_color(pkt->color);
+            ply->kills = pkt->kills;
         } break;
         case net::PACKET::WorldUpdate: {
             net::WorldUpdate *pkt = static_cast<net::WorldUpdate *>(loader);

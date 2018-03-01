@@ -29,7 +29,7 @@ void Camera::update() {
     pv = projection * view;
     forward = normalize(ang2dir(yaw, pitch));
     right = normalize(cross(world_up, forward));
-    // up = cross(forward, right);
+    up = cross(forward, right);
 
     if (old_pv == pv) return;
 

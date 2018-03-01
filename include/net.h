@@ -8,6 +8,17 @@
 namespace ace { class GameClient; }
 
 namespace net {
+    std::unique_ptr<uint8_t[]> inflate(uint8_t *data, size_t len);
+
+    enum class NetState {
+        UNCONNECTED,
+        DISCONNECTED,
+        CONNECTING,
+        CONNECTED,
+        MAP_TRANSFER,
+        // PACK_TRANSFER,
+    };
+
     struct Server {
         std::string ip;
         int port;
@@ -59,7 +70,7 @@ namespace net {
         ~NetworkClient();
         ACE_NO_COPY_MOVE(NetworkClient)
 
-        using BaseNetClient::connect;
+//        using BaseNetClient::connect;
         void connect(const Server &server);
 
         void on_connect(const ENetEvent& event) final;
@@ -74,9 +85,9 @@ namespace net {
 
         ace::GameClient &client;
 
-        bool connected;
+//        bool connected;
         DISCONNECT disconnect_reason;
-
+        NetState state;
     };
 
     inline const char *get_disconnect_reason(DISCONNECT reason) {

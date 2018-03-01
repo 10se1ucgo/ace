@@ -12,23 +12,26 @@ namespace net {
 //
 //    }
 
-    uint8_t *inflate(uint8_t *data, size_t len) {
+    std::unique_ptr<uint8_t[]> inflate(uint8_t *data, size_t len) {
         z_stream infstream;
         infstream.zalloc = Z_NULL;
         infstream.zfree = Z_NULL;
         infstream.opaque = Z_NULL;
 
         auto alloc_len = 1024 * 1024 * 8; // 8 mb
-        uint8_t *buf = new uint8_t[alloc_len];
+        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(alloc_len);
+//        uint8_t *buf = new uint8_t[alloc_len];
 
         infstream.avail_in = len; // size of input
         infstream.next_in = data; // input char array
         infstream.avail_out = alloc_len; // size of output
-        infstream.next_out = buf; // output char array
+        infstream.next_out = buf.get(); // output char array
 
         inflateInit(&infstream);
         fmt::print("{}\n", inflate(&infstream, Z_FINISH));
         inflateEnd(&infstream);
+
+        // TODO make this not awful
 
         return buf;
     }
@@ -104,7 +107,7 @@ namespace net {
 //        enet_packet_destroy(packet);
     }
 
-    NetworkClient::NetworkClient(ace::GameClient &client) : BaseNetClient(), client(client), connected(false), disconnect_reason(DISCONNECT::INVALID) {
+    NetworkClient::NetworkClient(ace::GameClient &client) : BaseNetClient(), client(client), disconnect_reason(DISCONNECT::INVALID), state(NetState::UNCONNECTED) {
         enet_host_compress_with_range_coder(this->host);
     }
 
@@ -118,16 +121,16 @@ namespace net {
         if(server.version != "0.75")
             THROW_ERROR("Ace of Spades {} unsupported!\n", server.version);
         
-        this->connect(server.ip.c_str(), server.port);
+        BaseNetClient::connect(server.ip.c_str(), server.port);
+        state = NetState::CONNECTING;
     }
 
     void NetworkClient::on_connect(const ENetEvent &event) {
-        connected = true;
-        fmt::print("CONNECTED\n");
+        state = NetState::CONNECTED;
     }
 
     void NetworkClient::on_disconnect(const ENetEvent &event) {
-        connected = false;
+        state = NetState::DISCONNECTED;
         disconnect_reason = DISCONNECT(event.data);
         fmt::print("DISCONNECTED: {}\n", get_disconnect_reason(disconnect_reason));
 //        client.set_scene<ace::scene::LoadingScene>();
@@ -139,40 +142,30 @@ namespace net {
         
         switch (packet_id) {
         case PACKET::MapStart: {
-//            client.set_scene<ace::scene::LoadingScene>();
+            client.set_scene<ace::scene::LoadingScene>("aos://0:0");
             map_writer.clear();
             uint32_t siz = br.read<uint32_t>();
             map_writer.vec.reserve(siz);
             fmt::print("MAP START {}\n", siz);
+            state = NetState::MAP_TRANSFER;
         } break;
         case PACKET::MapChunk: {
+            if (state != NetState::MAP_TRANSFER)
+                fmt::print(stderr, "Receiving map chunks before map start???");
             size_t len;
             uint8_t *data = br.get(&len);
             map_writer.write(data, len);
         } break;
-        case PACKET::StateData: {
-            fmt::print("MAP END {}\n", map_writer.vec.size());
-            //            fmt::print("MAP END {}\n", std::string(map_writer.vec.data(), map_writer.vec.data() + map_writer.vec.size()));
-            StateData state;
-            state.read(br);
-            uint8_t *buf = inflate(map_writer.vec.data(), map_writer.vec.size());
-            client.set_scene<ace::scene::GameScene>(state, this->players, this->ply_name, buf);
-            delete[] buf;
-        } break;
-        case PACKET::ExistingPlayer: {
-            ExistingPlayer r;
-            r.read(br);
-            this->players.push_back(r);
-        } break;
+        case PACKET::StateData:
+            state = NetState::CONNECTED;
         default: {
-            Loader *packet = get_loader(packet_id);
+            auto packet = get_loader(packet_id);
             if (packet == nullptr) {
                 fmt::print("CRITICAL: UNHANDLED PACKET WITH ID {}\n", packet_id);
                 break;
             };
             packet->read(br);
-            client.scene->on_packet(packet_id, packet);
-            delete packet;
+            client.scene->on_packet(packet_id, std::move(packet));
         } break;
         }
     }

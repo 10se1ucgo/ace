@@ -12,7 +12,7 @@ std::default_random_engine eng(std::chrono::system_clock::now().time_since_epoch
 int main(int argc, char **argv) {
     try {
         ace::GameClient client("ACE: \"Ace of Spades\" CliEnt", 800, 600);
-        client.set_scene<ace::scene::LoadingScene>("aos://180274501:34887:0.75");
+        client.set_scene<ace::scene::LoadingScene>("aos://180274501:40887:0.75");
  //       client.set_scene<ace::scene::LoadingScene>("69.197.190.10", 31887);
         client.run();
         return 0;

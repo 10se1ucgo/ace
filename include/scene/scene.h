@@ -21,7 +21,7 @@ namespace ace { namespace scene {
         virtual bool on_text_typing(const std::string &text) { return true; }
         virtual void on_text_finished() { }
 
-        virtual void on_packet(net::PACKET type, net::Loader *packet) { fmt::print("UNHANDLED PACKET {}\n", type); };
+        virtual void on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) { fmt::print("UNHANDLED PACKET {}\n", type); };
 
         double time;
         uint64_t ms_time;

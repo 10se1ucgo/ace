@@ -24,11 +24,13 @@ namespace ace { namespace scene {
 //        void on_mouse_motion(int x, int y, int dx, int dy) override;
 //        void on_mouse_button(int button, bool pressed) override;
 
+        void on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) override;
         
 
         glm::mat4 projection;
         draw::Font *font;
 
         net::Server server;
+        std::vector<std::pair<net::PACKET, std::unique_ptr<net::Loader>>> saved_loaders;
     };
 }}

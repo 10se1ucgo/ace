@@ -50,9 +50,8 @@ namespace ace {
             return SDL_IsTextInputActive() == SDL_TRUE;
         }
 
-        template<typename TScene, typename... TArgs>
+        template<typename TScene, typename... TArgs, typename = std::enable_if_t<std::is_base_of<scene::Scene, TScene>::value>>
         void set_scene(TArgs&&... args) {
-            static_assert(std::is_base_of<scene::Scene, TScene>::value, "scene class must derive from testogl::Scene");
             this->scene.reset();
             this->scene = std::make_unique<TScene>(*this, std::forward<TArgs>(args)...);
         }
@@ -79,6 +78,8 @@ namespace ace {
 
         bool quit = false;
         double time = 0.0;
+
+        std::unique_ptr<scene::Scene> scene; // very bad idea??
     private:
         void draw() const;
         void update(double dt);
@@ -87,8 +88,6 @@ namespace ace {
         void poll_events();
         void handle_key_press(const SDL_Event &event);
         void handle_window_event(const SDL_Event &event);
-
-        std::unique_ptr<scene::Scene> scene;
 
         int w, h;
         struct {

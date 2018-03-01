@@ -82,7 +82,6 @@ namespace ace {
         fmt::print("GLSL: {}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
         fmt::print("Renderer: {}\n", glGetString(GL_RENDERER));
         fmt::print("Vendor: {}\n", glGetString(GL_VENDOR));
-        this->set_exclusive_mouse(true);
 
         keyboard.keys = SDL_GetKeyboardState(&keyboard.numkeys);
         this->w = w;

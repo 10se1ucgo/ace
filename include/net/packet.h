@@ -777,37 +777,37 @@ namespace net {
         }
     };
 
-    inline Loader *get_loader(PACKET id) {
+    inline std::unique_ptr<Loader> get_loader(PACKET id) {
         switch(id) {
-            case PACKET::PositionData: return new PositionData;
-            case PACKET::OrientationData: return new OrientationData;
-            case PACKET::WorldUpdate: return new WorldUpdate;
-            case PACKET::InputData: return new InputData;
-            case PACKET::WeaponInput: return new WeaponInput;
-            case PACKET::SetHP: return new SetHP;
-            case PACKET::GrenadePacket: return new GrenadePacket;
-            case PACKET::SetTool: return new SetTool;
-            case PACKET::SetColor: return new SetColor;
-            case PACKET::ExistingPlayer: return new ExistingPlayer;
-            case PACKET::ShortPlayerData: return new ShortPlayerData;
-            case PACKET::MoveObject: return new MoveObject;
-            case PACKET::CreatePlayer: return new CreatePlayer;
-            case PACKET::BlockAction: return new BlockAction;
-            case PACKET::BlockLine: return new BlockLine;
-            case PACKET::StateData: return new StateData;
-            case PACKET::KillAction: return new KillAction;
-            case PACKET::ChatMessage: return new ChatMessage;
+            case PACKET::PositionData: return std::make_unique<PositionData>();
+            case PACKET::OrientationData: return std::make_unique< OrientationData>();
+            case PACKET::WorldUpdate: return std::make_unique< WorldUpdate>();
+            case PACKET::InputData: return std::make_unique<InputData>();
+            case PACKET::WeaponInput: return std::make_unique<WeaponInput>();
+            case PACKET::SetHP: return std::make_unique<SetHP>();
+            case PACKET::GrenadePacket: return std::make_unique<GrenadePacket>();
+            case PACKET::SetTool: return std::make_unique<SetTool>();
+            case PACKET::SetColor: return std::make_unique<SetColor>();
+            case PACKET::ExistingPlayer: return std::make_unique<ExistingPlayer>();
+            case PACKET::ShortPlayerData: return std::make_unique<ShortPlayerData>();
+            case PACKET::MoveObject: return std::make_unique<MoveObject>();
+            case PACKET::CreatePlayer: return std::make_unique<CreatePlayer>();
+            case PACKET::BlockAction: return std::make_unique<BlockAction>();
+            case PACKET::BlockLine: return std::make_unique<BlockLine>();
+            case PACKET::StateData: return std::make_unique<StateData>();
+            case PACKET::KillAction: return std::make_unique<KillAction>();
+            case PACKET::ChatMessage: return std::make_unique<ChatMessage>();
 //            case PACKET::MapStart: break;
 //            case PACKET::MapChunk: break;
-            case PACKET::PlayerLeft: return new PlayerLeft;
-            case PACKET::TerritoryCapture: return new TerritoryCapture;
-            case PACKET::ProgressBar: return new ProgressBar;
-            case PACKET::IntelCapture: return new IntelCapture;
-            case PACKET::IntelPickup: return new IntelPickup;
-            case PACKET::IntelDrop: return new IntelDrop;
-            case PACKET::Restock: return new Restock;
-            case PACKET::FogColor: return new FogColor;
-            case PACKET::WeaponReload: return new WeaponReload;
+            case PACKET::PlayerLeft: return std::make_unique<PlayerLeft>();
+            case PACKET::TerritoryCapture: return std::make_unique<TerritoryCapture>();
+            case PACKET::ProgressBar: return std::make_unique<ProgressBar>();
+            case PACKET::IntelCapture: return std::make_unique<IntelCapture>();
+            case PACKET::IntelPickup: return std::make_unique<IntelPickup>();
+            case PACKET::IntelDrop: return std::make_unique<IntelDrop>();
+            case PACKET::Restock: return std::make_unique<Restock>();
+            case PACKET::FogColor: return std::make_unique<FogColor>();
+            case PACKET::WeaponReload: return std::make_unique<WeaponReload>();
             case PACKET::ChangeTeam: break;
             case PACKET::ChangeWeapon: break;
             default: return nullptr;

@@ -27,7 +27,7 @@ namespace ace { namespace scene {
 
     class GameScene final : public Scene {
     public:
-        GameScene(GameClient &client, const net::StateData &state_data, const std::vector<net::ExistingPlayer> &players, std::string ply_name="Deuce", uint8_t *buf=nullptr);
+        GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name="Deuce", uint8_t *buf=nullptr);
         // GameScene(GameClient& client, const std::string& map_name);
         ~GameScene();
 
@@ -39,7 +39,7 @@ namespace ace { namespace scene {
         void on_mouse_button(int button, bool pressed) override;
         void on_window_resize(int ow, int oh) override;
         
-        void on_packet(net::PACKET type, net::Loader *loader) override;
+        void on_packet(net::PACKET type, std::unique_ptr<net::Loader> loader) override;
 
         bool on_text_typing(const std::string &text) override;
         void on_text_finished() override;
