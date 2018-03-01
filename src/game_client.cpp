@@ -27,8 +27,7 @@ namespace ace {
     }
 
     GameClient::GameClient(std::string caption, int w, int h, WINDOW style):
-        net(nullptr),
-        scene(nullptr), tasks(*this), window_title(std::move(caption)) {
+        tasks(*this), window_title(std::move(caption)) {
 
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
             sdl_error("SDL_Init");
@@ -91,6 +90,8 @@ namespace ace {
 
         enet_initialize();
         this->net = std::make_unique<net::NetworkClient>(*this);
+
+        this->shaders = std::make_unique<ShaderManager>();
 
         SDL_StopTextInput();
     }

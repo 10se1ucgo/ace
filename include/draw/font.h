@@ -14,12 +14,10 @@
 
 namespace ace { namespace draw {
     namespace detail {
-#pragma pack(push, 1)
         struct GlyphVertex {
             glm::vec4 pos_tex;
             glm::vec3 color;
         };
-#pragma pack(pop)
     }
 
 

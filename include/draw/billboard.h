@@ -8,13 +8,11 @@
 #include <string>
 
 namespace ace { namespace draw {
-#pragma pack(push, 1)
     struct Billboard {
         glm::vec3 position;
         glm::vec3 color;
         float size;
     };
-#pragma pack(pop)
 
     struct BillboardManager {
         BillboardManager();

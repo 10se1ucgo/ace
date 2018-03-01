@@ -137,17 +137,14 @@ namespace ace { namespace sound {
     }
 
     void SoundManager::set_listener(glm::vec3 position, glm::vec3 forward, glm::vec3 up, glm::vec3 velocity) const {
-        float pos[] = { position.x, position.y, position.z };
-        float vel[] = { velocity.x, velocity.y, velocity.z };
         float ori[] = { forward.x, forward.y, forward.z, up.x, up.y, up.z };
 
-        alListenerfv(AL_POSITION, pos);
-        CHECK_AL_ERROR();
-        alListenerfv(AL_VELOCITY, vel);
+        alListenerfv(AL_POSITION, glm::value_ptr(position));
         CHECK_AL_ERROR();
         alListenerfv(AL_ORIENTATION, ori);
         CHECK_AL_ERROR();
-
+        alListenerfv(AL_VELOCITY, glm::value_ptr(velocity));
+        CHECK_AL_ERROR();
     }
 
     SoundBuffer *SoundManager::get(const std::string& name) {

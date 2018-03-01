@@ -6,7 +6,7 @@
 #include "glm/glm.hpp"
 
 
-#include <stdio.h>
+#include <cstdio>
 #include <array>
 #include <cstddef>
 #include "common.h"
@@ -48,15 +48,13 @@ namespace {
         uint16_t height;
     };
 
-#pragma pack(push, 1)
     struct Vertex {
         glm::vec3 vertex;
         glm::vec3 color;
         glm::vec3 normal; // face normal
         glm::vec3 kv6norm; // kv6 normal
-        uint8_t face; // extra face shading
+//        uint8_t face; // extra face shading
     };
-#pragma pack(pop)
 
     void gen_faces(float x, float y, float z, glm::vec3 color, glm::vec3 kv6norm, uint8_t vis, std::vector<Vertex> &v) {
         const float x0 = x - 0.5f, x1 = x + 0.5f;
@@ -68,57 +66,57 @@ namespace {
 
         if (vis & 1 << 0) {
             //LEFT
-            v.push_back({ { x0, y0, z0 }, color,{ -1, 0, 0 }, kv6norm, 0 });
-            v.push_back({ { x0, y1, z0 }, color,{ -1, 0, 0 }, kv6norm, 0 });
-            v.push_back({ { x0, y0, z1 }, color,{ -1, 0, 0 }, kv6norm, 0 });
-            v.push_back({ { x0, y0, z1 }, color,{ -1, 0, 0 }, kv6norm, 0 });
-            v.push_back({ { x0, y1, z0 }, color,{ -1, 0, 0 }, kv6norm, 0 });
-            v.push_back({ { x0, y1, z1 }, color,{ -1, 0, 0 }, kv6norm, 0 });
+            v.push_back({ { x0, y0, z0 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
+            v.push_back({ { x0, y1, z0 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
+            v.push_back({ { x0, y0, z1 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
+            v.push_back({ { x0, y0, z1 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
+            v.push_back({ { x0, y1, z0 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
+            v.push_back({ { x0, y1, z1 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
         }
         if (vis & 1 << 1) {
             //RIGHT
-            v.push_back({ { x1, y0, z0 }, color,{ 1, 0, 0 }, kv6norm, 1 });
-            v.push_back({ { x1, y0, z1 }, color,{ 1, 0, 0 }, kv6norm, 1 });
-            v.push_back({ { x1, y1, z0 }, color,{ 1, 0, 0 }, kv6norm, 1 });
-            v.push_back({ { x1, y1, z0 }, color,{ 1, 0, 0 }, kv6norm, 1 });
-            v.push_back({ { x1, y0, z1 }, color,{ 1, 0, 0 }, kv6norm, 1 });
-            v.push_back({ { x1, y1, z1 }, color,{ 1, 0, 0 }, kv6norm, 1 });
+            v.push_back({ { x1, y0, z0 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
+            v.push_back({ { x1, y0, z1 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
+            v.push_back({ { x1, y1, z0 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
+            v.push_back({ { x1, y1, z0 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
+            v.push_back({ { x1, y0, z1 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
+            v.push_back({ { x1, y1, z1 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
         }
         if (vis & 1 << 2) {
             //BACK
-            v.push_back({ { x0, y0, z0 }, color,{ 0, 0, -1 }, kv6norm, 2 });
-            v.push_back({ { x1, y0, z0 }, color,{ 0, 0, -1 }, kv6norm, 2 });
-            v.push_back({ { x0, y1, z0 }, color,{ 0, 0, -1 }, kv6norm, 2 });
-            v.push_back({ { x0, y1, z0 }, color,{ 0, 0, -1 }, kv6norm, 2 });
-            v.push_back({ { x1, y0, z0 }, color,{ 0, 0, -1 }, kv6norm, 2 });
-            v.push_back({ { x1, y1, z0 }, color,{ 0, 0, -1 }, kv6norm, 2 });
+            v.push_back({ { x0, y0, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
+            v.push_back({ { x1, y0, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
+            v.push_back({ { x0, y1, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
+            v.push_back({ { x0, y1, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
+            v.push_back({ { x1, y0, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
+            v.push_back({ { x1, y1, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
         }
         if (vis & 1 << 3) {
             //FRONT
-            v.push_back({ { x0, y0, z1 }, color,{ 0, 0, 1 }, kv6norm, 3 });
-            v.push_back({ { x0, y1, z1 }, color,{ 0, 0, 1 }, kv6norm, 3 });
-            v.push_back({ { x1, y0, z1 }, color,{ 0, 0, 1 }, kv6norm, 3 });
-            v.push_back({ { x1, y0, z1 }, color,{ 0, 0, 1 }, kv6norm, 3 });
-            v.push_back({ { x0, y1, z1 }, color,{ 0, 0, 1 }, kv6norm, 3 });
-            v.push_back({ { x1, y1, z1 }, color,{ 0, 0, 1 }, kv6norm, 3 });
+            v.push_back({ { x0, y0, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
+            v.push_back({ { x0, y1, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
+            v.push_back({ { x1, y0, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
+            v.push_back({ { x1, y0, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
+            v.push_back({ { x0, y1, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
+            v.push_back({ { x1, y1, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
         }
         if (vis & 1 << 4) {
             //TOP
-            v.push_back({ { x0, y1, z0 }, color,{ 0, 1, 0 }, kv6norm, 4 });
-            v.push_back({ { x1, y1, z0 }, color,{ 0, 1, 0 }, kv6norm, 4 });
-            v.push_back({ { x0, y1, z1 }, color,{ 0, 1, 0 }, kv6norm, 4 });
-            v.push_back({ { x0, y1, z1 }, color,{ 0, 1, 0 }, kv6norm, 4 });
-            v.push_back({ { x1, y1, z0 }, color,{ 0, 1, 0 }, kv6norm, 4 });
-            v.push_back({ { x1, y1, z1 }, color,{ 0, 1, 0 }, kv6norm, 4 });
+            v.push_back({ { x0, y1, z0 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
+            v.push_back({ { x1, y1, z0 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
+            v.push_back({ { x0, y1, z1 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
+            v.push_back({ { x0, y1, z1 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
+            v.push_back({ { x1, y1, z0 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
+            v.push_back({ { x1, y1, z1 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
         }
         if (vis & 1 << 5) {
             //BOTTOM
-            v.push_back({ { x0, y0, z0 }, color,{ 0, -1, 0 }, kv6norm, 5 });
-            v.push_back({ { x0, y0, z1 }, color,{ 0, -1, 0 }, kv6norm, 5 });
-            v.push_back({ { x1, y0, z0 }, color,{ 0, -1, 0 }, kv6norm, 5 });
-            v.push_back({ { x1, y0, z0 }, color,{ 0, -1, 0 }, kv6norm, 5 });
-            v.push_back({ { x0, y0, z1 }, color,{ 0, -1, 0 }, kv6norm, 5 });
-            v.push_back({ { x1, y0, z1 }, color,{ 0, -1, 0 }, kv6norm, 5 });
+            v.push_back({ { x0, y0, z0 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
+            v.push_back({ { x0, y0, z1 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
+            v.push_back({ { x1, y0, z0 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
+            v.push_back({ { x1, y0, z0 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
+            v.push_back({ { x0, y0, z1 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
+            v.push_back({ { x1, y0, z1 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
         }
     }
 }

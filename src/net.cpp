@@ -67,7 +67,7 @@ namespace net {
         }
     }
 
-    void BaseNetClient::connect(const char* host, int port) {
+    void BaseNetClient::connect(const char *host, int port) {
         if (this->peer != nullptr) {
             enet_peer_disconnect(this->peer, 0);
         }
@@ -114,25 +114,11 @@ namespace net {
         fmt::print("~NetworkClient()\n");
     }
 
-    void NetworkClient::connect(const std::string &host) {
-        auto proto_pos = host.find(':', 0);
-        auto ip_pos = proto_pos + 3; // `:\\` 
-        auto port_pos = host.find(':', ip_pos);
-        auto version_pos = host.find(':', port_pos + 1);
-//        fmt::print("PROTOCOL: !{}!\n", host.substr(0, proto_pos));
-//        fmt::print("IP: !{}!\n", std::stoi(host.substr(ip_pos, port_pos - ip_pos)));
-//        fmt::print("PORT: !{}!\n", host.substr(port_pos + 1, version_pos - (port_pos + 1)));
-        if(version_pos != std::string::npos) {
-            auto version = host.substr(version_pos + 1);
-            // fmt::print("VERSION: !{}!\n", host.substr(version_pos + 1));
-            if(version != "0.75") {
-                THROW_ERROR("Ace of Spades {} unsupported!\n", version);
-            }
-        }
-
-        uint32_t ip = std::stoul(host.substr(ip_pos, port_pos - ip_pos));
-        auto ip_str = fmt::format("{}.{}.{}.{}", ip >> 0 & 0xFF, ip >> 8 & 0xFF, ip >> 16 & 0xFF, ip >> 24 & 0xFF);
-        this->connect(ip_str.c_str(), std::stoi(host.substr(port_pos + 1, version_pos - (port_pos + 1))));
+    void NetworkClient::connect(const Server &server) {
+        if(server.version != "0.75")
+            THROW_ERROR("Ace of Spades {} unsupported!\n", server.version);
+        
+        this->connect(server.ip.c_str(), server.port);
     }
 
     void NetworkClient::on_connect(const ENetEvent &event) {
@@ -144,7 +130,7 @@ namespace net {
         connected = false;
         disconnect_reason = DISCONNECT(event.data);
         fmt::print("DISCONNECTED: {}\n", get_disconnect_reason(disconnect_reason));
-        client.set_scene<ace::scene::LoadingScene>();
+//        client.set_scene<ace::scene::LoadingScene>();
     }
 
     void NetworkClient::on_receive(const ENetEvent &event) {
@@ -153,7 +139,7 @@ namespace net {
         
         switch (packet_id) {
         case PACKET::MapStart: {
-            client.set_scene<ace::scene::LoadingScene>();
+//            client.set_scene<ace::scene::LoadingScene>();
             map_writer.clear();
             uint32_t siz = br.read<uint32_t>();
             map_writer.vec.reserve(siz);
@@ -170,7 +156,7 @@ namespace net {
             StateData state;
             state.read(br);
             uint8_t *buf = inflate(map_writer.vec.data(), map_writer.vec.size());
-            client.set_scene<ace::scene::GameScene>(state, this->players, buf);
+            client.set_scene<ace::scene::GameScene>(state, this->players, this->ply_name, buf);
             delete[] buf;
         } break;
         case PACKET::ExistingPlayer: {

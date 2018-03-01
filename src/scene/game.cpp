@@ -9,8 +9,9 @@
 #include "world/grenade.h"
 
 namespace ace { namespace scene {
-    GameScene::GameScene(GameClient &client, const net::StateData &state_data, const std::vector<net::ExistingPlayer> &players, uint8_t *buf) :
+    GameScene::GameScene(GameClient &client, const net::StateData &state_data, const std::vector<net::ExistingPlayer> &players, std::string ply_name, uint8_t *buf) :
         Scene(client),
+        shaders(*client.shaders),
         cam(*this, { 256, -50.f + 1, 256 }, { 0, 0, 1 }),
         map(*this, buf),
         hud(*this),
@@ -18,7 +19,8 @@ namespace ace { namespace scene {
         teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color)},
                 {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color)} }),
         pd_upd(this->client.tasks.call_every(1, false, &GameScene::send_position_update, this)),
-        od_upd(this->client.tasks.call_every(1/30.f, false, &GameScene::send_orientation_update, this)) {
+        od_upd(this->client.tasks.call_every(1/30.f, false, &GameScene::send_orientation_update, this)),
+        ply_name(std::move(ply_name)) {
 
         // pyspades has a dumb system where sending more
         // than one PositionData packet every 0.7 seconds will cause you to rubberband
@@ -175,7 +177,7 @@ namespace ace { namespace scene {
 
             if(wep != net::WEAPON::INVALID) {
                 net::ExistingPlayer x;
-                x.name = "10se1ucgo";
+                x.name = ply_name;
                 x.team = net::TEAM::TEAM1;
                 x.weapon = wep;
                 this->client.net->send_packet(net::PACKET::ExistingPlayer, x);

@@ -10,13 +10,11 @@
 
 namespace ace { namespace draw {
     namespace {
-#pragma pack(push, 1)
         struct Vertex {
             glm::vec3 vertex;
             glm::vec3 color;
             GLubyte face;
         };
-#pragma pack(pop)
         
 
         void gen_faces(const float x, const float y, const float z, const uint8_t vis, const glm::vec3 color, std::vector<Vertex> &v) {

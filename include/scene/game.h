@@ -1,4 +1,5 @@
 #pragma once
+#include <utility>
 #include "glad/glad.h"
 #include "glm/gtx/string_cast.hpp"
 
@@ -17,16 +18,16 @@
 namespace ace { namespace scene {
     struct Team {
         Team() : name("None"), color(0), float_color(0) {}
-        Team(const std::string &name, const glm::ivec3 &color) : name(name), color(color), float_color(glm::vec3(color) / 255.f) {}
+        Team(std::string name, const glm::ivec3 &color) : name(std::move(name)), color(color), float_color(glm::vec3(color) / 255.f) {}
 
         std::string name;
         glm::ivec3 color;
         glm::vec3 float_color;
     };
 
-    class GameScene : public Scene {
+    class GameScene final : public Scene {
     public:
-        GameScene(GameClient &client, const net::StateData &state_data, const std::vector<net::ExistingPlayer> &players, uint8_t *buf=nullptr);
+        GameScene(GameClient &client, const net::StateData &state_data, const std::vector<net::ExistingPlayer> &players, std::string ply_name="Deuce", uint8_t *buf=nullptr);
         // GameScene(GameClient& client, const std::string& map_name);
         ~GameScene();
 
@@ -36,7 +37,7 @@ namespace ace { namespace scene {
         void on_key(SDL_Scancode scancode, int modifiers, bool pressed) override;
         void on_mouse_motion(int x, int y, int dx, int dy) override;
         void on_mouse_button(int button, bool pressed) override;
-        void on_window_resize(int nw, int nh) override;
+        void on_window_resize(int ow, int oh) override;
         
         void on_packet(net::PACKET type, net::Loader *loader) override;
 
@@ -57,16 +58,15 @@ namespace ace { namespace scene {
         void send_input_update();
         void send_grenade(float fuse);
 
-        template<typename TObj, typename... TArgs>
+        template<typename TObj, typename... TArgs, typename = std::enable_if_t<std::is_base_of<world::WorldObject, TObj>::value>>
         world::WorldObject *create_object(TArgs&&... args) {
-            static_assert(std::is_base_of<world::WorldObject, TObj>::value, "object class must derive from world::WorldObject");
             queued_objects.emplace_back(std::make_unique<TObj>(*this, std::forward<TArgs>(args)...));
             return queued_objects.back().get();
         }
 
-        ShaderManager shaders;
+        ShaderManager &shaders;
         draw::BillboardManager billboards;
-        KV6Manager models;
+        KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
         Camera cam;
         draw::DrawMap map;
         HUD hud;
@@ -110,5 +110,6 @@ namespace ace { namespace scene {
         }
 
         util::loops_t::reference pd_upd, od_upd;
+        std::string ply_name;
     };
 }}

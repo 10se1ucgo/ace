@@ -8,6 +8,35 @@
 namespace ace { class GameClient; }
 
 namespace net {
+    struct Server {
+        std::string ip;
+        int port;
+        std::string version;
+
+        Server(std::string ip, int port, std::string version="0.75") :
+            ip(std::move(ip)),
+            port(port),
+            version(std::move(version)) {
+        }
+
+        Server(const std::string &identifier) {
+            auto proto_pos = identifier.find(':', 0);
+            auto ip_pos = proto_pos + 3; // `:\\` 
+            auto port_pos = identifier.find(':', ip_pos);
+            auto version_pos = identifier.find(':', port_pos + 1);
+            if (version_pos != std::string::npos) {
+                this->version = identifier.substr(version_pos + 1);
+            } else {
+                this->version = "0.75";
+            }
+
+            uint32_t ip = std::stoul(identifier.substr(ip_pos, port_pos - ip_pos));
+
+            this->port = std::stoi(identifier.substr(port_pos + 1, version_pos - (port_pos + 1)));
+            this->ip = fmt::format("{}.{}.{}.{}", ip >> 0 & 0xFF, ip >> 8 & 0xFF, ip >> 16 & 0xFF, ip >> 24 & 0xFF);
+        }
+    };
+
     struct BaseNetClient {
         BaseNetClient();
         virtual ~BaseNetClient();
@@ -31,7 +60,7 @@ namespace net {
         ACE_NO_COPY_MOVE(NetworkClient)
 
         using BaseNetClient::connect;
-        void connect(const std::string &host);
+        void connect(const Server &server);
 
         void on_connect(const ENetEvent& event) final;
         void on_disconnect(const ENetEvent& event) final;
@@ -41,10 +70,13 @@ namespace net {
         
         ByteWriter map_writer;
         std::vector<net::ExistingPlayer> players;
+        std::string ply_name;
+
         ace::GameClient &client;
 
         bool connected;
         DISCONNECT disconnect_reason;
+
     };
 
     inline const char *get_disconnect_reason(DISCONNECT reason) {

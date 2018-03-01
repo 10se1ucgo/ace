@@ -57,28 +57,39 @@ namespace ace {
             this->scene = std::make_unique<TScene>(*this, std::forward<TArgs>(args)...);
         }
         
+        friend net::NetworkClient;
+        std::unique_ptr<net::NetworkClient> net; // unique_ptr because enet has to be intialized before constructed (maybe i can use comma operator)
+        std::unique_ptr<ShaderManager> shaders; // uniqe_ptr because GL context needs to be created before the shaders can be compiled and loaded.
+        sound::SoundManager sound;
+        util::TaskScheduler tasks;
+        draw::FontManager fonts;
 
+        // Input state
         struct {
             int numkeys = 0;
             const Uint8 *keys = nullptr;
             SDL_Keymod mods = KMOD_NONE;
         } keyboard;
-
         struct {
             int x = 0, y = 0, dx = 0, dy = 0;
             Uint32 state = 0, dstate = 0;
         } mouse;
 
-        std::unique_ptr<net::NetworkClient> net;
-        sound::SoundManager sound;
-        util::TaskScheduler tasks;
-        draw::FontManager fonts;
+        std::string input_buffer;
 
         bool quit = false;
         double time = 0.0;
-        std::string input_buffer;
-        std::string window_title;
     private:
+        void draw() const;
+        void update(double dt);
+        void update_fps();
+
+        void poll_events();
+        void handle_key_press(const SDL_Event &event);
+        void handle_window_event(const SDL_Event &event);
+
+        std::unique_ptr<scene::Scene> scene;
+
         int w, h;
         struct {
             double last_update = 0.0;
@@ -87,16 +98,6 @@ namespace ace {
 
         SDL_Window *window;
         SDL_GLContext context;
-
-        std::unique_ptr<scene::Scene> scene;
-        friend net::NetworkClient;
-        
-        void draw() const;
-        void update(double dt);
-        void update_fps();
-
-        void poll_events();
-        void handle_key_press(const SDL_Event &event);
-        void handle_window_event(const SDL_Event &event);
+        std::string window_title;
     };
 }

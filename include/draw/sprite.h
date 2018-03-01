@@ -13,14 +13,12 @@
 
 namespace ace {
     namespace draw {
-#pragma pack(push, 1)
         struct SpriteVert {
             glm::vec4 tint;
             glm::mat3 model;
 
             SpriteVert(glm::vec4 tint, glm::mat3 model) : tint(tint), model(model) { }
         };
-#pragma pack(pop)
 
         struct SpriteGroup {
             SpriteGroup(const std::string &file_name);

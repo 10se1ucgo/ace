@@ -24,7 +24,7 @@ namespace ace { namespace world {
         uint8_t carrier;
 
         KV6 mesh;
-
+//        draw::SpriteGroup
     };
 
     struct CommandPost : Entity {
