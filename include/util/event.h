@@ -2,7 +2,8 @@
 #include <map>
 #include <functional>
 #include <utility>
-#include <list>
+#include <vector>
+#include <memory>
 
 namespace ace { 
 class GameClient;
@@ -14,7 +15,7 @@ namespace util {
                 interval(interval),
                 func(std::move(func)),
                 next_call(next_call) {
-            };
+            }
 
             double interval;
             std::function<void()> func;
@@ -28,50 +29,39 @@ namespace util {
 
     }
 
-    using tasks_t = std::map<double, std::function<void()>>;
-    using loops_t = std::list<detail::LoopingCall>;
-
     // wow im bad at designing anything
-    struct TaskScheduler {
+    class TaskScheduler {
+        std::map<double, std::function<void()>> tasks;
+        std::vector<std::weak_ptr<detail::LoopingCall>> loops;
+        GameClient &client;
+
+    public:
+        using task_type = decltype(tasks)::iterator;
+        using loop_type = std::shared_ptr<decltype(loops)::value_type::element_type>;
+
         explicit TaskScheduler(GameClient& client): client(client) {}
 
         void update(double dt);
 
-        tasks_t::iterator call_later(double seconds, std::function<void()> &&func) {
+        task_type call_later(double seconds, std::function<void()> &&func) {
             return tasks.emplace(this->get_time(seconds), func).first;
             
         }
 
         template<typename TFunc, typename... TArgs>
-        tasks_t::iterator call_later(double seconds, TFunc&& func, TArgs&&... args) {
+        task_type call_later(double seconds, TFunc&& func, TArgs&&... args) {
             // YIKES visual studio just hangs when i try to compile this
             // return this->call_later(seconds, std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
             return tasks.emplace(this->get_time(seconds), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...)).first;
         }
 
-        loops_t::reference call_every(double interval, bool now, std::function<void()>&& func) {
-            loops.emplace_back(interval, func, now ? 0.0 : this->get_time(interval));
-            return loops.back();
-        }
-
         template<typename TFunc, typename... TArgs>
-        loops_t::reference call_every(double interval, bool now, TFunc&& func, TArgs&&... args) {
-            // this too
-            // i guess it doesnt like the variadic template
-            //return this->call_every(interval, now, std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
-            loops.emplace_back(interval, std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...), now ? 0.0 : this->get_time(interval));
-            return loops.back();
-        }
-
-        void remove_loop(loops_t::reference loop) {
-            loops.remove(loop);
+        loop_type call_every(double interval, bool now, TFunc&& func, TArgs&&... args) {
+            loop_type ptr(std::make_shared<detail::LoopingCall>(interval, std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...), now ? 0.0 : this->get_time(interval)));
+            this->loops.emplace_back(ptr);
+            return ptr;
         }
 
         double get_time(double seconds);
-
-    private:
-        tasks_t tasks;
-        loops_t loops;
-        GameClient &client;
     };
 }}

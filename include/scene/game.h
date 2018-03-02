@@ -109,7 +109,7 @@ namespace ace { namespace scene {
             return this->teams[id];
         }
 
-        util::loops_t::reference pd_upd, od_upd;
+        util::TaskScheduler::loop_type pd_upd, od_upd;
         std::string ply_name;
     };
 }}

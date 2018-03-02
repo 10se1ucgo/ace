@@ -8,10 +8,17 @@ namespace ace { namespace util {
             this->tasks.begin()->second();
             tasks.erase(this->tasks.begin());
         }
-        for(auto &loop : loops) {
-            if(this->client.time >= loop.next_call) {
-                loop.func();
-                loop.next_call += loop.interval;
+
+        for (auto i = loops.begin(); i != loops.end();) {
+            auto loop(i->lock());
+            if (loop) {
+                if (this->client.time >= loop->next_call) {
+                    loop->func();
+                    loop->next_call += loop->interval;
+                }
+                ++i;
+            } else {
+                i = loops.erase(i);
             }
         }
     }

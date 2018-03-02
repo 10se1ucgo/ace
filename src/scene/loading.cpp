@@ -31,10 +31,7 @@ namespace ace { namespace scene {
     void LoadingScene::draw() {
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-
-        
         std::string str;
-
         switch(client.net->state) {
             case net::NetState::UNCONNECTED:
             case net::NetState::DISCONNECTED:
@@ -52,13 +49,14 @@ namespace ace { namespace scene {
             default: 
                 break;
         }
-        font->draw(str, { client.width() / 2.f, client.height() / 2.f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+        font->draw(str, { client.width() / 2.f, client.height() / 2.f }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
     
         client.shaders->text.bind();
         client.fonts.draw(projection, client.shaders->text);
     }
 
     void LoadingScene::update(double dt) {
+        Scene::update(dt);
     }
 
     bool LoadingScene::on_text_typing(const std::string &text) {
@@ -80,13 +78,12 @@ namespace ace { namespace scene {
         if(type == net::PACKET::StateData) {
             auto &client = this->client;
             auto buf(net::inflate(client.net->map_writer.vec.data(), client.net->map_writer.vec.size()));
-            auto name = client.net->ply_name;
             auto saved_loaders(std::move(this->saved_loaders));
 
             // hey so im pretty sure calling client.set_scene invalidates this object (this->scene.reset() destroys this)
             // so im gonna quickly copy/move all of the important stuff out of the class before we destroy it
             // is this bad design? absolutely. i think.
-            client.set_scene<GameScene>(*reinterpret_cast<net::StateData *>(packet.get()), name, buf.get());
+            client.set_scene<GameScene>(*reinterpret_cast<net::StateData *>(packet.get()), client.net->ply_name, buf.get());
             for (auto &pkt : saved_loaders) {
                 client.scene->on_packet(pkt.first, std::move(pkt.second));
             }

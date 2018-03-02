@@ -73,8 +73,8 @@ namespace ace { namespace scene {
     }
 
     GameScene::~GameScene() {
-        this->client.tasks.remove_loop(pd_upd);
-        this->client.tasks.remove_loop(od_upd);
+//        this->client.tasks.remove_loop(pd_upd);
+//        this->client.tasks.remove_loop(od_upd);
         this->client.set_exclusive_mouse(false);
         fmt::print("~GameScene()\n");
     }
