@@ -19,7 +19,7 @@ namespace ace { namespace draw {
 
         void gen_faces(const float x, const float y, const float z, const uint8_t vis, const glm::vec3 color, std::vector<Vertex> &v) {
             const float x0 = x, x1 = x + 1.0f;
-            const float y0 = -z, y1 = -z + 1.0f;
+            const float y0 = -z - 1.0f, y1 = -z;
             const float z0 = y, z1 = y + 1.0f;
 
             // vis = 0b11111111;
@@ -77,7 +77,6 @@ namespace ace { namespace draw {
 
     VXLBlocks::VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) : scale(1), rotation(0), position(0) {
         this->centroid += center;
-        
 
         std::vector<Vertex> v;
         v.reserve(blocks.size() * sizeof(Vertex));

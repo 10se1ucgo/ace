@@ -209,7 +209,6 @@ bool KV6::sprhitscan(glm::vec3 p0, glm::vec3 v0, glm::vec3 *h) {
     glm::vec3 v(dot(v0, ss), dot(v0, sh), dot(v0, sf));
 
     glm::vec3 sprp(draw2vox(this->position));
-    sprp.z += 1;
     glm::vec3 t(p0 - sprp);
     glm::vec3 u(dot(t, ss), dot(t, sh), dot(t, sf));
     u /= glm::vec3{ dot(ss, ss), dot(sh, sh), dot(sf, sf) };

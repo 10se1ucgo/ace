@@ -309,7 +309,6 @@ namespace ace { namespace world {
 
         if(this->local_player && !this->scene.thirdperson) {
             this->scene.cam.position = vox2draw(this->e);
-            this->scene.cam.position.y += 1;
         }
 
         
@@ -319,7 +318,8 @@ namespace ace { namespace world {
 
                 int step = (scene.ms_time & 3) + 1;
                 std::string sound = fmt::format("{}{}.wav", this->wade ? "wade" : "footstep", step);
-                this->scene.client.sound.play(sound, vox2draw(this->p) + 0.5f, 100, this->local_player && !this->scene.thirdperson);
+                this->play_sound(sound);
+//                this->scene.client.sound.play(sound, vox2draw(this->p) + 0.5f, 100, this->local_player && !this->scene.thirdperson);
                 this->next_footstep = scene.time + (this->sprint ? 0.386f : 0.512f);
             }
         }
@@ -477,7 +477,7 @@ namespace ace { namespace world {
 
         if (!this->alive) {
             this->mdl_dead.rotation = { 0, -yaw + 90, 0 };
-            this->mdl_dead.position = { this->p.x, -this->p.z - 0.25f, this->p.y };
+            this->mdl_dead.position = { this->p.x, -this->p.z - 1.25f, this->p.y };
             return;
         }
 
@@ -485,12 +485,12 @@ namespace ace { namespace world {
         float s = sin(glm::radians(-yaw + 90));
 
         if (!this->local_player || this->scene.thirdperson) {
-            this->mdl_head.position = this->mdl_torso.position = { this->e.x, -this->e.z + 0.7f, this->e.y };
-            this->mdl_arms.position = { this->e.x, -this->e.z + (crouch ? 0.6f : 0.5f), this->e.y };
+            this->mdl_head.position = this->mdl_torso.position = { this->e.x, -this->e.z - 0.3f, this->e.y };
+            this->mdl_arms.position = { this->e.x, -this->e.z - (crouch ? 0.4f : 0.5f), this->e.y };
             //            this->mdl_arms.position += draw_forward * bob + scene.cam.up * (airborne ? v.z * 0.2f : 0);
             float legxy_mod = crouch ? -0.3f : 0.f;
-            this->mdl_legr.position = { this->e.x + c * 0.25f + legxy_mod * s, -this->e.z - (crouch ? -0.3f : 0.1f), this->e.y - s * 0.25f + legxy_mod * c };
-            this->mdl_legl.position = { this->e.x - c * 0.25f + legxy_mod * s, -this->e.z - (crouch ? -0.3f : 0.1f), this->e.y + s * 0.25f + legxy_mod * c };
+            this->mdl_legr.position = { this->e.x + c * 0.25f + legxy_mod * s, -this->e.z - (crouch ? 0.7f : 1.1f), this->e.y - s * 0.25f + legxy_mod * c };
+            this->mdl_legl.position = { this->e.x - c * 0.25f + legxy_mod * s, -this->e.z - (crouch ? 0.7f : 1.1f), this->e.y + s * 0.25f + legxy_mod * c };
 
             this->mdl_head.rotation = this->mdl_arms.rotation = glm::vec3(-pitch, -yaw + 90, 0);
             this->mdl_torso.rotation = this->mdl_legl.rotation = this->mdl_legr.rotation = { 0, -yaw + 90, 0 };
@@ -545,6 +545,6 @@ namespace ace { namespace world {
     }
 
     void DrawPlayer::play_sound(const std::string &name, int volume) const {
-        this->scene.client.sound.play(name, vox2draw(this->p) + 0.5f, 100, this->local_player && !this->scene.thirdperson);
+        this->scene.client.sound.play(name, vox2draw(this->p), 100, this->local_player && !this->scene.thirdperson);
     }
 }}

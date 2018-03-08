@@ -31,7 +31,6 @@ namespace ace { namespace world {
     void Entity::set_position(glm::vec3 pos) {
         this->position = pos;
         this->mesh.position = vox2draw(position);
-        this->mesh.position.y += 1;
     }
 
     void Entity::set_team(net::TEAM team) {

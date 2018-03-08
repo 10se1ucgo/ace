@@ -17,8 +17,6 @@ namespace ace { namespace world {
         this->move(dt);
 
         this->mesh.position = vox2draw(this->p);
-        this->mesh.position.y += 1;
-
         this->mesh.rotation += float(-dt * 480) * vox2draw(this->v);
         
         if(fuse <= 0) {

@@ -52,7 +52,6 @@ namespace ace { namespace world {
         float size = life * .1f;
         for(const auto &d : debris) {
             glm::vec3 p = vox2draw(d.p);
-            p.y += 1;
             this->scene.billboards.draw({ p, color, size });
         }
     }
