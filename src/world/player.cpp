@@ -285,34 +285,33 @@ namespace ace { namespace world {
                 if (changed) this->scene.send_input_update();
             }
         } else {
-            switch_time = 0.0;
+            this->switch_time = 0.0;
         }
        
         
-        if (this->jump && !this->airborne) {
+        if (this->jump && !this->airborne && this->alive) {
             this->play_sound(this->wade ? "waterjump.wav" : "jump.wav");
         }
 
-        const glm::vec2 angles = dir2ang(draw_forward);
-        const float yaw = angles.x, pitch = angles.y;
+
 
         long ret = AcePlayer::update(dt);
 
         if(!this->alive) {
-            this->mdl_dead.rotation = { 0, -yaw + 90, 0 };
-            this->mdl_dead.position = { this->p.x, -this->p.z - 0.25f, this->p.y };
             return -2;
         }
 
         if(ret == -1) {
             this->play_sound(this->wade ? "waterland.wav" : "land.wav");
-        } 
-        if (ret > 0 && local_player) {
+        } else if (ret > 0 && this->local_player) {
             this->play_sound("fallhurt.wav");
         }
 
-        float c = cos(glm::radians(-yaw + 90));
-        float s = sin(glm::radians(-yaw + 90));
+        if(this->local_player && !this->scene.thirdperson) {
+            this->scene.cam.position = vox2draw(this->e);
+            this->scene.cam.position.y += 1;
+        }
+
         
         
         if(fabs(v.x) > 0.01f || fabs(v.y) > 0.01f) {
@@ -324,65 +323,14 @@ namespace ace { namespace world {
                 this->next_footstep = scene.time + (this->sprint ? 0.386f : 0.512f);
             }
         }
-
-        if (!this->local_player || this->scene.thirdperson) {
-            this->mdl_head.position = this->mdl_torso.position = { this->e.x, -this->e.z + 0.7f, this->e.y };
-            this->mdl_arms.position = { this->e.x, -this->e.z + (crouch ? 0.6f : 0.5f), this->e.y };
-//            this->mdl_arms.position += draw_forward * bob + scene.cam.up * (airborne ? v.z * 0.2f : 0);
-            float legxy_mod = crouch ? -0.3f : 0.f;
-            this->mdl_legr.position = { this->e.x + c * 0.25f + legxy_mod * s, -this->e.z - (crouch ? -0.3f : 0.1f), this->e.y - s * 0.25f + legxy_mod * c };
-            this->mdl_legl.position = { this->e.x - c * 0.25f + legxy_mod * s, -this->e.z - (crouch ? -0.3f : 0.1f), this->e.y + s * 0.25f + legxy_mod * c };
-
-            this->mdl_head.rotation = this->mdl_arms.rotation = glm::vec3(-pitch, -yaw + 90, 0);
-            this->mdl_torso.rotation = this->mdl_legl.rotation = this->mdl_legr.rotation = { 0, -yaw + 90, 0 };
-
-            if(this->sprint) {
-                this->mdl_arms.rotation.x = 50;
-            }
-
-            if (fabs(v.x) > 0.01f || fabs(v.y) > 0.01f) {
-                float rot1, rot2;
-                rot1 = rot2 = (scene.ms_time & 511) - 255.f;
-                rot1 *= this->f.x * this->v.x + this->f.y * this->v.y * 0.028f * 30;
-                rot2 *= this->s.x * this->v.x + this->s.y * this->v.y * 0.028f * 30;
-
-                //            rot1 *= 0.028;
-                //            rot2 *= 0.028;
-                //            rot1 *= 30;
-                //            rot2 *= 30;
-                if ((scene.ms_time & 1023) > 511) {
-                    mdl_legl.rotation.x = -rot1;
-                    mdl_legl.rotation.z = -rot2;
-                    mdl_legr.rotation.x = rot1;
-                    mdl_legr.rotation.z = rot2;
-                }
-                else {
-                    mdl_legl.rotation.x = rot1;
-                    mdl_legl.rotation.z = rot2;
-                    mdl_legr.rotation.x = -rot1;
-                    mdl_legr.rotation.z = -rot2;
-                }
-            }
-        } else {
-            float bob = ((scene.ms_time & 511) - 255.f) * std::max(std::fabs(v.x), std::fabs(v.y)) / 1000.f;
-            this->mdl_arms.local_position = { -0.01f, -0.45f + (v.z * 0.2f * airborne), 0.1f + (scene.ms_time & 1023) > 511 ? bob : -bob };
-            this->mdl_arms.local_rotation = {0, 0, 0};
-            this->mdl_arms.rotation = glm::vec3(-pitch, -yaw + 90, 0); // because lighting haHAA
-
-            float t = this->switch_time * 5;
-            this->mdl_arms.local_position -= glm::vec3{ -t, t, 0 };
-
-            this->scene.cam.position = vox2draw(this->e);
-            this->scene.cam.position.y += 1;
-        }
         this->get_tool()->update(dt);
         return ret;
     }
 
     void DrawPlayer::set_orientation(float x, float y, float z) {
         AcePlayer::set_orientation(x, y, z);
-        draw_forward = vox2draw(this->f); //  { this->f.x, -this->f.z, this->f.y };
-        draw_right = glm::normalize(cross(scene.cam.up, draw_forward));
+        this->draw_forward = vox2draw(this->f); //  { this->f.x, -this->f.z, this->f.y };
+        this->draw_right = glm::normalize(cross(this->scene.cam.up, this->draw_forward));
     }
 
     bool DrawPlayer::set_walk(bool mf, bool mb, bool ml, bool mr) {
@@ -484,7 +432,10 @@ namespace ace { namespace world {
     }
 
     void DrawPlayer::draw() {
-        
+        this->transform();
+        auto tool = this->get_tool();
+        tool->transform();
+
         scene.shaders.model.uniform("replacement_color", this->scene.teams[this->team].float_color * 0.5f);
         if(!this->alive) {
             if(!local_player) this->mdl_dead.draw(scene.cam.matrix(), scene.shaders.model);
@@ -497,10 +448,10 @@ namespace ace { namespace world {
             this->mdl_legl.draw(scene.cam.matrix(), scene.shaders.model);
             this->mdl_legr.draw(scene.cam.matrix(), scene.shaders.model);
             this->mdl_arms.draw(scene.cam.matrix(), scene.shaders.model);
-            this->get_tool()->draw();
+            tool->draw();
         } else if(!this->sprint && this->switch_time < 0.5f && this->get_tool()->drawable() && !(this->secondary_fire && this->weapon_equipped)) {
             this->mdl_arms.draw_local(scene.cam.projection, scene.shaders.model);
-            this->get_tool()->draw();
+            tool->draw();
         }
     }
 
@@ -517,6 +468,68 @@ namespace ace { namespace world {
         case net::TOOL::WEAPON: return this->weapon_obj.get();
         case net::TOOL::GRENADE: return &this->grenades;
         default: return &this->spade;
+        }
+    }
+
+    void DrawPlayer::transform() {
+        const glm::vec2 angles = dir2ang(draw_forward);
+        const float yaw = angles.x, pitch = angles.y;
+
+        if (!this->alive) {
+            this->mdl_dead.rotation = { 0, -yaw + 90, 0 };
+            this->mdl_dead.position = { this->p.x, -this->p.z - 0.25f, this->p.y };
+            return;
+        }
+
+        float c = cos(glm::radians(-yaw + 90));
+        float s = sin(glm::radians(-yaw + 90));
+
+        if (!this->local_player || this->scene.thirdperson) {
+            this->mdl_head.position = this->mdl_torso.position = { this->e.x, -this->e.z + 0.7f, this->e.y };
+            this->mdl_arms.position = { this->e.x, -this->e.z + (crouch ? 0.6f : 0.5f), this->e.y };
+            //            this->mdl_arms.position += draw_forward * bob + scene.cam.up * (airborne ? v.z * 0.2f : 0);
+            float legxy_mod = crouch ? -0.3f : 0.f;
+            this->mdl_legr.position = { this->e.x + c * 0.25f + legxy_mod * s, -this->e.z - (crouch ? -0.3f : 0.1f), this->e.y - s * 0.25f + legxy_mod * c };
+            this->mdl_legl.position = { this->e.x - c * 0.25f + legxy_mod * s, -this->e.z - (crouch ? -0.3f : 0.1f), this->e.y + s * 0.25f + legxy_mod * c };
+
+            this->mdl_head.rotation = this->mdl_arms.rotation = glm::vec3(-pitch, -yaw + 90, 0);
+            this->mdl_torso.rotation = this->mdl_legl.rotation = this->mdl_legr.rotation = { 0, -yaw + 90, 0 };
+
+            if (this->sprint) {
+                this->mdl_arms.rotation.x = 50;
+            }
+
+            if (fabs(v.x) > 0.01f || fabs(v.y) > 0.01f) {
+                float rot1, rot2;
+                rot1 = rot2 = (scene.ms_time & 511) - 255.f;
+                rot1 *= this->f.x * this->v.x + this->f.y * this->v.y * 0.028f * 30;
+                rot2 *= this->s.x * this->v.x + this->s.y * this->v.y * 0.028f * 30;
+
+                //            rot1 *= 0.028;
+                //            rot2 *= 0.028;
+                //            rot1 *= 30;
+                //            rot2 *= 30;
+                if ((scene.ms_time & 1023) > 511) {
+                    mdl_legl.rotation.x = -rot1;
+                    mdl_legl.rotation.z = -rot2;
+                    mdl_legr.rotation.x = rot1;
+                    mdl_legr.rotation.z = rot2;
+                }
+                else {
+                    mdl_legl.rotation.x = rot1;
+                    mdl_legl.rotation.z = rot2;
+                    mdl_legr.rotation.x = -rot1;
+                    mdl_legr.rotation.z = -rot2;
+                }
+            }
+        } else {
+            float bob = ((scene.ms_time & 511) - 255.f) * std::max(std::fabs(v.x), std::fabs(v.y)) / 1000.f;
+            this->mdl_arms.local_position = { -0.01f, -0.45f + (v.z * 0.2f * airborne), 0.1f + (scene.ms_time & 1023) > 511 ? bob : -bob };
+            this->mdl_arms.local_rotation = { 0, 0, 0 };
+            this->mdl_arms.rotation = glm::vec3(-pitch, -yaw + 90, 0); // because lighting haHAA
+
+            float t = this->switch_time * 5;
+            this->mdl_arms.local_position -= glm::vec3{ -t, t, 0 };
         }
     }
 

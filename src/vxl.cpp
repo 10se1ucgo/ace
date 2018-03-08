@@ -38,29 +38,27 @@ namespace {
             + ((dirt_base_color
                 + ((z & 7) * ((dirt_color_table[vertical_slice + 1] & 0xFF00FF) - (dirt_base_color & 0xFF00FF)) >> 3)) & 0xFF00FF)
             + 4 * (abs((z & 7) - 4) + ((abs((y & 7) - 4) + (abs((x & 7) - 4) << 8)) << 8));
-        return (color + 0x10101 * (rand() & 7)) | 0x3F000000;
+        return (color + 0x10101 * (rand() & 7)) | 0x7F000000;
     }
 }
 
 AceMap::AceMap(uint8_t *buf) : eng(std::chrono::system_clock::now().time_since_epoch().count()) {
-    nodes.reserve(512);
+    this->nodes.reserve(512);
     this->read(buf);
 }
 
 void AceMap::read(uint8_t *buf) {
-    fmt::print("READING MAP");
+    fmt::print("READING MAP\n");
     if (!buf) return;
+
+    auto start = std::chrono::high_resolution_clock::now();
+    this->geometry.set();
+    this->colors.clear();
+    this->colors.reserve(MAP_X * MAP_Y * 16); // just a guess tbh
 
     for (int y = 0; y < MAP_Y; ++y) {
         for (int x = 0; x < MAP_X; ++x) {
-            int z;
-            for (z = 0; z < MAP_Z; ++z) {
-                this->geometry[get_pos(x, y, z)] = true;
-                this->colors[get_pos(x, y, z)] = (0x7F << 24) | (dirtcolor(x, y, z) & 0x00FFFFFF);
-            }
-
-
-            z = 0;
+            int z = 0;
             while (true) {
                 int number_4byte_chunks = buf[0];
                 int top_color_start = buf[1];
@@ -70,8 +68,9 @@ void AceMap::read(uint8_t *buf) {
                     this->geometry[get_pos(x, y, i)] = false;
 
                 uint32_t *color = reinterpret_cast<uint32_t *>(&buf[4]);
-                for (z = top_color_start; z <= top_color_end; z++)
+                for (z = top_color_start; z <= top_color_end; z++) {
                     this->colors[get_pos(x, y, z)] = (0x7F << 24) | (*color++ & 0x00FFFFFF);
+                }
 
                 int len_bottom = top_color_end - top_color_start + 1;
 
@@ -97,6 +96,9 @@ void AceMap::read(uint8_t *buf) {
             }
         }
     }
+    auto end = std::chrono::high_resolution_clock::now();
+
+    fmt::print("MAP READ TIME: {}\n", std::chrono::duration<double>(end - start).count());
 }
 
 std::vector<uint8_t> AceMap::write() {
@@ -170,10 +172,10 @@ size_t AceMap::write(std::vector<uint8_t> &v, int *sx, int *sy, int columns) {
                 v.push_back(air_start);
 
                 for (i = 0; i < top_colors_len; ++i)
-                    write_color(v, this->colors[get_pos(x, y, top_colors_start + i)]);
+                    write_color(v, this->get_color(x, y, top_colors_start + i));
 
                 for (i = 0; i < bottom_colors_len; ++i)
-                    write_color(v, this->colors[get_pos(x, y, bottom_colors_start + i)]);
+                    write_color(v, this->get_color(x, y, bottom_colors_start + i));
             }
             column++;
         }
@@ -213,7 +215,13 @@ uint32_t AceMap::get_color(int x, int y, int z, bool wrapped) {
         y &= MAP_Y - 1;
     }
     if (!is_valid_pos(x, y, z)) return 0;
-    return this->colors[get_pos(x, y, z)];
+
+    auto pos = get_pos(x, y, z);
+    auto color = this->colors.find(pos);
+    if(color == this->colors.end()) {
+        return this->colors[pos] = dirtcolor(x, y, z);
+    }
+    return color->second;
 }
 
 int AceMap::get_z(const int x, const int y, const int start) const {
@@ -324,14 +332,17 @@ bool AceMap::set_point(const size_t pos, const bool solid, const uint32_t color)
     if (!is_valid_pos(pos)) return false;
 
     this->geometry[pos] = solid;
-    this->colors[pos] = colorjit(solid ? color : DEFAULT_COLOR);
+    if (solid)
+        this->colors[pos] = colorjit(color);
+    else
+        this->colors.erase(pos);
     return true;
 }
 
 bool AceMap::check_node(int x, int y, int z, bool destroy, std::vector<VXLBlock> &destroyed) {
     marked.clear();
     nodes.clear();
-    nodes.push_back({ x, y, z });
+    nodes.emplace_back(x, y, z);
 
     while (!nodes.empty()) {
         const glm::ivec3 &node = nodes.back();
@@ -342,7 +353,7 @@ bool AceMap::check_node(int x, int y, int z, bool destroy, std::vector<VXLBlock>
         }
 
         // already visited?
-        const auto ret = marked.insert({ x, y, z });
+        const auto ret = marked.emplace(x, y, z);
         if (ret.second) {
             this->add_neighbors(nodes, x, y, z);
         }
@@ -350,6 +361,7 @@ bool AceMap::check_node(int x, int y, int z, bool destroy, std::vector<VXLBlock>
 
     // destroy the node's path!
     if (destroy) {
+        // need to iter twice to get proper visflags.
         for (const auto &pos : marked) {
             if (this->get_solid(pos.x, pos.y, pos.z)) {
                 destroyed.push_back({ pos, this->get_color(pos.x, pos.y, pos.z), this->get_vis(pos.x, pos.y, pos.z) });

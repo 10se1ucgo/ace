@@ -31,7 +31,7 @@ namespace ace {
 
         void run();
 
-        std::pair<int, int> size() const { return { w, h }; }
+        glm::vec2 size() const { return { w, h }; }
         int width() const { return w; }
         int height() const { return h; }
 

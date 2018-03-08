@@ -70,7 +70,7 @@ namespace net {
         }
     }
 
-    void BaseNetClient::connect(const char *host, int port) {
+    void BaseNetClient::connect(const char *host, int port, uint32_t data) {
         if (this->peer != nullptr) {
             enet_peer_disconnect(this->peer, 0);
         }
@@ -82,7 +82,7 @@ namespace net {
         }
         address.port = port;
 
-        this->peer = enet_host_connect(this->host, &address, 1, VERSION);
+        this->peer = enet_host_connect(this->host, &address, 1, data);
 
         if (this->peer == nullptr) {
             THROW_ERROR("FAILED TO ALLOCATE PEER\n");
@@ -121,7 +121,7 @@ namespace net {
         if(server.version != "0.75")
             THROW_ERROR("Ace of Spades {} unsupported!\n", server.version);
         
-        BaseNetClient::connect(server.ip.c_str(), server.port);
+        BaseNetClient::connect(server.ip.c_str(), server.port, VERSION);
         state = NetState::CONNECTING;
     }
 
@@ -156,8 +156,8 @@ namespace net {
             uint8_t *data = br.get(&len);
             map_writer.write(data, len);
         } break;
-        case PACKET::StateData:
-            state = NetState::CONNECTED;
+//        case PACKET::StateData:
+//            state = NetState::CONNECTED;
         default: {
             auto packet = get_loader(packet_id);
             if (packet == nullptr) {

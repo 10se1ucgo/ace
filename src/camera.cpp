@@ -19,10 +19,10 @@ Camera::Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, 
 void Camera::update(double dt) {
     this->mouse(dt);
     this->keyboard(dt);
-    this->update();
+    this->update_view();
 }
 
-void Camera::update() {
+void Camera::update_view() {
     glm::mat4 old_pv(pv);
 
     view = lookAt(position, position + forward, up);

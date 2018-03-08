@@ -2,6 +2,7 @@
 
 #include "glad/glad.h"
 #include "gl/shader.h"
+#include "gl/gl_obj.h"
 #include "glm/glm.hpp"
 #include "SDL.h"
 
@@ -10,6 +11,7 @@
 #include <glm/gtx/transform.hpp>
 
 #include "draw/draw.h"
+
 
 namespace ace {
     namespace draw {
@@ -26,12 +28,14 @@ namespace ace {
             SpriteGroup(const std::pair<SDL_Surface *, bool> params) : SpriteGroup(params.first, params.second) {}
             SpriteGroup(SDL_Surface *data, bool color_key = false);
 
-            void draw(glm::vec4 tint, glm::mat3 mvp);
+            void draw(glm::vec4 tint, glm::mat3 model);
             void draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale = { 1.0, 1.0 }, Align align = Align::TOP_LEFT);
             void draw(ShaderProgram &s);
 
             int w{}, h{};
-            GLuint tex{}, vao{}, vbo{}, models{};
+            gl::vao vao;
+            gl::vbo vbo, models;
+            gl::texture tex;
 
             std::vector<SpriteVert> verts;
         };
@@ -94,11 +98,11 @@ namespace ace {
 
             void draw(ShaderProgram& s) {
                 for(auto &kv : this->sprites) {
-                    kv.second->draw(s);
+                    kv.second.draw(s);
                 }
             }
         private:
-            std::unordered_map<std::string, std::unique_ptr<SpriteGroup>> sprites;
+            std::unordered_map<std::string, SpriteGroup> sprites;
         };
     }
 }

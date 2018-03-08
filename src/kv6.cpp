@@ -174,10 +174,8 @@ KV6Mesh::KV6Mesh(const std::string &name) {
     }
 
 
-    glGenVertexArrays(1, &vao);
     glBindVertexArray(vao);
 
-    glGenBuffers(1, &vbo);
     glBindBuffer(GL_ARRAY_BUFFER, vbo);
     glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(Vertex), v.data(), GL_STATIC_DRAW);
 
@@ -239,13 +237,4 @@ bool KV6::sprhitscan(glm::vec3 p0, glm::vec3 v0, glm::vec3 *h) {
     u -= glm::vec3{ this->mesh->xpiv, this->mesh->ypiv, this->mesh->zpiv };
     *h = glm::vec3{ dot(v, {ss.x, sh.x, sf.x}), dot(v, {ss.y, sh.y, sf.y}), dot(v, {ss.z, sh.z, sf.z}) } + sprp;
     return true;
-}
-
-KV6Mesh *KV6Manager::get(const std::string &name) {
-    try {
-        return models.at(name).get();
-    } catch (std::out_of_range &) {
-        auto x = std::make_unique<KV6Mesh>("kv6/" + name);
-        return models.insert({ name, std::move(x) }).first->second.get();
-    }
 }

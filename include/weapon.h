@@ -29,6 +29,7 @@ struct Tool {
 
     virtual void update(double dt);
     virtual void draw() = 0;
+    virtual void transform() = 0;
 
     virtual bool on_primary() { return true; }
     virtual bool on_secondary() { return true; }
@@ -73,6 +74,7 @@ struct SpadeTool : Tool {
 
     void update(double dt) final;
     void draw() final;
+    void transform() final;
 
     bool available() final { return true; }
 
@@ -81,6 +83,9 @@ struct SpadeTool : Tool {
 
     KV6 mdl;
     bool last_secondary;
+
+
+    
 };
 
 struct BlockTool : Tool {
@@ -101,6 +106,7 @@ struct BlockTool : Tool {
 
     void update(double dt) final;
     void draw() final;
+    void transform() final;
 
     bool available() final { return this->primary_ammo > 0; }
 
@@ -129,6 +135,7 @@ struct GrenadeTool : Tool {
 
     void update(double dt) final;
     void draw() final;
+    void transform() final;
 
     bool on_primary() final;
 
@@ -146,6 +153,7 @@ struct Weapon : Tool {
 
     void update(double dt) final;
     void draw() final;
+    void transform() final;
 
     virtual std::string sight() = 0;
 

@@ -20,13 +20,7 @@ namespace util {
             double interval;
             std::function<void()> func;
             double next_call;
-
-            bool operator==(const LoopingCall &other) const {
-                return interval == other.interval && next_call == other.next_call && func.target_type() == other.func.target_type();
-            }
         };
-
-
     }
 
     // wow im bad at designing anything
@@ -43,15 +37,8 @@ namespace util {
 
         void update(double dt);
 
-        task_type call_later(double seconds, std::function<void()> &&func) {
-            return tasks.emplace(this->get_time(seconds), func).first;
-            
-        }
-
         template<typename TFunc, typename... TArgs>
         task_type call_later(double seconds, TFunc&& func, TArgs&&... args) {
-            // YIKES visual studio just hangs when i try to compile this
-            // return this->call_later(seconds, std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
             return tasks.emplace(this->get_time(seconds), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...)).first;
         }
 

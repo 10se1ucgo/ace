@@ -1,6 +1,8 @@
 #pragma once
+#include "common.h"
+#include "gl/gl_obj.h"
 
-#include "glm/fwd.hpp"
+#include "glm/glm.hpp"
 #include "glad/glad.h"
 
 #include <string>
@@ -9,8 +11,9 @@
 #include <glm/gtc/type_ptr.hpp>
 
 struct Shader {
-    Shader(const std::string &source, GLenum type);
+    Shader(const std::string &file, GLenum type);
     ~Shader();
+    ACE_NO_COPY_MOVE(Shader)
 
     GLuint handle;
 };
@@ -35,6 +38,7 @@ void uniform(const std::string &name, const T_TYPE##4 &vec) { glUniform4##T_FUNC
 struct ShaderProgram {
     ShaderProgram(std::initializer_list<Shader> shaders);
     ~ShaderProgram();
+    ACE_NO_COPY_MOVE(ShaderProgram)
 
     void bind() const {
         if (bound_program == this->program) return;

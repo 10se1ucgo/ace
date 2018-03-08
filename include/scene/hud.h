@@ -41,8 +41,9 @@ namespace ace { namespace scene {
 
         void on_window_resize(int ow, int oh);
 
-        void add_chat_message(const std::string &message, glm::vec3 color);
+        void add_chat_message(std::string message, glm::vec3 color);
         void add_killfeed_message(const world::DrawPlayer &killer, const world::DrawPlayer &victim, net::KILL kill_type);
+        void set_big_message(std::string message);
         
         void set_hit(glm::vec3 source);
 
@@ -58,19 +59,30 @@ namespace ace { namespace scene {
 
         MapDisplay map_display;
         
+        world::DrawPlayer ply;
 
         int color_index = 0;
-        float respawn_time = 0.0f;
+        float respawn_time = 0.0f, big_message_time = 0.0f;
 
         glm::vec3 last_hit;
     private:
-        void update_color();
+        enum class State {
+            None,
+            ChangeTeam,
+            ChangeWeapon,
+            Exit
+        } state{ State::None };
+
+        void update_color(SDL_Scancode key);
+
         void draw_chat();
+        void draw_scoreboard();
 
         net::CHAT cur_chat_type{ net::CHAT::INVALID };
-        draw::Font *sys48, *sys13, *sys15;
+        draw::Font *sys48, *sys13, *sys15, *sys18;
         std::deque<Message> chat_messages, killfeed;
+        std::string big_message;
 
-        friend struct MapDisplay;
+        friend MapDisplay;
     };
 }}

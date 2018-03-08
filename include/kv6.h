@@ -1,30 +1,24 @@
 #pragma once
-#include <string>
+#include "common.h"
+#include "gl/shader.h"
+#include "gl/gl_obj.h"
 
 #include "glad/glad.h"
 #include "glm/glm.hpp"
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtx/euler_angles.hpp"
-#include "gl/shader.h"
+
+#include <string>
 #include <memory>
-#include <utility>
-#include "common.h"
 
 struct KV6Mesh {
     KV6Mesh(const std::string &name);
-    // KV6Mesh(Vertex* vertices, unsigned int numVertices, unsigned int* indices, unsigned int numIndices);
-    ~KV6Mesh() {
-        glDeleteBuffers(1, &vbo);
-        glDeleteVertexArrays(1, &vao);
-    }
-
 
     void draw() const {
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, this->vertices);
     }
 
-    GLuint vao, vbo;
+    ace::gl::vao vao;
+    ace::gl::vbo vbo;
     GLsizei vertices;
 
     long xsiz, ysiz, zsiz, num_voxels;
@@ -70,9 +64,16 @@ struct KV6 {
 
 
 struct KV6Manager {
-    KV6Mesh *get(const std::string &name);
+    KV6Mesh *get(const std::string &name) {
+        try {
+            return &models.at(name);
+        } catch (std::out_of_range &) {
+//            auto x = std::make_unique<KV6Mesh>("kv6/" + name);
+            return &models.emplace(name, "kv6/" + name).first->second;
+        }
+    }
 private:
-    std::unordered_map<std::string, std::unique_ptr<KV6Mesh>> models;
+    std::unordered_map<std::string, KV6Mesh> models;
 };
 
 

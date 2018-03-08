@@ -241,7 +241,7 @@ namespace net {
         SPECTATOR = -1,
         TEAM1,
         TEAM2,
-        NETURAL,
+        NEUTRAL,
     };
 
 
@@ -777,6 +777,34 @@ namespace net {
         }
     };
 
+    struct ChangeTeam : Loader {
+        uint8_t pid;
+        TEAM team;
+
+        void read(ByteReader &reader) override {
+            this->pid = reader.read<uint8_t>();
+            this->team = reader.read<TEAM>();
+        }
+        void write(ByteWriter &writer) override {
+            writer.write(this->pid);
+            writer.write(this->team);
+        }
+    };
+
+    struct ChangeWeapon : Loader {
+        uint8_t pid;
+        WEAPON weapon;
+
+        void read(ByteReader &reader) override {
+            this->pid = reader.read<uint8_t>();
+            this->weapon = reader.read<WEAPON>();
+        }
+        void write(ByteWriter &writer) override {
+            writer.write(this->pid);
+            writer.write(this->weapon);
+        }
+    };
+
     inline std::unique_ptr<Loader> get_loader(PACKET id) {
         switch(id) {
             case PACKET::PositionData: return std::make_unique<PositionData>();
@@ -808,11 +836,10 @@ namespace net {
             case PACKET::Restock: return std::make_unique<Restock>();
             case PACKET::FogColor: return std::make_unique<FogColor>();
             case PACKET::WeaponReload: return std::make_unique<WeaponReload>();
-            case PACKET::ChangeTeam: break;
-            case PACKET::ChangeWeapon: break;
+            case PACKET::ChangeTeam: std::make_unique<ChangeTeam>();
+            case PACKET::ChangeWeapon: std::make_unique<ChangeWeapon>();
             default: return nullptr;
         }
-        return nullptr;
     }
 
 //    auto x = sizeof(Packet);

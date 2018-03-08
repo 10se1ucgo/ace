@@ -48,9 +48,13 @@ inline glm::mat4 model_matrix(glm::vec3 m_position, glm::vec3 m_rotation, glm::v
     return  scale(model, m_scale);
 }
 
-// todo not rely on this lol
-#define ACE_NO_COPY_MOVE(T) \
+
+#define ACE_NO_COPY(T) \
     T(const T &other) = delete; \
     void operator=(const T &other) = delete; \
+
+#define ACE_NO_COPY_MOVE(T) \
+    ACE_NO_COPY(T) \
     T(T&&) = delete; \
     void operator=(T&&) = delete; \
+

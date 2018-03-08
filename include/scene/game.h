@@ -17,12 +17,25 @@
 
 namespace ace { namespace scene {
     struct Team {
-        Team() : name("None"), color(0), float_color(0) {}
-        Team(std::string name, const glm::ivec3 &color) : name(std::move(name)), color(color), float_color(glm::vec3(color) / 255.f) {}
+        Team() : Team("Neutral", {255, 255, 255}, net::TEAM::NEUTRAL) {}
+        Team(std::string name, glm::ivec3 color, net::TEAM id) :
+            name(std::move(name)),
+            color(color),
+            float_color(glm::vec3(color) / 255.f),
+            id(id),
+            score(0), max_score(0) {
+            
+        }
+        void update_players(GameScene &scene);
 
         std::string name;
         glm::ivec3 color;
         glm::vec3 float_color;
+        net::TEAM id;
+        int score{};
+        int max_score{};
+
+        std::vector<world::DrawPlayer *> players;
     };
 
     class GameScene final : public Scene {
@@ -57,6 +70,8 @@ namespace ace { namespace scene {
         void send_orientation_update();
         void send_input_update();
         void send_grenade(float fuse);
+        void send_team_change(net::TEAM new_team);
+        void send_weapon_change(net::WEAPON new_weapon);
 
         template<typename TObj, typename... TArgs, typename = std::enable_if_t<std::is_base_of<world::WorldObject, TObj>::value>>
         world::WorldObject *create_object(TArgs&&... args) {

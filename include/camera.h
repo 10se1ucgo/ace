@@ -29,7 +29,7 @@ public:
     
 
     void update(double dt);
-    void update();
+    void update_view();
 
     void set_projection(float fov, float w, float h, float nearc=0.1f, float farc=256.f) {
         this->nearc = nearc;

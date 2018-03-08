@@ -94,10 +94,8 @@ namespace ace { namespace draw {
         }
         this->vertices = v.size();
 
-        glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
-        glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(Vertex), v.data(), GL_STATIC_DRAW);
 
@@ -108,11 +106,6 @@ namespace ace { namespace draw {
         glEnableVertexAttribArray(1);
         glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, face)));
         glEnableVertexAttribArray(2);
-    }
-
-    VXLBlocks::~VXLBlocks() {
-        glDeleteVertexArrays(1, &vao);
-        glDeleteBuffers(1, &vbo);
     }
 
     void VXLBlocks::draw(const glm::mat4& pv, ShaderProgram& s) const {
@@ -128,10 +121,7 @@ namespace ace { namespace draw {
     }
 
     Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y), vbo_size(0), vertices(0) {
-        glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
-
-        glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
 
         glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, vertex)));
@@ -140,13 +130,6 @@ namespace ace { namespace draw {
         glEnableVertexAttribArray(1);
         glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, face)));
         glEnableVertexAttribArray(2);
-        //fmt::print("PILLAR SAYS HI! AT {} {} WITH VBO {}:{}\n", x, y, vao, vbo);
-    }
-
-    Pillar::~Pillar() {
-        //fmt::print("PILLAR SAYS BYE! AT {} {} WITH VBO {}:{}\n", x, y, vao, vbo);
-        glDeleteVertexArrays(1, &vao);
-        glDeleteBuffers(1, &vbo);
     }
 
     void Pillar::update() {
@@ -172,12 +155,11 @@ namespace ace { namespace draw {
 
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        if (this->vertices * sizeof(Vertex) > vbo_size) {
+        if (true /* this->vertices * sizeof(Vertex) > vbo_size */) {
             glInvalidateBufferData(GL_ARRAY_BUFFER);
             glBufferData(GL_ARRAY_BUFFER, this->vertices * sizeof(Vertex), v.data(), GL_DYNAMIC_DRAW);
             vbo_size = this->vertices * sizeof(Vertex);
-        }
-        else {
+        } else {
             glBufferSubData(GL_ARRAY_BUFFER, 0, this->vertices * sizeof(Vertex), v.data());
         }
 
@@ -186,6 +168,7 @@ namespace ace { namespace draw {
 
     void Pillar::draw() {
         if (dirty) this->update();
+
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, this->vertices);
     }
@@ -226,25 +209,24 @@ namespace ace { namespace draw {
 
     void DrawMap::draw(const glm::vec3 &position, ShaderProgram &shader) {
         for (auto &p : this->pillars) {
-            if (this->scene.cam.box_in_frustum(p->x, 0, p->y, p->x + PILLAR_SIZE, -64, p->y + PILLAR_SIZE)) {
-                p->draw();
+            if (this->scene.cam.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
+                p.draw();
             }
         }
     }
 
-    std::unique_ptr<Pillar> &DrawMap::get_pillar(const int x, const int y, const int z) {
+    Pillar &DrawMap::get_pillar(const int x, const int y, const int z) {
         int xp = (x & MAP_X - 1) / PILLAR_SIZE;
         int yp = (y & MAP_Y - 1) / PILLAR_SIZE;
         return this->pillars[xp * (MAP_Y / PILLAR_SIZE) + yp];
     }
 
     void DrawMap::gen_pillars() {
-
         pillars.clear();
         pillars.reserve((MAP_X / PILLAR_SIZE) * (MAP_Y / PILLAR_SIZE));
         for (size_t x = 0; x < MAP_X / PILLAR_SIZE; x++) {
             for (size_t y = 0; y < MAP_Y / PILLAR_SIZE; y++) {
-                pillars.emplace_back(std::make_unique<Pillar>(*this, x * PILLAR_SIZE, y * PILLAR_SIZE));
+                pillars.emplace_back(*this, x * PILLAR_SIZE, y * PILLAR_SIZE);
             }
         }
     }
@@ -253,10 +235,10 @@ namespace ace { namespace draw {
     bool DrawMap::set_point(const int x, const int y, const int z, const bool solid, const uint32_t color) {
         bool ok = AceMap::set_point(x, y, z, solid, color);
 
-        this->get_pillar(x - 1, y, z)->dirty |= ok;
-        this->get_pillar(x + 1, y, z)->dirty |= ok;
-        this->get_pillar(x, y - 1, z)->dirty |= ok;
-        this->get_pillar(x, y + 1, z)->dirty |= ok;
+        this->get_pillar(x - 1, y, z).dirty |= ok;
+        this->get_pillar(x + 1, y, z).dirty |= ok;
+        this->get_pillar(x, y - 1, z).dirty |= ok;
+        this->get_pillar(x, y + 1, z).dirty |= ok;
         // pillars dont render edges even across pillar boundries
         // so you have to update adjacent pillars if the destroyed block shares a face with another pillar.
         // TODO: shadows dont update across chunks. the origin block can be ~18 blocks a way, so maybe update all chunks within
@@ -318,9 +300,9 @@ namespace ace { namespace draw {
         damage_queue.push_back({ scene.time + 10, {x, y, z} });
         return false;
     }
-
-    SDL_Surface *DrawMap::get_overview() {
-        uint8_t *pixels = new uint8_t[MAP_X * MAP_Y * 3];
+    
+    draw::SpriteGroup DrawMap::get_overview() {
+        auto pixels(std::make_unique<uint8_t[]>(MAP_X * MAP_Y * 3));
         int p = 0;
         for(int y = 0; y < MAP_Y; y++) {
             for(int x = 0; x < MAP_X; x++) {
@@ -334,10 +316,9 @@ namespace ace { namespace draw {
                     unpack_color(this->get_color(x, y, this->get_z(x, y)), &a, &r, &g, &b);
                 }
                 
-                
                 pixels[p++] = r; pixels[p++] = g; pixels[p++] = b;
             }
         }
-        return SDL_CreateRGBSurfaceFrom(pixels, MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0);
+        return draw::SpriteGroup(SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
     }
 }}

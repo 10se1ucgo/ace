@@ -40,7 +40,6 @@ namespace ace { namespace world {
 
     bool DebrisGroup::update(double dt) {
         life -= dt;
-        
         if (life <= 0) return true;
 
         for(auto &d : debris) {
@@ -50,14 +49,11 @@ namespace ace { namespace world {
     }
 
     void DebrisGroup::draw() {
-        float size = (life + .5f) * .1f;
+        float size = life * .1f;
         for(const auto &d : debris) {
             glm::vec3 p = vox2draw(d.p);
             p.y += 1;
             this->scene.billboards.draw({ p, color, size });
-//            mdl.position = vox2draw(d.p);
-//            mdl.position.y += 1;
-//            mdl.draw(this->scene.cam.matrix(), this->scene.shaders.billboard);
         }
     }
 }}

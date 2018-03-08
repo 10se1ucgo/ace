@@ -26,8 +26,8 @@ namespace ace { namespace world {
     }
 
     void Tracer::draw() {
-        scene.shaders.model.bind();
-        scene.shaders.model.uniform("replacement_color", glm::vec3{ 0.f });
+        this->scene.shaders.model.bind();
+        this->scene.shaders.model.uniform("replacement_color", glm::vec3{ 0.f });
         this->mesh.draw(scene.cam.matrix(), scene.shaders.model);
     }
 }}

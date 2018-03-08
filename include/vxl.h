@@ -7,6 +7,7 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtx/hash.hpp"
+#include <unordered_map>
 
 
 //struct Pos3 {
@@ -122,7 +123,7 @@ public:
     }
 protected:
     std::bitset<MAP_X * MAP_Y * MAP_Z> geometry;
-    uint32_t colors[MAP_X * MAP_Y * MAP_Z];
+    std::unordered_map<size_t, uint32_t> colors;
 
     std::vector<glm::ivec3> nodes;
     std::unordered_set<glm::ivec3> marked;
@@ -134,6 +135,3 @@ protected:
             v.emplace_back(x, y, z);
     }
 };
-
-
-// int check_node(int x, int y, int z, AceMap * map, int destroy);

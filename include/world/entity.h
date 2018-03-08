@@ -32,7 +32,7 @@ namespace ace { namespace world {
     };
 
     struct Flag : Entity {
-        Flag(scene::GameScene& scene, uint8_t id, glm::vec3 position, net::TEAM team, uint8_t carrier) : Entity(scene, id, position, team, carrier, "intel.kv6", 0.15f) {}
+        Flag(scene::GameScene& scene, uint8_t id, glm::vec3 position, net::TEAM team, uint8_t carrier) : Entity(scene, id, position, team, carrier, "intel.kv6", 0.2f) {}
         
         bool update(double dt) final {
             this->mesh.rotation.y += dt * 10;
@@ -48,7 +48,7 @@ namespace ace { namespace world {
 //        
 //    };
 //
-    struct Helicopter : Entity {
-
-    };
+//    struct Helicopter : Entity {
+//
+//    };
 }}

@@ -63,32 +63,37 @@ namespace ace { namespace scene {
             }
             return manager.get("paletteret", SDL_CreateRGBSurfaceFrom(pixels, siz, siz, 32, 4 * siz, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
         }
+
+        float angle2d(glm::vec2 p, glm::vec2 o) {
+            return glm::degrees(glm::atan(glm::determinant(glm::mat2(o, p)), dot(o, p)));
+        }
     }
 
     MapDisplay::MapDisplay(HUD& hud): hud(hud), big(&hud.scene.map.overview), marker(hud.sprites.get("player.bmp")) {
-        big.alignment = draw::Align::CENTER;
+        this->big.alignment = draw::Align::CENTER;
     }
 
     void MapDisplay::update(double dt) {
-        big.position.x = hud.scene.client.width() / 2.f;
-        big.position.y = hud.scene.client.height() / 2.f;
+        this->big.position.x = hud.scene.client.width() / 2.f;
+        this->big.position.y = hud.scene.client.height() / 2.f;
     }
 
     void MapDisplay::draw() {
-        if (!visible) return;
+        if (!this->visible) return;
 
         auto &shader = this->hud.scene.shaders.sprite;
         shader.bind();
-        big.draw();
-        big.flush(shader);
-        auto op = big.get_position();
+
+        this->big.draw();
+        this->big.flush(shader);
+        auto op = this->big.get_position();
         for (auto &kv : this->hud.scene.players) {
             auto &ply = kv.second;
             if (!ply->alive) continue;
             auto color = ply->local_player ? glm::vec4(0, 1.0f, 1.0f, 1.0f) : glm::vec4(this->hud.scene.get_team(ply->team).float_color, 1.0f);
-            marker->draw(color, op + glm::vec2{ ply->p.x, ply->p.y }, dir2ang(ply->draw_forward).x + 90.f, {1, 1}, draw::Align::CENTER);
+            this->marker->draw(color, op + glm::vec2{ ply->p.x, ply->p.y }, dir2ang(ply->draw_forward).x + 90.f, {1, 1}, draw::Align::CENTER);
         }
-        marker->draw(shader);
+        this->marker->draw(shader);
 
         for(char c = 'A'; c <= 'H'; c++) {
             float x = (op.x + (32 + 64 * (c - 'A'))) * big.scale.x;
@@ -108,16 +113,18 @@ namespace ace { namespace scene {
         reticle(sprites.get("target.png")), pal(gen_palette(sprites)), palret(gen_palret(sprites)), hit_indicator(sprites.get("indicator.bmp")),
         weapon_sight(sprites.get("semi.png")), ammo_icon(sprites.get("semi.bmp")),
         map_display(*this),
+        ply(scene, false),
         sys48(scene.client.fonts.get("fixedsys.ttf", 48, false)),
         sys13(scene.client.fonts.get("fixedsys.ttf", 13, false)),
-        sys15(scene.client.fonts.get("fixedsys.ttf", 15, false)) {
+        sys15(scene.client.fonts.get("fixedsys.ttf", 15, false)),
+        sys18(scene.client.fonts.get("fixedsys.ttf", 16, false)) {
        
-        reticle.alignment = draw::Align::CENTER;
-        hit_indicator.alignment = draw::Align::CENTER;
-        weapon_sight.alignment = draw::Align::CENTER;
-        ammo_icon.alignment = draw::Align::BOTTOM_RIGHT;
-        pal.alignment = draw::Align::BOTTOM_RIGHT;
-        ammo_icon.tint = { 1, 1, 0, 1 };
+        this->reticle.alignment = draw::Align::CENTER;
+        this->hit_indicator.alignment = draw::Align::CENTER;
+        this->weapon_sight.alignment = draw::Align::CENTER;
+        this->ammo_icon.alignment = draw::Align::BOTTOM_RIGHT;
+        this->pal.alignment = draw::Align::BOTTOM_RIGHT;
+        this->ammo_icon.tint = { 1, 1, 0, 1 };
         
         this->on_window_resize(0, 0);
     }
@@ -128,30 +135,36 @@ namespace ace { namespace scene {
 
 
         if (!this->scene.ply->alive) {
-            float old_rt = respawn_time;
-            respawn_time = std::max(1.0, respawn_time - dt);
-            int rt = int(respawn_time);
+            float old_rt = this->respawn_time;
+            this->respawn_time = std::max(1.0, this->respawn_time - dt);
+            int rt = int(this->respawn_time);
             if (int(old_rt) != rt) {
                 if (rt == 3 || rt == 2) {
                     this->scene.client.sound.play("beep2.wav", {}, 100, true);
-                }
-                else if (rt == 1) {
+                } else if (rt == 1) {
                     this->scene.client.sound.play("beep1.wav", {}, 100, true);
                 }
             }
         }
 
-        glm::vec2 p(this->last_hit - this->scene.ply->p);
-        glm::vec2 o(this->scene.ply->f);
-        this->hit_indicator.rotation = glm::degrees(glm::atan(glm::determinant(glm::mat2(o, p)), dot(o, p)));
-        this->hit_indicator.tint.a = std::max(0.0f, this->hit_indicator.tint.a - float(dt));
+        this->big_message_time = std::max(0.0, this->big_message_time - dt);
+
+        this->hit_indicator.rotation = angle2d(this->last_hit - this->scene.ply->p, this->scene.ply->f);
+        this->hit_indicator.tint.a = std::max(0.0, this->hit_indicator.tint.a - dt);
 
         
 
-        map_display.update(dt);
+        this->map_display.update(dt);
     }
 
     void HUD::draw() {
+//        auto p(draw2vox(this->scene.cam.position + this->scene.cam.forward * 3.f));
+//        auto o(draw2vox(this->scene.cam.forward));
+//        ply.set_position(p.x, p.y, p.z);
+//        ply.set_orientation(-o.x, -o.y, -o.z);
+//        ply.draw();
+
+
         glEnable(GL_BLEND);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
@@ -168,12 +181,12 @@ namespace ace { namespace scene {
 
             this->ammo_icon.position = { scene.client.width(), scene.client.height() - 20 };
             if (this->scene.ply->tool == net::TOOL::BLOCK) {
-                pal.draw();
-                palret.tint = glm::vec4{ float(int(scene.time * 2) % 2) };
-                palret.tint.a = 1.0f;
-                palret.draw();
+                this->pal.draw();
+                this->palret.tint = glm::vec4{ float(int(scene.time * 2) % 2) };
+                this->palret.tint.a = 1.0f;
+                this->palret.draw();
 
-                ammo_icon.position.x -= pal.w();
+                this->ammo_icon.position.x -= pal.w();
             }
 
             auto pos = glm::vec2(ammo_icon.position.x - ammo_icon.w(), ammo_icon.position.y);
@@ -182,61 +195,105 @@ namespace ace { namespace scene {
             
 
 
-            hit_indicator.draw();
+            this->hit_indicator.draw();
 
-            ammo_icon.draw();
+            this->ammo_icon.draw();
 
             if(this->scene.ply->secondary_fire && this->scene.ply->weapon_equipped)
-                weapon_sight.draw();
+                this->weapon_sight.draw();
             else
-                reticle.draw();
-                
+                this->reticle.draw();
         }
+
+
+        std::string str;
+        switch(state) {
+        case State::Exit:
+            str = "EXIT GAME? Y/N";
+            break;
+        case State::ChangeTeam:
+            str = fmt::format("TEAM: 1 - {}/2 - {}/3 - Spectator", this->scene.teams[net::TEAM::TEAM1].name, this->scene.teams[net::TEAM::TEAM2].name);
+            break;
+        case State::ChangeWeapon:
+            str = "WEAPON: 1 - Rifle/2 - SMG/3 - Shotgun";
+            break;
+        default:
+            break;
+        }
+        if(!str.empty()) {
+            this->sys48->draw(str, { this->scene.client.width() / 2.f, this->scene.client.height() / 2.5f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+        }
+
+        if(big_message_time > 0.f) {
+            this->sys48->draw(big_message, { this->scene.client.width() / 2.f, this->scene.client.height() / 1.75f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+        }
+
         this->draw_chat();
 
-        scene.shaders.sprite.bind();
-        scene.shaders.sprite.uniform("projection", projection);
+        if (this->scene.client.keyboard.keys[SDL_SCANCODE_TAB]) {
+            this->draw_scoreboard();
+        }
+        
+        
+        this->scene.shaders.sprite.bind();
+        this->scene.shaders.sprite.uniform("projection", projection);
         this->sprites.draw(scene.shaders.sprite);
 
-        map_display.draw();
+        this->map_display.draw();
         
-        scene.shaders.text.bind();
+        this->scene.shaders.text.bind();
         this->scene.client.fonts.draw(projection, scene.shaders.text);
     }
 
     void HUD::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
         if (!pressed) return;
+        this->update_color(scancode);
 
         switch(scancode) {
-        case SDL_SCANCODE_UP:
-            this->color_index -= 8;
-            this->update_color();
-            break;
-        case SDL_SCANCODE_DOWN:
-            this->color_index += 8;
-            this->update_color();
-            break;
-        case SDL_SCANCODE_LEFT:
-            this->color_index -= 1;
-            this->update_color();
-            break;
-        case SDL_SCANCODE_RIGHT:
-            this->color_index += 1;
-            this->update_color();
-            break;
         case SDL_SCANCODE_T:
             this->cur_chat_type = net::CHAT::ALL;
             this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
             break;
         case SDL_SCANCODE_Y:
+            if(this->state == State::Exit) {
+                this->scene.client.quit = true;
+                break;
+            }
             this->cur_chat_type = net::CHAT::TEAM;
             this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
             break;
         case SDL_SCANCODE_M:
-            map_display.visible = !map_display.visible;
+            this->map_display.visible = !this->map_display.visible;
+            break;
+
+        case SDL_SCANCODE_ESCAPE:
+            this->state = this->state == State::None ? State::Exit : State::None;
+            break;
+        case SDL_SCANCODE_N:
+            if (this->state == State::Exit) {
+                this->state = State::None;
+            }
+            break;
+        case SDL_SCANCODE_COMMA:
+            this->state = State::ChangeTeam;
+            break;
+        case SDL_SCANCODE_PERIOD:
+            this->state = State::ChangeWeapon;
             break;
         default:
             break;
+        }
+
+        if (scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_3) {
+            if(this->state == State::ChangeWeapon) {
+                this->scene.send_weapon_change(net::WEAPON(scancode - SDL_SCANCODE_1));
+            } else if(this->state == State::ChangeTeam) {
+                auto team = scancode == SDL_SCANCODE_3 ? net::TEAM::SPECTATOR : net::TEAM(scancode - SDL_SCANCODE_1);
+                this->scene.send_team_change(team);
+            } else {
+                return;
+            }
+            this->state = State::None;
         }
     }
 
@@ -262,18 +319,20 @@ namespace ace { namespace scene {
     }
 
     void HUD::on_window_resize(int ow, int oh) {
-        float w = scene.client.width(), h = scene.client.height();
-        projection = glm::ortho(0.f, w, h, 0.0f);
+        glm::vec2 size = this->scene.client.size();
+        this->projection = glm::ortho(0.f, size.x, size.y, 0.0f);
 
-        weapon_sight.position = hit_indicator.position = reticle.position = { w / 2.f, h / 2.f };
-        pal.position = { w, h };
-        weapon_sight.scale = { h / weapon_sight.group->h, h / weapon_sight.group->h };
+        this->weapon_sight.position = this->hit_indicator.position = this->reticle.position = size / 2.f;
+        this->pal.position = size;
+
+        this->weapon_sight.scale = { size.y / this->weapon_sight.group->h, size.y / this->weapon_sight.group->h };
+        this->hit_indicator.scale = { size.y / this->hit_indicator.group->h, size.y / this->hit_indicator.group->h };
     }
 
-    void HUD::add_chat_message(const std::string& message, glm::vec3 color) {
-        chat_messages.push_front({message, color});
-        while (chat_messages.size() > 6) {
-            chat_messages.pop_back();
+    void HUD::add_chat_message(std::string message, glm::vec3 color) {
+        this->chat_messages.push_front({std::move(message), color});
+        while (this->chat_messages.size() > 6) {
+            this->chat_messages.pop_back();
         }
     }
 
@@ -303,6 +362,11 @@ namespace ace { namespace scene {
         this->add_chat_message(message.str(),  color);
     }
 
+    void HUD::set_big_message(std::string message) {
+        this->big_message = std::move(message);
+        this->big_message_time = 4.0f;
+    }
+
     void HUD::set_hit(glm::vec3 source) {
         this->last_hit = source;
         this->hit_indicator.tint.a = 1.2f;
@@ -316,8 +380,25 @@ namespace ace { namespace scene {
         this->ammo_icon.group = this->sprites.get(ammo_icon);
     }
 
-    void HUD::update_color() {
+    void HUD::update_color(SDL_Scancode key) {
         if (!this->scene.ply) return;
+
+        switch(key) {
+            case SDL_SCANCODE_UP:
+                this->color_index -= 8;
+                break;
+            case SDL_SCANCODE_DOWN:
+                this->color_index += 8;
+                break;
+            case SDL_SCANCODE_LEFT:
+                this->color_index -= 1;
+                break;
+            case SDL_SCANCODE_RIGHT:
+                this->color_index += 1;
+                break;
+            default:
+                return;
+        }
 
         this->color_index = (this->color_index + 64) % 64;
         this->scene.ply->set_color(color_palette[this->color_index]);
@@ -331,13 +412,32 @@ namespace ace { namespace scene {
             int index = i - chat_messages.begin() + 1;
             glm::vec2 pos;
             pos.x = 25;
-            pos.y = (scene.client.height() - 15 * index) - 100;
+            pos.y = (scene.client.height() - 15 * index) - 20;
             this->sys13->draw(i->message, pos, i->color);
         }
 
         if (this->scene.client.text_input_active()) {
             const char *prefix = this->cur_chat_type == net::CHAT::ALL ? "(Global) " : "(Team): ";
-            this->sys13->draw(prefix + this->scene.client.input_buffer + "_", { 25, scene.client.height() - 100 });
+            this->sys13->draw(prefix + this->scene.client.input_buffer + "_", { 25, scene.client.height() - 20 });
         }
     }
+
+    inline void draw_scoreboard_players(Team &team, glm::vec2 offset, draw::Align alignment, draw::Font *f) {
+        for (auto i = team.players.begin(); i != team.players.end(); ++i) {
+            auto *ply = *i;
+            f->draw(fmt::format("{:>15} #{:<2d} {:<3d}", ply->name, ply->pid, ply->kills), offset, { 1, 1, 1 }, { 1, 1 }, alignment);
+            offset.y += f->size();
+        }
+    }
+
+    void HUD::draw_scoreboard() {
+        auto &t1 = this->scene.get_team(net::TEAM::TEAM1);
+        auto &t2 = this->scene.get_team(net::TEAM::TEAM2);
+        float w = this->scene.client.width();
+        this->sys48->draw(fmt::format("{}-{}", t1.score, t1.max_score), { w / 4, 150 }, t1.float_color, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+        this->sys48->draw(fmt::format("{}-{}", t2.score, t2.max_score), { w - w / 4, 150 }, t2.float_color, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+        draw_scoreboard_players(t1, { w * .1, 175 }, draw::Align::BOTTOM_LEFT, this->sys18);
+        draw_scoreboard_players(t2, { w - w * .1, 175 }, draw::Align::BOTTOM_RIGHT, this->sys18);
+    }
+
 }}

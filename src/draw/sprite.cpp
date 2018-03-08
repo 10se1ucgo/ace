@@ -34,7 +34,6 @@ namespace ace { namespace draw {
             data = rgba;
         }
 
-        glGenTextures(1, &tex);
         glBindTexture(GL_TEXTURE_2D, tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -45,37 +44,31 @@ namespace ace { namespace draw {
         glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, data->pixels);
 
         GLfloat vertices[] = {
-            0.f, 0.f, 1.0f, 0.0f, 0.0f,
-            0.f,   h, 1.0f, 0.0f, 1.0f,
-            w,   0.f, 1.0f, 1.0f, 0.0f,
-            w,     h, 1.0f, 1.0f, 1.0f,
+            0.f, 0.f,
+            0.f,   h,
+            w,   0.f,
+            w,     h,
         };
 
-        glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
-        glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void*>(0));
+        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
         glEnableVertexAttribArray(0); // vert
-        glVertexAttribPointer(1, 2, GL_FLOAT, GL_FALSE, 5 * sizeof(GLfloat), reinterpret_cast<void*>(3 * sizeof(GLfloat)));
-        glEnableVertexAttribArray(1); // tex coord
 
-        glGenBuffers(1, &models);
         glBindBuffer(GL_ARRAY_BUFFER, models);
-        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, tint)));
-        glEnableVertexAttribArray(2); // tint
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 0));
-        glEnableVertexAttribArray(3); // model col 1                                                  offsetof(SpriteVert, model[0]) should work REEEEEE
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 1));
-        glEnableVertexAttribArray(4); // model col 2
-        glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 2));
-        glEnableVertexAttribArray(5); // model col 3
+        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, tint)));
+        glEnableVertexAttribArray(1); // tint
+        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 0));
+        glEnableVertexAttribArray(2); // model col 1                                                  offsetof(SpriteVert, model[0]) should work REEEEEE
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 1));
+        glEnableVertexAttribArray(3); // model col 2
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 2));
+        glEnableVertexAttribArray(4); // model col 3
 
         glVertexAttribDivisor(0, 0);
-        glVertexAttribDivisor(1, 0);
-        for(int i = 2; i <= 5; i++) {
+        for(int i = 1; i <= 4; i++) {
             glVertexAttribDivisor(i, 1);
         }
 
@@ -108,28 +101,24 @@ namespace ace { namespace draw {
         glBindTexture(GL_TEXTURE_2D, tex);
         s.uniform("sprite_tex", 0);
 
-        glBindVertexArray(vao);
+        
         glBindBuffer(GL_ARRAY_BUFFER, models);
-
         glInvalidateBufferData(GL_ARRAY_BUFFER);
         glBufferData(GL_ARRAY_BUFFER, this->verts.size() * sizeof(SpriteVert), this->verts.data(), GL_STREAM_DRAW);
 
+        glBindVertexArray(vao);
         glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, this->verts.size());
         this->verts.clear();
     }
 
     SpriteGroup *SpriteManager::get(const std::string &name, SDL_Surface *data) {
         try {
-            return sprites.at(name).get();
-        }
-        catch (std::out_of_range &) {
-            std::unique_ptr<SpriteGroup> x;
-            if (data)
-                x = std::make_unique<SpriteGroup>(data);
-            else
-                x = std::make_unique<SpriteGroup>("png/" + name);
-
-            return sprites.insert({ name, std::move(x) }).first->second.get();
+            return &sprites.at(name);
+        } catch (std::out_of_range &) {
+            if(data) {
+                return &sprites.emplace(name, data).first->second;
+            }
+            return &sprites.emplace(name, "png/" + name).first->second;
         }
     }
 }}

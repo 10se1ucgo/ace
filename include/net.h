@@ -32,19 +32,25 @@ namespace net {
 
         Server(const std::string &identifier) {
             auto proto_pos = identifier.find(':', 0);
-            auto ip_pos = proto_pos + 3; // `:\\` 
-            auto port_pos = identifier.find(':', ip_pos);
-            auto version_pos = identifier.find(':', port_pos + 1);
-            if (version_pos != std::string::npos) {
-                this->version = identifier.substr(version_pos + 1);
+
+            if (identifier.substr(0, proto_pos) == "aos") {
+                auto ip_pos = proto_pos + 3; // `:\\` 
+                auto port_pos = identifier.find(':', ip_pos);
+                auto version_pos = identifier.find(':', port_pos + 1);
+                if (version_pos != std::string::npos) {
+                    this->version = identifier.substr(version_pos + 1);
+                }
+                else {
+                    this->version = "0.75";
+                }
+
+                uint32_t ip = std::stoul(identifier.substr(ip_pos, port_pos - ip_pos));
+                this->ip = fmt::format("{}.{}.{}.{}", ip >> 0 & 0xFF, ip >> 8 & 0xFF, ip >> 16 & 0xFF, ip >> 24 & 0xFF);
+                this->port = std::stoi(identifier.substr(port_pos + 1, version_pos - (port_pos + 1)));
             } else {
-                this->version = "0.75";
+                this->ip = identifier.substr(0, proto_pos);
+                this->port = std::stoi(identifier.substr(proto_pos + 1));
             }
-
-            uint32_t ip = std::stoul(identifier.substr(ip_pos, port_pos - ip_pos));
-
-            this->port = std::stoi(identifier.substr(port_pos + 1, version_pos - (port_pos + 1)));
-            this->ip = fmt::format("{}.{}.{}.{}", ip >> 0 & 0xFF, ip >> 8 & 0xFF, ip >> 16 & 0xFF, ip >> 24 & 0xFF);
         }
     };
 
@@ -54,7 +60,7 @@ namespace net {
         ACE_NO_COPY_MOVE(BaseNetClient)
 
         void update(double dt);
-        void connect(const char *host, int port);
+        void connect(const char *host, int port, uint32_t data=0);
         void send(const void *data, size_t len, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
 
         virtual void on_connect(const ENetEvent &event) = 0;

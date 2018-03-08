@@ -7,7 +7,6 @@ namespace ace { namespace scene {
     struct Scene {
         Scene(ace::GameClient &client) : time(0.0), ms_time(0), client(client) {
         }
-
         virtual ~Scene() = default;
 
         virtual void update(double dt) { this->time += dt; ms_time = this->time * 1000; }

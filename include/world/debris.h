@@ -1,10 +1,8 @@
 #pragma once
-#include <glm/glm.hpp>
+#include "glm/glm.hpp"
 
 #include "world/world.h"
 #include "draw/map.h"
-#include "kv6.h"
-#include "draw/billboard.h"
 
 namespace ace { namespace world {
     struct DebrisGroup;
@@ -27,7 +25,7 @@ namespace ace { namespace world {
         std::vector<Debris> debris;
         glm::vec3 color;
 
-        constexpr static float MAX_LIFE = 2.f;
+        constexpr static float MAX_LIFE = 2.5f;
         float life;
     };
 }}

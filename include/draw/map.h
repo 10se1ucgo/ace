@@ -1,19 +1,18 @@
 #pragma once
 
-#include <vector>
+#include "common.h"
+#include "vxl.h"
+#include "scene/scene.h"
+#include "draw/sprite.h"
+#include "gl/shader.h"
+#include "gl/gl_obj.h"
 
 #include "glad/glad.h"
-
 #include "glm/glm.hpp"
 
-#include "gl/shader.h"
-#include "vxl.h"
-#include "common.h"
 #include <memory>
+#include <vector>
 
-#include "scene/scene.h"
-
-#include "draw/sprite.h"
 
 namespace ace { namespace draw {
     constexpr size_t PILLAR_SIZE = 16;
@@ -34,22 +33,16 @@ namespace ace { namespace draw {
     struct VXLBlocks {
         VXLBlocks(const std::vector<VXLBlock> &blocks) : VXLBlocks(blocks, get_centroid(blocks)) { }
         VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
-        ~VXLBlocks();
-        // todo 
-        ACE_NO_COPY_MOVE(VXLBlocks)
-
         void draw(const glm::mat4 &pv, ShaderProgram &s) const;
 
-        GLuint vao, vbo;
+        gl::vao vao;
+        gl::vbo vbo;
         GLsizei vertices;
         glm::vec3 scale, rotation, position, centroid;
     };
 
     struct Pillar {
         Pillar(AceMap &map, size_t x, size_t y);
-        ~Pillar();
-        // todo 
-        ACE_NO_COPY_MOVE(Pillar)
 
         void update();
         void draw();
@@ -57,7 +50,8 @@ namespace ace { namespace draw {
         bool dirty;
         AceMap &map;
         size_t x, y, vbo_size, vertices;
-        GLuint vao, vbo;
+        gl::vao vao;
+        gl::vbo vbo;
     };
 
     struct DrawMap : AceMap {
@@ -72,7 +66,7 @@ namespace ace { namespace draw {
         bool destroy_point(int x, int y, int z, std::vector<VXLBlock> &destroyed);
         bool damage_point(int x, int y, int z, uint8_t damage);
 
-        SDL_Surface *get_overview();
+        
 
         static glm::ivec3 next_block(int x, int y, int z, Face face) {
             switch(face) {
@@ -98,14 +92,15 @@ namespace ace { namespace draw {
             }
         }
 
-        std::unique_ptr<Pillar> &get_pillar(int x, int y, int z = 0);
+        Pillar &get_pillar(int x, int y, int z = 0);
 
         scene::GameScene &scene;
-        std::vector<std::unique_ptr<Pillar>> pillars;
+        std::vector<Pillar> pillars;
         std::vector<std::pair<double, glm::ivec3>> damage_queue;
 
         draw::SpriteGroup overview;
     private:
+        draw::SpriteGroup get_overview();
         void gen_pillars();
     };
 }}

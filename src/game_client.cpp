@@ -196,7 +196,7 @@ namespace ace {
     }
 
     void GameClient::handle_key_press(const SDL_Event &event) {
-        this->quit |= event.key.keysym.sym == SDLK_ESCAPE;
+//        this->quit |= event.key.keysym.sym == SDLK_ESCAPE;
     }
 
     void GameClient::handle_window_event(const SDL_Event &event) {

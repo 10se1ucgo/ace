@@ -9,6 +9,17 @@
 #include "world/grenade.h"
 
 namespace ace { namespace scene {
+    void Team::update_players(GameScene &scene) {
+        this->players.clear();
+        for (const auto &kv : scene.players) {
+            auto *ply = kv.second.get();
+            if(ply->team == this->id) {
+                this->players.push_back(ply);
+            }
+        }
+        std::sort(this->players.begin(), this->players.end(), [](const auto *a, const auto *b) { return a->kills > b->kills; });
+    }
+
     GameScene::GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name, uint8_t *buf) :
         Scene(client),
         shaders(*client.shaders),
@@ -16,8 +27,8 @@ namespace ace { namespace scene {
         map(*this, buf),
         hud(*this),
         state_data(state_data),
-        teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color)},
-                {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color)} }),
+        teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color, net::TEAM::TEAM1)},
+                {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }),
         pd_upd(this->client.tasks.call_every(1, false, &GameScene::send_position_update, this)),
         od_upd(this->client.tasks.call_every(1/30.f, false, &GameScene::send_orientation_update, this)),
         ply_name(std::move(ply_name)) {
@@ -59,6 +70,11 @@ namespace ace { namespace scene {
             entities.emplace(uint8_t(net::OBJECT::GREEN_BASE), std::make_unique<world::CommandPost>(*this, 0, mode.team2_base, net::TEAM::TEAM2, 255));
             entities.emplace(uint8_t(net::OBJECT::BLUE_FLAG), std::make_unique<world::Flag>(*this, 0, mode.team1_flag, net::TEAM::TEAM1, mode.team1_carrier));
             entities.emplace(uint8_t(net::OBJECT::GREEN_FLAG), std::make_unique<world::Flag>(*this, 0, mode.team2_flag, net::TEAM::TEAM2, mode.team2_carrier));
+
+            auto &t1 = this->get_team(net::TEAM::TEAM1);
+            t1.score = mode.team1_score; t1.max_score = mode.cap_limit;
+            auto &t2 = this->get_team(net::TEAM::TEAM2);
+            t2.score = mode.team2_score; t2.max_score = mode.cap_limit;
         }
 
         this->ply = this->get_ply(state_data.pid, true, true);
@@ -73,8 +89,6 @@ namespace ace { namespace scene {
     }
 
     GameScene::~GameScene() {
-//        this->client.tasks.remove_loop(pd_upd);
-//        this->client.tasks.remove_loop(od_upd);
         this->client.set_exclusive_mouse(false);
         fmt::print("~GameScene()\n");
     }
@@ -113,10 +127,7 @@ namespace ace { namespace scene {
         this->shaders.billboard.bind();
         this->shaders.billboard.uniform("cam_right", -this->cam.right);
         this->shaders.billboard.uniform("cam_up", this->cam.up);
-//        fmt::print("CR: {} MAT: {}\n", to_string(this->cam.right), to_string(glm::vec3(glm::row(this->cam.view, 0))));
-//        fmt::print("CU: {} MAT: {}\n", to_string(this->cam.up), to_string(glm::vec3(glm::row(this->cam.view, 1))));
         this->billboards.draw(this->cam.matrix(), this->shaders.billboard);
-
 
         if (!this->thirdperson)
             glClear(GL_DEPTH_BUFFER_BIT);
@@ -129,14 +140,19 @@ namespace ace { namespace scene {
     void GameScene::update(double dt) {
         Scene::update(dt);
 
+        for (auto &kv : teams) {
+            kv.second.update_players(*this);
+        }
+
+
         cam.update(dt);
         if (!this->thirdperson)
             this->ply->set_orientation(this->cam.forward.x, this->cam.forward.z, -this->cam.forward.y);
         for (auto &kv : players) {
             kv.second->update(dt);
         }
-        cam.update();
-        client.sound.set_listener(this->cam.position, this->cam.forward, glm::vec3(glm::row(this->cam.view, 1)));
+        cam.update_view();
+        client.sound.set_listener(this->cam.position, this->cam.forward, this->cam.up);
 
         map.update(dt);
 
@@ -361,12 +377,16 @@ namespace ace { namespace scene {
         case net::PACKET::IntelCapture: {
             net::IntelCapture *pkt = static_cast<net::IntelCapture *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
-            if(ply != nullptr) {
-                fmt::print("{} captured the {} team Intel!", ply->name, this->get_team(ply->team, true).name);
-            } 
-            if(pkt->winning) {
-                this->client.sound.play("horn.wav", { 0,0,0 }, 100, true);
+            if (!pkt->winning) {
+                if (ply != nullptr) {
+                    auto msg = fmt::format("{} captured the {} team Intel!", ply->name, this->get_team(ply->team, true).name);
+                    this->hud.add_chat_message(msg, { 1, 0, 0 });
+                }
+            } else {
+                this->hud.set_big_message(fmt::format("{} Team Wins!", this->get_team(ply->team).name));
             }
+
+            this->client.sound.play(pkt->winning ? "horn.wav" : "pickup.wav", { 0,0,0 }, 100, true);
         } break;
         case net::PACKET::IntelPickup: {
             net::IntelPickup *pkt = static_cast<net::IntelPickup *>(loader);
@@ -529,11 +549,25 @@ namespace ace { namespace scene {
     }
 
     void GameScene::send_grenade(float fuse) {
+        if (!this->ply || !this->ply->alive) return;
+
         net::GrenadePacket gp;
         gp.position = this->ply->p;
         gp.velocity = this->ply->f + this->ply->v;
         gp.fuse = fuse;
         this->client.net->send_packet(net::PACKET::GrenadePacket, gp);
+    }
+
+    void GameScene::send_team_change(net::TEAM new_team) {
+        net::ChangeTeam ct;
+        ct.team = new_team;
+        this->client.net->send_packet(net::PACKET::ChangeTeam, ct);
+    }
+
+    void GameScene::send_weapon_change(net::WEAPON new_weapon) {
+        net::ChangeWeapon cw;
+        cw.weapon = new_weapon;
+        this->client.net->send_packet(net::PACKET::ChangeWeapon, cw);
     }
 
     void GameScene::set_fog_color(glm::vec3 color) {

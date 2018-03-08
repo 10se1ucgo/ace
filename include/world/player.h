@@ -56,16 +56,16 @@ namespace ace {
 
         
 
-        uint8_t pid, health;
+        uint8_t pid{}, health{};
         net::WEAPON weapon{net::WEAPON::INVALID};
         net::TOOL tool{net::TOOL::INVALID};
-        net::TEAM team{net::TEAM::TEAM1};
-        uint32_t kills;
+        net::TEAM team{net::TEAM::SPECTATOR};
+        uint32_t kills{};
         glm::u8vec3 color{112, 112, 112};
         std::string name;
 
         KV6 mdl_head, mdl_torso, mdl_legr, mdl_legl, mdl_arms, mdl_dead;
-        bool local_player;
+        bool local_player{false};
 
         glm::vec3 draw_forward, draw_right;
 
@@ -79,5 +79,7 @@ namespace ace {
         Tool *get_tool(net::TOOL tool = net::TOOL::INVALID);
 
         double switch_time, next_footstep{};
+    private:
+        void transform();
     };
 }}

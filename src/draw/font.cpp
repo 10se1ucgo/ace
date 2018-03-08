@@ -39,12 +39,9 @@ namespace ace { namespace draw {
             height = std::max(height, g->bitmap.rows);
         }
 
-        glGenVertexArrays(1, &vao);
         glBindVertexArray(vao);
 
-        glGenBuffers(1, &vbo);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
         glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, pos_tex)));
         glEnableVertexAttribArray(1);
         glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, color)));
@@ -52,7 +49,6 @@ namespace ace { namespace draw {
 
 
         glActiveTexture(GL_TEXTURE0);
-        glGenTextures(1, &this->tex);
         glBindTexture(GL_TEXTURE_2D, tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
@@ -179,17 +175,15 @@ namespace ace { namespace draw {
     Font *FontManager::get(const std::string &name, int size, bool antialias) {
         auto n = fmt::format("{}{}{}", name, size, !antialias);
         try {
-            return fonts.at(n).get();
+            return &fonts.at(n);
         } catch (std::out_of_range &) {
-            auto x = std::make_unique<Font>("font/" + name, size, !antialias, this->ftl);
-            // yeah this is awful im sorry
-            return fonts.insert({ std::move(n), std::move(x) }).first->second.get();
+            return &fonts.emplace(std::move(n), Font("font/" + name, size, !antialias, this->ftl)).first->second;
         }
     }
 
     void FontManager::draw(const glm::mat4& pv, ShaderProgram& s) {
         for(auto &kv : this->fonts) {
-            kv.second->draw(pv, s);
+            kv.second.draw(pv, s);
         }
     }
 }}
