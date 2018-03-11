@@ -1,19 +1,23 @@
 #pragma once
 #include <utility>
-#include "glad/glad.h"
-#include "glm/gtx/string_cast.hpp"
 
-#include "scene.h"
-#include "gl/shader.h"
-#include "kv6.h"
+#include "glm/glm.hpp"
+
+#include "scene/scene.h"
+#include "scene/hud.h"
+
 #include "world/world.h"
 #include "world/player.h"
-#include "camera.h"
-#include "draw/map.h"
-#include "scene/hud.h"
 #include "world/entity.h"
-#include "net.h"
+
 #include "draw/billboard.h"
+#include "draw/map.h"
+#include "gl/shader.h"
+
+#include "camera.h"
+#include "kv6.h"
+#include "net.h"
+
 
 namespace ace { namespace scene {
     struct Team {

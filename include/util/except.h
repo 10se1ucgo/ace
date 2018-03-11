@@ -1,11 +1,10 @@
 #pragma once
-#include <exception>
+#include <stdexcept>
 
 #include "fmt/format.h"
 #include "glad/glad.h"
-#include "al.h"
 
-namespace testogl {
+namespace ace {
     class RuntimeException: public std::runtime_error {
     public:
         template <typename... T>
@@ -49,5 +48,5 @@ namespace testogl {
 }
 
 
-#define THROW_ERROR(fmt, ...) throw testogl::RuntimeException(__FILE__, __LINE__, __func__, fmt, __VA_ARGS__)
+#define THROW_ERROR(fmt, ...) throw ace::RuntimeException(__FILE__, __LINE__, __func__, fmt, __VA_ARGS__)
 

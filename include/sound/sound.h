@@ -1,13 +1,13 @@
 #pragma once
-#include "common.h"
+#include <string>
+#include <unordered_map>
+#include <memory>
 
 #include "al.h"
 #include "alc.h"
 #include "glm/vec3.hpp"
 
-#include <string>
-#include <unordered_map>
-#include <memory>
+#include "common.h"
 
 
 namespace ace { namespace sound {

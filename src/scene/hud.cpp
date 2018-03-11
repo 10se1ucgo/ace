@@ -1,7 +1,7 @@
+#include "glm/glm.hpp"
+
 #include "scene/hud.h"
 #include "scene/game.h"
-
-#include "glm/glm.hpp"
 
 namespace ace { namespace scene {
     namespace {

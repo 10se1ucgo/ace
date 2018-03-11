@@ -1,16 +1,15 @@
 #include "kv6.h"
 
-#include "util/except.h"
-#include "fmt/format.h"
-#include "glad/glad.h"
-#include "glm/glm.hpp"
-
-
 #include <cstdio>
 #include <array>
 #include <cstddef>
+
+#include "glad/glad.h"
+#include "glm/glm.hpp"
+#include "fmt/format.h"
+
 #include "common.h"
-#include <glm/gtx/string_cast.hpp>
+#include "util/except.h"
 
 namespace {
     // adapted from SLAB6.C by Ken Silverman (http://advsys.net/ken)

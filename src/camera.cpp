@@ -1,13 +1,15 @@
 #include "camera.h"
 
-#include "SDL.h"
-#include "fmt/format.h"
 #include <algorithm>
+
+#include "SDL.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtc/matrix_access.hpp"
 
 #include "common.h"
 #include "scene/game.h"
 
-#include "glm/gtc/matrix_access.hpp"
 
 Camera::Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, glm::vec3 world_up):
     pitch(0), yaw(0), position(position),

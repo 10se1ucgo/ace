@@ -1,6 +1,8 @@
 #include "util/event.h"
-#include "game_client.h"
+
 #include <algorithm>
+
+#include "game_client.h"
 
 namespace ace { namespace util {
     void TaskScheduler::update(double dt) {

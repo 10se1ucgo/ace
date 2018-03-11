@@ -1,7 +1,8 @@
 #pragma once
-#include "draw/sprite.h"
-#include "scene/scene.h"
 #include <deque>
+
+#include "scene/scene.h"
+#include "draw/sprite.h"
 #include "world/player.h"
 
 namespace ace { namespace scene {

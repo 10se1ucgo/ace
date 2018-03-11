@@ -1,17 +1,14 @@
 #pragma once
-
-#include "common.h"
-#include "vxl.h"
-#include "scene/scene.h"
-#include "draw/sprite.h"
-#include "gl/shader.h"
-#include "gl/gl_obj.h"
+#include <vector>
 
 #include "glad/glad.h"
 #include "glm/glm.hpp"
 
-#include <memory>
-#include <vector>
+#include "scene/scene.h"
+#include "draw/sprite.h"
+#include "gl/shader.h"
+#include "gl/gl_obj.h"
+#include "vxl.h"
 
 
 namespace ace { namespace draw {
@@ -25,9 +22,9 @@ namespace ace { namespace draw {
     inline glm::vec3 get_centroid(const std::vector<VXLBlock> &blocks) {
         glm::vec3 centroid;
         for (const VXLBlock &b : blocks) {
-            centroid += glm::vec3(b.position) / float(blocks.size());
+            centroid += b.position;
         }
-        return glm::round(centroid);
+        return glm::round(centroid / float(blocks.size()));
     }
 
     struct VXLBlocks {

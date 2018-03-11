@@ -1,7 +1,7 @@
 #pragma once
-#include "util/except.h"
-
 #include "glm/glm.hpp"
+
+#include "util/except.h"
 
 namespace net {
     struct ByteReader {

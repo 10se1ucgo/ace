@@ -1,10 +1,9 @@
 #pragma once
+#include <algorithm>
+
 #include "glad/glad.h"
 
 #include "common.h"
-
-#include <algorithm>
-#include "glad/glad.h"
 
 namespace ace { namespace gl {
     typedef void (*TGENERATOR)(GLsizei n, GLuint *handles);
@@ -47,17 +46,17 @@ namespace ace { namespace gl {
     namespace detail {
         // beccaus i cant use the glad function ptr directly
         // because lambdas can't be constant expressions until C++17 :(
-        inline auto gen_vert_array(GLsizei n, GLuint *handles) { return glGenVertexArrays(n, handles); }
-        inline auto del_vert_array(GLsizei n, const GLuint *handles) { return glDeleteVertexArrays(n, handles); }
+        inline auto gen_vertex_arrays(GLsizei n, GLuint *handles) { return glGenVertexArrays(n, handles); }
+        inline auto delete_vertex_arrays(GLsizei n, const GLuint *handles) { return glDeleteVertexArrays(n, handles); }
 
-        inline auto gen_buffer(GLsizei n, GLuint *handles) { return glGenBuffers(n, handles); }
-        inline auto del_buffer(GLsizei n, const GLuint *handles) { return glDeleteBuffers(n, handles); }
+        inline auto gen_buffers(GLsizei n, GLuint *handles) { return glGenBuffers(n, handles); }
+        inline auto del_buffers(GLsizei n, const GLuint *handles) { return glDeleteBuffers(n, handles); }
 
-        inline auto gen_texture(GLsizei n, GLuint *handles) { return glGenTextures(n, handles); }
-        inline auto del_texture(GLsizei n, const GLuint *handles) { return glDeleteTextures(n, handles); }
+        inline auto gen_textures(GLsizei n, GLuint *handles) { return glGenTextures(n, handles); }
+        inline auto del_textures(GLsizei n, const GLuint *handles) { return glDeleteTextures(n, handles); }
     }
 
-    using vao = GLObj<detail::gen_vert_array, detail::del_vert_array>;
-    using vbo = GLObj<detail::gen_buffer, detail::del_buffer>;
-    using texture = GLObj<detail::gen_texture, detail::del_texture>;
+    using vao = GLObj<detail::gen_vertex_arrays, detail::delete_vertex_arrays>;
+    using vbo = GLObj<detail::gen_buffers, detail::del_buffers>;
+    using texture = GLObj<detail::gen_textures, detail::del_textures>;
 }}

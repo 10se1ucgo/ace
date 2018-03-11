@@ -1,4 +1,5 @@
 #include "world/entity.h"
+
 #include "scene/game.h"
 
 namespace ace { namespace world {

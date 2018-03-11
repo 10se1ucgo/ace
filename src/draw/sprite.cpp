@@ -1,11 +1,10 @@
 #include "draw/sprite.h"
-#include "util/except.h"
 
 #include "SDL_image.h"
-#include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/matrix_transform_2d.hpp"
 #include "glm/gtx/euler_angles.hpp"
 
+#include "util/except.h"
 
 namespace ace { namespace draw {
     inline std::pair<SDL_Surface *, bool> load_image(const std::string& file_name) {

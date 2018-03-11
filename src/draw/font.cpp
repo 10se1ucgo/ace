@@ -1,8 +1,8 @@
 #include "draw/font.h"
-#include <algorithm>
-#include "fmt/printf.h"
 
-#include FT_BITMAP_H
+#include <algorithm>
+
+#include "fmt/format.h"
 
 namespace ace { namespace draw {
     namespace {

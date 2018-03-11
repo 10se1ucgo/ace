@@ -2,12 +2,6 @@
 
 #include "scene/game.h"
 
-#include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtx/euler_angles.hpp"
-#include "fmt/format.h"
-#include "glm/gtx/string_cast.hpp"
-#include "fmt/printf.h"
-
 namespace ace { namespace draw {
     namespace {
         struct Vertex {
@@ -108,13 +102,7 @@ namespace ace { namespace draw {
     }
 
     void VXLBlocks::draw(const glm::mat4& pv, ShaderProgram& s) const {
-        glm::mat4 model(1.0);
-        glm::vec3 rot(radians(rotation));
-        model = glm::translate(model, position);
-        model *= glm::eulerAngleXYZ(rot.x, rot.y, rot.z);
-        model = glm::scale(model, scale);
-
-        s.uniform("mvp", pv * model);
+        s.uniform("mvp", pv * model_matrix(this->position, this->rotation, this->scale));
         glBindVertexArray(vao);
         glDrawArrays(GL_TRIANGLES, 0, this->vertices);
     }
@@ -243,12 +231,12 @@ namespace ace { namespace draw {
         // TODO: shadows dont update across chunks. the origin block can be ~18 blocks a way, so maybe update all chunks within
         // 18 blocks? or only in the direction of shadows (increasing y)
 
-        // todo this sucks massive donkey balls why am i updating the texture 1 by 1 lol
-        // i should batch updates and update by region the next frame, not per block
         if (x == 0 || y == 0 || x == MAP_X - 1 || y == MAP_Y - 1 || !(x & 63) || !(y & 63)) {
             return ok;
         }
 
+        // todo this sucks massive donkey balls why am i updating the texture 1 by 1 lol
+        // i should batch updates and update by region the next frame, not per block
         uint8_t argb[4];
         unpack_color(this->get_color(x, y, this->get_z(x, y)), argb + 0, argb + 1, argb + 2, argb + 3);
         glBindTexture(GL_TEXTURE_2D, this->overview.tex);

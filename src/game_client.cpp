@@ -1,11 +1,10 @@
 #include "game_client.h"
-#include "util/except.h"
-
-#include "scene/scene.h"
-
-#include "net.h"
 
 #include <SDL_image.h>
+
+#include "scene/scene.h"
+#include "net.h"
+
 
 namespace ace {
     void APIENTRY gl_error(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
@@ -14,9 +13,9 @@ namespace ace {
 
         fmt::print("---------------------opengl-callback-start------------\n");
         fmt::print("message: {}\n", message);
-        fmt::print("type: {}\n", testogl::get_gl_debug_type_name(type));
+        fmt::print("type: {}\n", ace::get_gl_debug_type_name(type));
         fmt::print("id: {}\n", id);
-        fmt::print("severity: {}\n", testogl::get_gl_debug_severity_name(severity));
+        fmt::print("severity: {}\n", ace::get_gl_debug_severity_name(severity));
         fmt::print("---------------------opengl-callback-end--------------\n");
     }
 

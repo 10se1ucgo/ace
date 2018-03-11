@@ -1,11 +1,7 @@
 #include "world/player.h"
 
-#include "scene/game.h"
-
-#include "glm/gtx/rotate_vector.hpp"
-#include "glm/gtc/epsilon.hpp"
-
 #include "common.h"
+#include "scene/game.h"
 
 constexpr float FALL_SLOW_DOWN = 0.24f;
 constexpr float FALL_DAMAGE_VELOCITY = 0.58f;

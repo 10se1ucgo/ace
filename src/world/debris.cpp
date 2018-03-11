@@ -1,6 +1,6 @@
 #include "world/debris.h"
+
 #include "scene/game.h"
-#include "glm/gtc/matrix_access.hpp"
 
 namespace ace { namespace world {
     Debris::Debris(DebrisGroup& group, glm::vec3 position, glm::vec3 velocity) : group(group), p(position), v(velocity) {

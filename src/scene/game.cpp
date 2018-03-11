@@ -1,12 +1,12 @@
 #include "scene/game.h"
 
-#include "world/falling_blocks.h"
+#include "SDL.h"
 
-#include <SDL_image.h>
-#include "util/except.h"
-#include <glm/gtc/matrix_access.hpp>
 #include "world/debris.h"
 #include "world/grenade.h"
+#include "world/falling_blocks.h"
+#include "util/except.h"
+
 
 namespace ace { namespace scene {
     void Team::update_players(GameScene &scene) {

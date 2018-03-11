@@ -2,11 +2,10 @@
 #include <string>
 
 #include "SDL.h"
-#include "glad/glad.h"
-#include "fmt/format.h"
+
 #include "sound/sound.h"
-#include "util/event.h"
 #include "draw/font.h"
+#include "util/event.h"
 
 namespace net {
     struct NetworkClient;

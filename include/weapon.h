@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+
 #include "kv6.h"
 #include "draw/map.h"
 
@@ -83,9 +84,6 @@ struct SpadeTool : Tool {
 
     KV6 mdl;
     bool last_secondary;
-
-
-    
 };
 
 struct BlockTool : Tool {

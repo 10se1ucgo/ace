@@ -1,6 +1,5 @@
 #pragma once
-#include "SDL.h"
-#include "scene.h"
+#include "scene/scene.h"
 #include "net.h"
 
 

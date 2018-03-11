@@ -1,17 +1,15 @@
 #pragma once
+#include <unordered_map>
+
 #include "glad/glad.h"
 #include "glm/glm.hpp"
-#include "gl/shader.h"
-#include "gl/gl_obj.h"
-
 #include "ft2build.h"
 #include FT_FREETYPE_H
 
-#include <unordered_map>
-#include <memory>
-#include <utility>
-
 #include "draw/draw.h"
+#include "gl/shader.h"
+#include "gl/gl_obj.h"
+
 
 namespace ace { namespace draw {
     namespace detail {

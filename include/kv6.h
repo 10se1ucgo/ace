@@ -1,13 +1,13 @@
 #pragma once
+#include <string>
+
+#include "glm/glm.hpp"
+#include "glad/glad.h"
+
 #include "common.h"
 #include "gl/shader.h"
 #include "gl/gl_obj.h"
 
-#include "glad/glad.h"
-#include "glm/glm.hpp"
-
-#include <string>
-#include <memory>
 
 struct KV6Mesh {
     KV6Mesh(const std::string &name);

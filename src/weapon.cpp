@@ -1,11 +1,11 @@
 #include "weapon.h"
 
+#include "glm/gtx/norm.hpp"
+
 #include "scene/game.h"
 #include "world/player.h"
 #include "world/tracer.h"
 #include "world/grenade.h"
-
-#include "glm/gtx/norm.hpp"
 #include "world/debris.h"
 
 Tool::Tool(ace::world::DrawPlayer& ply) : ply(ply) {

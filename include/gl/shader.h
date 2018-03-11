@@ -1,14 +1,14 @@
 #pragma once
-#include "common.h"
-#include "gl/gl_obj.h"
-
-#include "glm/glm.hpp"
-#include "glad/glad.h"
-
 #include <string>
 #include <vector>
 #include <unordered_map>
-#include <glm/gtc/type_ptr.hpp>
+
+#include "common.h"
+
+#include "glad/glad.h"
+#include "glm/glm.hpp"
+#include "glm/gtc/type_ptr.hpp"
+
 
 struct Shader {
     Shader(const std::string &file, GLenum type);

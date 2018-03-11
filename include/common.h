@@ -1,6 +1,5 @@
 #pragma once
 #include <random>
-#include <chrono>
 
 #include "glm/vec3.hpp"
 #include "glm/mat4x4.hpp"

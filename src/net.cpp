@@ -1,10 +1,12 @@
 #include "net.h"
-#include "scene/game.h"
-#include "scene/loading.h"
 
 #include "zlib.h"
 
-#include <fstream>
+#include "scene/game.h"
+#include "scene/loading.h"
+
+
+
 
 namespace net {
 //    template<typename T>

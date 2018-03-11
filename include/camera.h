@@ -1,6 +1,7 @@
 #pragma once
-#include <glm/fwd.hpp>
-#include <glm/gtc/matrix_transform.hpp>
+#include "glm/glm.hpp"
+#include "glm/gtc/matrix_transform.hpp"
+
 #include "scene/scene.h"
 
 enum {
@@ -38,12 +39,12 @@ public:
     }
 // private:
     glm::mat4 projection, view, pv;
-    float nearc, farc;
+    float nearc{ 0.1f }, farc{ 256.f };
     glm::vec4 planes[FRUSTUM_NUM_PLANES];
 
     void mouse(double dt);
     void keyboard(double dt);
 
-    bool box_in_frustum(int x1, int y1, int z1, int x2, int y2, int z2);
+    bool box_in_frustum(int x0, int y0, int z0, int x1, int y1, int z1);
 };
 

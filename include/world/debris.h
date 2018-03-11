@@ -1,8 +1,9 @@
 #pragma once
 #include "glm/glm.hpp"
 
-#include "world/world.h"
 #include "draw/map.h"
+#include "world/world.h"
+
 
 namespace ace { namespace world {
     struct DebrisGroup;

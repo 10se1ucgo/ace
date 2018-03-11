@@ -1,9 +1,11 @@
 #include "sound/sound.h"
+
+#include "SDL_audio.h"
+
+#include "glm/gtc/type_ptr.hpp"
+
 #include "util/except.h"
 
-#include "al.h"
-#include "glm/gtc/type_ptr.hpp"
-#include <SDL_audio.h>
 
 namespace ace { namespace sound {
 #define CHECK_AL_ERROR() do { ALenum error = alGetError(); \
@@ -11,8 +13,6 @@ namespace ace { namespace sound {
             THROW_ERROR("OPENAL ERROR: {}\n", alGetString(error)); \
         } \
     } while (0)
-
-#define CHECK_AL_ERROR() 
 
     SoundBuffer::SoundBuffer(const std::string& name) {
         SDL_AudioSpec spec;

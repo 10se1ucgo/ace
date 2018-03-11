@@ -1,6 +1,8 @@
 #include "scene/loading.h"
-#include "scene/game.h"
+
 #include <functional>
+
+#include "scene/game.h"
 
 namespace ace { namespace scene {
 //    LoadingScene::LoadingScene(GameClient &client, const char *host, int port):

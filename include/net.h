@@ -24,33 +24,34 @@ namespace net {
         int port;
         std::string version;
 
-        Server(std::string ip, int port, std::string version="0.75") :
+        Server(std::string ip, int port, std::string version) :
             ip(std::move(ip)),
             port(port),
             version(std::move(version)) {
         }
 
-        Server(const std::string &identifier) {
+        Server(const std::string &identifier): port(32887), version("0.75") {
             auto proto_pos = identifier.find(':', 0);
 
             if (identifier.substr(0, proto_pos) == "aos") {
                 auto ip_pos = proto_pos + 3; // `:\\` 
                 auto port_pos = identifier.find(':', ip_pos);
                 auto version_pos = identifier.find(':', port_pos + 1);
-                if (version_pos != std::string::npos) {
+                if (version_pos != std::string::npos && port_pos != std::string::npos) {
                     this->version = identifier.substr(version_pos + 1);
-                }
-                else {
-                    this->version = "0.75";
                 }
 
                 uint32_t ip = std::stoul(identifier.substr(ip_pos, port_pos - ip_pos));
                 this->ip = fmt::format("{}.{}.{}.{}", ip >> 0 & 0xFF, ip >> 8 & 0xFF, ip >> 16 & 0xFF, ip >> 24 & 0xFF);
-                this->port = std::stoi(identifier.substr(port_pos + 1, version_pos - (port_pos + 1)));
+                if(port_pos != std::string::npos)
+                    this->port = std::stoi(identifier.substr(port_pos + 1, version_pos - (port_pos + 1)));
             } else {
                 this->ip = identifier.substr(0, proto_pos);
-                this->port = std::stoi(identifier.substr(proto_pos + 1));
+                if(proto_pos != std::string::npos)
+                    this->port = std::stoi(identifier.substr(proto_pos + 1));
             }
+
+            fmt::print("Server: {}:{}:{}\n", this->ip, this->port, this->version);
         }
     };
 

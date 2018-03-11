@@ -1,12 +1,8 @@
 #pragma once
-#include "gl/gl_obj.h"
-
-#include "glad/glad.h"
-#include "gl/shader.h"
 #include "glm/glm.hpp"
-#include "SDL.h"
 
-#include <string>
+#include "gl/gl_obj.h"
+#include "gl/shader.h"
 
 namespace ace { namespace draw {
     struct Billboard {
