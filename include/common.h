@@ -30,8 +30,8 @@ namespace ace {
     }
 
     inline glm::vec3 rand_normalized() {
-        float z = ace::random::random(-1.f, 1.f);
-        float v = ace::random::random(0.f, glm::two_pi<float>());
+        float z = random::random(-1.f, 1.f);
+        float v = random::random(0.f, glm::two_pi<float>());
         float r = glm::sqrt(1.f - z * z);
         float x = r * glm::cos(v);
         float y = r * glm::sin(v);
@@ -41,8 +41,8 @@ namespace ace {
     // euler to direction
     inline glm::vec3 ang2dir(float yaw, float pitch) {
         return { glm::cos(glm::radians(pitch)) * glm::cos(glm::radians(yaw)),
-            glm::sin(glm::radians(pitch)),
-            glm::cos(glm::radians(pitch)) * glm::sin(glm::radians(yaw)) };
+                 glm::sin(glm::radians(pitch)),
+                 glm::cos(glm::radians(pitch)) * glm::sin(glm::radians(yaw)) };
     }
 
     inline glm::vec2 dir2ang(const glm::vec3 &dir) {

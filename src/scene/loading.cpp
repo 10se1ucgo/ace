@@ -94,9 +94,9 @@ namespace ace { namespace scene {
         }
     }
 
-    //
-//    void LoadingScene::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
-//    }
+    void LoadingScene::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
+        if (scancode == SDL_SCANCODE_ESCAPE && pressed) this->client.quit = true;
+    }
 //
 //    void LoadingScene::on_mouse_motion(int x, int y, int dx, int dy) {
 //    }

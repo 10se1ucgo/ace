@@ -19,7 +19,7 @@ namespace ace { namespace scene {
 
         void on_window_resize(int ow, int oh) override;
 
-//        void on_key(SDL_Scancode scancode, int modifiers, bool pressed) override;
+        void on_key(SDL_Scancode scancode, int modifiers, bool pressed) override;
 //        void on_mouse_motion(int x, int y, int dx, int dy) override;
 //        void on_mouse_button(int button, bool pressed) override;
 
