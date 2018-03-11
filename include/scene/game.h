@@ -36,8 +36,7 @@ namespace ace { namespace scene {
         glm::ivec3 color;
         glm::vec3 float_color;
         net::TEAM id;
-        int score{};
-        int max_score{};
+        int score{}, max_score{};
 
         std::vector<world::DrawPlayer *> players;
     };

@@ -29,7 +29,7 @@ void Camera::update_view() {
 
     view = lookAt(position, position + forward, up);
     pv = projection * view;
-    forward = normalize(ang2dir(yaw, pitch));
+    forward = normalize(ace::ang2dir(yaw, pitch));
     right = normalize(cross(world_up, forward));
     up = cross(forward, right);
 

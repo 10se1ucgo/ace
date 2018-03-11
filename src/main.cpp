@@ -3,12 +3,8 @@
 #include <iostream>
 #include <chrono>
 
-#include "common.h"
 #include "scene/game.h"
 #include "scene/loading.h"
-
-
-std::default_random_engine eng(std::chrono::system_clock::now().time_since_epoch().count());
 
 int main(int argc, char **argv) {
     try {

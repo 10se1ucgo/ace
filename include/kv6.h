@@ -34,13 +34,13 @@ struct KV6 {
     bool sprhitscan(glm::vec3 p0, glm::vec3 v0, glm::vec3 *h);
 
     glm::mat4 get_model() const {
-        return model_matrix(position, rotation, scale);
+        return ace::model_matrix(position, rotation, scale);
     }
 
     glm::mat4 get_local_model() const {
         glm::vec3 rot(local_rotation);
         rot.y += 180;
-        return model_matrix(local_position, rot, local_scale);
+        return ace::model_matrix(local_position, rot, local_scale);
     }
 
     void draw(const glm::mat4 &pv, ShaderProgram &s) const {

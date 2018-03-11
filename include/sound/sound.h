@@ -47,6 +47,9 @@ namespace ace { namespace sound {
         // THE RETURNED REFERENCE ISN'T GUARANTEED TO STAY VALID FOR VERY LONG
         // IDK WHY IM RETURNING IT JUST DONT BE DUMB KTNX
         Sound *play(const std::string &name, glm::vec3 position, float volume = 100.f, bool local = false);
+        Sound *play_local(const std::string &name, float volume = 100.f) {
+            return this->play(name, {}, volume, true);
+        }
         void update(double dt);
 
         void set_listener(glm::vec3 position, glm::vec3 forward, glm::vec3 up, glm::vec3 velocity = {0, 0, 0}) const;

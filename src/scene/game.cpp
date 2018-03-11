@@ -78,7 +78,8 @@ namespace ace { namespace scene {
         }
 
         this->ply = this->get_ply(state_data.pid, true, true);
-        this->ply->set_position(256, 256, 0);
+        auto p = this->map.get_random_point();
+        this->ply->set_position(p.x, p.y, p.z - 32);
 
 
         this->client.sound.play("intro.wav", {}, 100, true);
@@ -222,7 +223,7 @@ namespace ace { namespace scene {
 
     void GameScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> ploader) {
         // this is bad I KNOW dont flame thanks :))
-        auto loader = ploader.get();
+        net::Loader *loader = ploader.get();
 
         switch(type) {
         case net::PACKET::CreatePlayer: {

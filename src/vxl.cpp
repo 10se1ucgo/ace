@@ -5,6 +5,7 @@
 #include <unordered_set>
 
 #include "fmt/printf.h"
+#include "common.h"
 
 
 namespace {
@@ -43,7 +44,7 @@ namespace {
     }
 }
 
-AceMap::AceMap(uint8_t *buf) : eng(std::chrono::system_clock::now().time_since_epoch().count()) {
+AceMap::AceMap(uint8_t *buf) {
     this->nodes.reserve(512);
     this->read(buf);
 }
@@ -233,17 +234,20 @@ int AceMap::get_z(const int x, const int y, const int start) const {
 }
 
 void AceMap::get_random_point(int *x, int *y, int *z, const int x1, const int y1, const int x2, const int y2) {
-    const std::uniform_int_distribution<int> xdist(x1, x2 - 1);
-    const std::uniform_int_distribution<int> ydist(y1, y2 - 1);
-
     int rx = 0, ry = 0, rz = 0;
     for (int i = 0; i < 16; i++) {
-        rx = xdist(this->eng); ry = ydist(this->eng); rz = this->get_z(rx, ry);
+        rx = ace::random::random(x1, x2 - 1); ry = ace::random::random(y1, y2 - 1); rz = this->get_z(rx, ry);
         if (rz < MAP_Z - 2 && this->get_solid(rx, ry, rz)) {
             break;
         }
     }
     *x = rx; *y = ry; *z = rz;
+}
+
+glm::ivec3 AceMap::get_random_point(glm::ivec2 p1, glm::ivec2 p2) {
+    glm::ivec3 p;
+    this->get_random_point(&p.x, &p.y, &p.z, p1.x, p1.y, p2.x, p2.y);
+    return p;
 }
 
 std::vector<glm::ivec3> AceMap::block_line(const int x1, const int y1, const int z1, const int x2, const int y2, const int z2) const {

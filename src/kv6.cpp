@@ -202,12 +202,12 @@ KV6Mesh::KV6Mesh(const std::string &name) {
 bool KV6::sprhitscan(glm::vec3 p0, glm::vec3 v0, glm::vec3 *h) {
     // todo this isn't accurate
     glm::mat4 mm = this->get_model();
-    glm::vec3 ss = -draw2vox(glm::vec3{ mm[0] });
-    glm::vec3 sh = -draw2vox(glm::vec3{ mm[1] });
-    glm::vec3 sf = draw2vox(glm::vec3{ mm[2] });
+    glm::vec3 ss = -ace::draw2vox(glm::vec3{ mm[0] });
+    glm::vec3 sh = -ace::draw2vox(glm::vec3{ mm[1] });
+    glm::vec3 sf = ace::draw2vox(glm::vec3{ mm[2] });
     glm::vec3 v(dot(v0, ss), dot(v0, sh), dot(v0, sf));
 
-    glm::vec3 sprp(draw2vox(this->position));
+    glm::vec3 sprp(ace::draw2vox(this->position));
     glm::vec3 t(p0 - sprp);
     glm::vec3 u(dot(t, ss), dot(t, sh), dot(t, sf));
     u /= glm::vec3{ dot(ss, ss), dot(sh, sh), dot(sf, sf) };
