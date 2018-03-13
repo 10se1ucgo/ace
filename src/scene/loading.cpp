@@ -37,7 +37,8 @@ namespace ace { namespace scene {
         switch(client.net->state) {
             case net::NetState::UNCONNECTED:
             case net::NetState::DISCONNECTED:
-                str = fmt::format("ENTER NAME: {}_", this->client.input_buffer);
+                if(this->client.text_input_active())
+                    str = fmt::format("ENTER NAME: {}_", this->client.input_buffer);
                 break;
             case net::NetState::CONNECTING:
             case net::NetState::CONNECTED: 

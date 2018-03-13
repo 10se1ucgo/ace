@@ -318,6 +318,15 @@ namespace ace {
         }
     }
 
+    namespace {
+        // thanks br[azil] (again)
+        float calc_spread(float max_spread) {
+            // ReSharper disable once CppIdenticalOperandsInBinaryExpression
+            // screw off no its not
+            return (random::random() - random::random()) * max_spread;
+        }
+    }
+
     bool Weapon::on_primary() {
         if (this->one_by_one()) {
             this->reloading = false;
@@ -334,7 +343,7 @@ namespace ace {
         for (int i = 0; i < this->pellets(); i++) {
             glm::vec3 dir = this->ply.f;
             float spread = this->spread() * (this->ply.secondary_fire ? 1 : 2);
-            dir += glm::vec3{ random::random(-spread, spread), random::random(-spread, spread), random::random(-spread, spread) };
+            dir += glm::vec3{ calc_spread(spread), calc_spread(spread), calc_spread(spread) };
             this->ply.scene.create_object<world::Tracer>(this->tracer(), this->ply.e + dir * 4.f, dir);
 
             glm::ivec3 hit;

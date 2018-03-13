@@ -1,6 +1,7 @@
 #pragma once
 #include <random>
 #include <chrono>
+#include <cmath>
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
@@ -9,18 +10,27 @@
 namespace ace {
     namespace random {
         inline std::default_random_engine &engine() {
-            static std::default_random_engine eng(std::chrono::system_clock::now().time_since_epoch().count());
+            static std::default_random_engine eng(std::random_device{}());
             return eng;
         }
 
+        // Generate random integer number between [min, max]
         template<typename T>
         std::enable_if_t<std::is_integral<T>::value && !std::is_same<T, bool>::value, T> random(T min = std::numeric_limits<T>::min(), T max = std::numeric_limits<T>::max()) {
             return std::uniform_int_distribution<T>(min, max)(engine());
         }
 
-        template<typename T = double>
-        std::enable_if_t<std::is_floating_point<T>::value, T> random(T min = T{0}, T max = T{1}) {
+        // Generate random real number between [min, max)
+        // Rougly equivalent to `ace::random::random() * (max - min) + min`
+        template<typename T>
+        std::enable_if_t<std::is_floating_point<T>::value, T> random(T min, T max) {
             return std::uniform_real_distribution<T>(min, max)(engine());
+        }
+
+        // Generate random real number between [0, 1)
+        template<typename T = double, size_t bits = std::numeric_limits<T>::digits>
+        std::enable_if_t<std::is_floating_point<T>::value, T> random() {
+            return std::generate_canonical<T, bits>(engine());
         }
 
         template<typename T>
