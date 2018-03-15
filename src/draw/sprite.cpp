@@ -103,7 +103,7 @@ namespace ace { namespace draw {
 
         
         glBindBuffer(GL_ARRAY_BUFFER, models);
-        glInvalidateBufferData(GL_ARRAY_BUFFER);
+//        glInvalidateBufferData(models);
         glBufferData(GL_ARRAY_BUFFER, this->verts.size() * sizeof(SpriteVert), this->verts.data(), GL_STREAM_DRAW);
 
         glBindVertexArray(vao);

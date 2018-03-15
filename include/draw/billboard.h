@@ -1,7 +1,7 @@
 #pragma once
 #include "glm/glm.hpp"
 
-#include "gl/gl_obj.h"
+#include "gl/gl_util.h"
 #include "gl/shader.h"
 
 namespace ace { namespace draw {

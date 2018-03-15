@@ -8,7 +8,7 @@
 
 #include "draw/draw.h"
 #include "gl/shader.h"
-#include "gl/gl_obj.h"
+#include "gl/gl_util.h"
 
 
 namespace ace { namespace draw {

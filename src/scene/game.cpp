@@ -192,14 +192,16 @@ namespace ace { namespace scene {
             case SDL_SCANCODE_6: wep = net::WEAPON::SMG; break;
             case SDL_SCANCODE_7: wep = net::WEAPON::SHOTGUN; break;
             case SDL_SCANCODE_R: this->ply->get_tool()->reload(); break;
+#ifndef NDEBUG
             case SDL_SCANCODE_F2: this->thirdperson = !this->thirdperson; break;
             case SDL_SCANCODE_F3: this->ply->alive = !this->ply->alive; break;
+#endif
             default: break;
             }
 
             if(wep != net::WEAPON::INVALID) {
                 net::ExistingPlayer x;
-                x.name = ply_name;
+                x.name = this->ply_name;
                 x.team = net::TEAM::TEAM1;
                 x.weapon = wep;
                 this->client.net->send_packet(net::PACKET::ExistingPlayer, x);

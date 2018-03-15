@@ -16,7 +16,7 @@ namespace ace {
         struct Scene;
     }
 
-    enum class WINDOW {
+    enum class WINDOW_STYLE {
         WINDOWED,
         FULLSCREEN,
         FULLSCREEN_BORDERLESS
@@ -24,7 +24,7 @@ namespace ace {
 
     class GameClient {
     public:
-        GameClient(std::string caption, int w = 800, int h = 600, WINDOW style = WINDOW::WINDOWED);
+        GameClient(std::string caption, int w = 800, int h = 600, WINDOW_STYLE style = WINDOW_STYLE::WINDOWED);
         ~GameClient();
         ACE_NO_COPY_MOVE(GameClient)
 

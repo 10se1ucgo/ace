@@ -24,7 +24,7 @@ namespace ace { namespace draw {
         s.uniform("pv", pv);
 
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glInvalidateBufferData(GL_ARRAY_BUFFER);
+//        glInvalidateBufferData(vbo);
         glBufferData(GL_ARRAY_BUFFER, this->billboards.size() * sizeof(Billboard), this->billboards.data(), GL_STREAM_DRAW);
 
         glBindVertexArray(vao);

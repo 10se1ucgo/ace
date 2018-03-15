@@ -70,10 +70,6 @@ namespace ace { namespace draw {
                 bmpbuffer.clear();
                 unpack_monochrome_buffer(bmpbuffer, g);
                 buffer = bmpbuffer.data();
-//                FT_Bitmap bmp;
-//                FT_Bitmap_Init(&bmp);
-//                FT_Bitmap_Convert(ft, &g->bitmap, &bmp, 1);
-//                buffer = bmp.buffer;
             }
             glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0, g->bitmap.width, g->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, buffer);
 
@@ -95,8 +91,7 @@ namespace ace { namespace draw {
 
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-        glInvalidateBufferData(GL_ARRAY_BUFFER);
+//        glInvalidateBufferData(vbo);
         glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(detail::GlyphVertex), this->vertices.data(), GL_STREAM_DRAW);
 
         glActiveTexture(GL_TEXTURE0);
@@ -111,10 +106,10 @@ namespace ace { namespace draw {
         glm::vec2 p;
         p.y = -std::numeric_limits<float>::infinity();
         for (unsigned char c : str) {
-            p.x += chars[c].advance.x * scale.x;
-            p.y = std::max(p.y, chars[c].bearing.y * scale.y);
+            p.x += chars[c].advance.x;
+            p.y = std::max(p.y, float(chars[c].bearing.y));
         }
-        return p;
+        return p * scale;
     }
 
     void Font::draw(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {

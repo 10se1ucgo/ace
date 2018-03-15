@@ -7,35 +7,32 @@
 
 
 namespace ace {
-    void APIENTRY gl_error(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam)
-    {
+    void APIENTRY gl_error(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
         if (severity == GL_DEBUG_SEVERITY_NOTIFICATION) return;
 
-        fmt::print("---------------------opengl-callback-start------------\n");
-        fmt::print("message: {}\n", message);
-        fmt::print("type: {}\n", ace::get_gl_debug_type_name(type));
+        fmt::print("=============O P E N G L  D E B U G  C A L L B A C K=============\n");
+        fmt::print("source: {}\n", get_gl_debug_source_name(type));
+        fmt::print("type: {}\n", get_gl_debug_type_name(type));
         fmt::print("id: {}\n", id);
-        fmt::print("severity: {}\n", ace::get_gl_debug_severity_name(severity));
-        fmt::print("---------------------opengl-callback-end--------------\n");
+        fmt::print("severity: {}\n", get_gl_debug_severity_name(severity));
+        fmt::print("message: {}\n", message);
+        fmt::print("=============O P E N G L  D E B U G  C A L L B A C K=============\n");
     }
 
 
-    void sdl_error(std::string msg) {
-        THROW_ERROR("{}: {}\n", msg, SDL_GetError());
-        // fprintf(stderr, "%s: %s\n", msg, SDL_GetError());
-    }
+#define SDL_ERROR(msg) THROW_ERROR("{}: {}\n", msg, SDL_GetError())
 
-    GameClient::GameClient(std::string caption, int w, int h, WINDOW style):
+    GameClient::GameClient(std::string caption, int w, int h, WINDOW_STYLE style):
         tasks(*this), window_title(std::move(caption)) {
 
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
-            sdl_error("SDL_Init");
+            SDL_ERROR("SDL_Init");
         if (IMG_Init(IMG_INIT_PNG) < 0)
-            sdl_error("IMG_Init");
+            SDL_ERROR("IMG_Init");
 
         SDL_GL_LoadLibrary(nullptr);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 6);
+//        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+//        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
         SDL_GL_SetAttribute(SDL_GL_RED_SIZE, 8);
@@ -51,31 +48,32 @@ namespace ace {
         
         this->window = SDL_CreateWindow(window_title.c_str(),
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
-            SDL_WINDOW_OPENGL | (style == WINDOW::WINDOWED ? 0 : SDL_WINDOW_FULLSCREEN)
+            SDL_WINDOW_OPENGL | (style == WINDOW_STYLE::WINDOWED ? 0 : SDL_WINDOW_FULLSCREEN)
         );
-        if(style == WINDOW::FULLSCREEN_BORDERLESS) {
+        if(style == WINDOW_STYLE::FULLSCREEN_BORDERLESS) {
             SDL_SetWindowBordered(this->window, SDL_FALSE);
         }
         if (this->window == nullptr)
-            sdl_error("SDL_CreateWindow");
+            SDL_ERROR("SDL_CreateWindow");
 
         this->context = SDL_GL_CreateContext(this->window);
         if (this->context == nullptr)
-            sdl_error("SDL_GL_CreateContext");
+            SDL_ERROR("SDL_GL_CreateContext");
 
         if (!gladLoadGLLoader(SDL_GL_GetProcAddress)) {
             THROW_ERROR("gladLoaderGLLoader fail");
         }
 
         SDL_GL_MakeCurrent(this->window, this->context);
-
-
-
-        glEnable(GL_DEBUG_OUTPUT);
-//        glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
-        glDebugMessageCallback(gl_error, nullptr);
-
         SDL_GL_SetSwapInterval(0);
+
+#ifndef NDEBUG
+        if(GLAD_GL_VERSION_4_3) {
+            glEnable(GL_DEBUG_OUTPUT);
+            glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
+            glDebugMessageCallback(gl_error, nullptr);
+        }
+#endif
 
         fmt::print("OpenGL: {}\n", glGetString(GL_VERSION));
         fmt::print("GLSL: {}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));

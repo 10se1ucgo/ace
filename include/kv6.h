@@ -6,7 +6,7 @@
 
 #include "common.h"
 #include "gl/shader.h"
-#include "gl/gl_obj.h"
+#include "gl/gl_util.h"
 
 
 struct KV6Mesh {

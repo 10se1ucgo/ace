@@ -12,6 +12,26 @@ namespace ace {
             std::runtime_error(fmt::format("Error near {0}:{1}, in function {2}; {3}", file, line, function, fmt::format(format, args...))) {}
     };
 
+    static const char *get_gl_debug_source_name(GLenum source) {
+        switch(source) {
+        case GL_DEBUG_SOURCE_API:
+            return "API";
+        case GL_DEBUG_SOURCE_WINDOW_SYSTEM:
+            return "WINDOW_SYSTEM";
+        case GL_DEBUG_SOURCE_SHADER_COMPILER:
+            return "SHADER_COMPILER";
+        case GL_DEBUG_SOURCE_THIRD_PARTY:
+            return "THIRD_PARTY";
+        case GL_DEBUG_SOURCE_APPLICATION:
+            return "APPLICATION";
+        case GL_DEBUG_SOURCE_OTHER:
+            return "OTHER";
+        default:
+            return "<UNKNOWN>";
+        }
+        
+    }
+
     static const char *get_gl_debug_type_name(GLenum type) {
         switch (type) {
         case GL_DEBUG_TYPE_ERROR:

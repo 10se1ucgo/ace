@@ -143,7 +143,7 @@ namespace ace { namespace draw {
         glBindVertexArray(vao);
         glBindBuffer(GL_ARRAY_BUFFER, vbo);
         if (true /* this->vertices * sizeof(Vertex) > vbo_size */) {
-            glInvalidateBufferData(GL_ARRAY_BUFFER);
+//            glInvalidateBufferData(vbo);
             glBufferData(GL_ARRAY_BUFFER, this->vertices * sizeof(Vertex), v.data(), GL_DYNAMIC_DRAW);
             vbo_size = this->vertices * sizeof(Vertex);
         } else {

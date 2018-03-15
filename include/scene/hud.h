@@ -22,7 +22,9 @@ namespace ace { namespace scene {
         HUD &hud;
         draw::SpriteGroup *marker, *map;
         draw::Sprite big, mini;
-        bool visible{false};
+        bool big_open{false};
+    private:
+        void draw_map_grid(glm::vec2 offset);
     };
 
     struct HUD {

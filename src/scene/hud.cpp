@@ -87,61 +87,56 @@ namespace ace { namespace scene {
     }
 
     void MapDisplay::draw() {
-        if (!this->visible) {
-            auto offset = this->mini.get_position(draw::Align::CENTER);
-
-            // yeah blah blah DRY
-            // its getting close to my bed time so ill do this better later
-            for (auto &kv : this->hud.scene.players) {
-                auto &ply = kv.second;
-                if (!ply->alive) continue;
-                auto p = glm::vec2(ply->p - this->hud.scene.ply->p);
-                if (p.x < -64 || p.x > 64 || p.y < -64 || p.y > 64) continue;
-                auto color = ply->local_player ? glm::vec4(0, 1.0f, 1.0f, 1.0f) : glm::vec4(this->hud.scene.get_team(ply->team).float_color, 1.0f);
-                this->marker->draw(color, offset + p, dir2ang(ply->draw_forward).x + 90.f, { 1.f, 1.f }, draw::Align::CENTER);
-            }
-
-            for (auto &kv : this->hud.scene.entities) {
-                auto &ent = kv.second;
-                if (!ent->visible()) continue;
-                auto p = clamp(glm::vec2(ent->position - this->hud.scene.ply->p), -64.f, 64.f);
-                auto *spr = this->hud.sprites.get(ent->icon());
-                spr->order = this->marker->order + 1;
-                spr->draw(glm::vec4(this->hud.scene.get_team(ent->team).float_color, 1.0f), offset + p, 0, { 1, 1 }, draw::Align::CENTER);
-            }
-
+        glm::vec2 offset;
+        if(this->big_open) {
+            offset = this->big.get_position();
+            this->big.draw();
+            this->draw_map_grid(offset);
+        } else {
+            offset = this->mini.get_position(draw::Align::CENTER);
             this->mini.draw();
-            return;
         }
 
-        this->big.draw();
-        auto offset = this->big.get_position();
+        glm::vec2 player_pos(draw2vox(this->hud.scene.cam.position));
 
         for (auto &kv : this->hud.scene.players) {
             auto &ply = kv.second;
             if (!ply->alive) continue;
+
+            glm::vec2 p(ply->p);
+            if(!this->big_open) {
+                p -= player_pos;
+                if (p.x < -64 || p.x > 64 || p.y < -64 || p.y > 64) continue;
+            }
+
             auto color = ply->local_player ? glm::vec4(0, 1.0f, 1.0f, 1.0f) : glm::vec4(this->hud.scene.get_team(ply->team).float_color, 1.0f);
-            this->marker->draw(color, offset + glm::vec2(ply->p), dir2ang(ply->draw_forward).x + 90.f, {1, 1}, draw::Align::CENTER);
+            this->marker->draw(color, offset + p, dir2ang(ply->draw_forward).x + 90.f, {1, 1}, draw::Align::CENTER);
         }
 
         for(auto &kv : this->hud.scene.entities) {
             auto &ent = kv.second;
             if (!ent->visible()) continue;
+
+            glm::vec2 p(ent->position);
+            if(!this->big_open) {
+                p = clamp(p - player_pos, -64.f, 64.f);
+            }
+
             auto *spr = this->hud.sprites.get(ent->icon());
             spr->order = this->marker->order + 1;
-            spr->draw(glm::vec4(this->hud.scene.get_team(ent->team).float_color, 1.0f), offset + glm::vec2(ent->position), 0, { 1, 1 }, draw::Align::CENTER);
+            spr->draw(glm::vec4(this->hud.scene.get_team(ent->team).float_color, 1.0f), offset + p, 0, { 1, 1 }, draw::Align::CENTER);
         }
+    }
 
-        for(char c = 'A'; c <= 'H'; c++) {
-            float x = (offset.x + (32 + 64 * (c - 'A'))) * big.scale.x;
-            float y = offset.y;
-            this->hud.sys15->draw(std::string(1, c), { x, y }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+    void MapDisplay::draw_map_grid(glm::vec2 offset) {
+        for (char c = 'A'; c <= 'H'; c++) {
+            float x = (offset.x + (32 + 64 * (c - 'A'))) * this->big.scale.x;
+            this->hud.sys15->draw(std::string(1, c), { x, offset.y }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         }
 
         for (int c = 1; c <= 8; c++) {
-            float x = offset.x;
             float y = offset.y + (32 + 64 * (c - 1));
-            this->hud.sys15->draw(std::to_string(c), { x, y }, { 1, 1, 1 }, { 1,1 }, draw::Align::BOTTOM_RIGHT);
+            this->hud.sys15->draw(std::to_string(c), { offset.x, y }, { 1, 1, 1 }, { 1,1 }, draw::Align::BOTTOM_RIGHT);
         }
     }
 
@@ -300,7 +295,7 @@ namespace ace { namespace scene {
             this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
             break;
         case SDL_SCANCODE_M:
-            this->map_display.visible = !this->map_display.visible;
+            this->map_display.big_open = !this->map_display.big_open;
             break;
 
         case SDL_SCANCODE_ESCAPE:
