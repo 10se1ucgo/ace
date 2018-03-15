@@ -69,42 +69,79 @@ namespace ace { namespace scene {
         }
     }
 
-    MapDisplay::MapDisplay(HUD& hud): hud(hud), big(&hud.scene.map.overview), marker(hud.sprites.get("player.bmp")) {
+    MapDisplay::MapDisplay(HUD& hud): hud(hud), marker(hud.sprites.get("player.bmp")), map(hud.scene.map.get_overview()), big(map), mini(map) {
+        this->map->order = 4;
+        this->marker->order = 5;
+        
         this->big.alignment = draw::Align::CENTER;
+        this->mini.alignment = draw::Align::TOP_RIGHT;
+        this->mini.scale = glm::vec2{ 0.25f };
     }
 
     void MapDisplay::update(double dt) {
         this->big.position.x = hud.scene.client.width() / 2.f;
         this->big.position.y = hud.scene.client.height() / 2.f;
+        this->mini.position = { hud.scene.client.width() - 15, 15 };
+        glm::vec2 d(this->hud.scene.ply->p);
+        this->mini.set_region(d - glm::vec2{64}, d + glm::vec2{64});
     }
 
     void MapDisplay::draw() {
-        if (!this->visible) return;
+        if (!this->visible) {
+            auto offset = this->mini.get_position(draw::Align::CENTER);
 
-        auto &shader = this->hud.scene.shaders.sprite;
-        shader.bind();
+            // yeah blah blah DRY
+            // its getting close to my bed time so ill do this better later
+            for (auto &kv : this->hud.scene.players) {
+                auto &ply = kv.second;
+                if (!ply->alive) continue;
+                auto p = glm::vec2(ply->p - this->hud.scene.ply->p);
+                if (p.x < -64 || p.x > 64 || p.y < -64 || p.y > 64) continue;
+                auto color = ply->local_player ? glm::vec4(0, 1.0f, 1.0f, 1.0f) : glm::vec4(this->hud.scene.get_team(ply->team).float_color, 1.0f);
+                this->marker->draw(color, offset + p, dir2ang(ply->draw_forward).x + 90.f, { 1.f, 1.f }, draw::Align::CENTER);
+            }
+
+            for (auto &kv : this->hud.scene.entities) {
+                auto &ent = kv.second;
+                if (!ent->visible()) continue;
+                auto p = clamp(glm::vec2(ent->position - this->hud.scene.ply->p), -64.f, 64.f);
+                auto *spr = this->hud.sprites.get(ent->icon());
+                spr->order = this->marker->order + 1;
+                spr->draw(glm::vec4(this->hud.scene.get_team(ent->team).float_color, 1.0f), offset + p, 0, { 1, 1 }, draw::Align::CENTER);
+            }
+
+            this->mini.draw();
+            return;
+        }
 
         this->big.draw();
-        this->big.flush(shader);
-        auto op = this->big.get_position();
+        auto offset = this->big.get_position();
+
         for (auto &kv : this->hud.scene.players) {
             auto &ply = kv.second;
             if (!ply->alive) continue;
             auto color = ply->local_player ? glm::vec4(0, 1.0f, 1.0f, 1.0f) : glm::vec4(this->hud.scene.get_team(ply->team).float_color, 1.0f);
-            this->marker->draw(color, op + glm::vec2{ ply->p.x, ply->p.y }, dir2ang(ply->draw_forward).x + 90.f, {1, 1}, draw::Align::CENTER);
+            this->marker->draw(color, offset + glm::vec2(ply->p), dir2ang(ply->draw_forward).x + 90.f, {1, 1}, draw::Align::CENTER);
         }
-        this->marker->draw(shader);
+
+        for(auto &kv : this->hud.scene.entities) {
+            auto &ent = kv.second;
+            if (!ent->visible()) continue;
+            auto *spr = this->hud.sprites.get(ent->icon());
+            spr->order = this->marker->order + 1;
+            spr->draw(glm::vec4(this->hud.scene.get_team(ent->team).float_color, 1.0f), offset + glm::vec2(ent->position), 0, { 1, 1 }, draw::Align::CENTER);
+        }
 
         for(char c = 'A'; c <= 'H'; c++) {
-            float x = (op.x + (32 + 64 * (c - 'A'))) * big.scale.x;
-            float y = op.y;
-            this->hud.sys15->draw(std::string(1, c), glm::vec2{ x, y }, {1, 1, 1}, { 1, 1}, draw::Align::BOTTOM_CENTER);
+            float x = (offset.x + (32 + 64 * (c - 'A'))) * big.scale.x;
+            float y = offset.y;
+            this->hud.sys15->draw(std::string(1, c), { x, y }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         }
 
         for (int c = 1; c <= 8; c++) {
-            float x = op.x;
-            float y = op.y + (32 + 64 * (c - 1));
-            this->hud.sys15->draw(std::to_string(c), glm::vec2{ x, y }, { 1, 1, 1 }, { 1,1 }, draw::Align::BOTTOM_RIGHT);
+            float x = offset.x;
+            float y = offset.y + (32 + 64 * (c - 1));
+            this->hud.sys15->draw(std::to_string(c), { x, y }, { 1, 1, 1 }, { 1,1 }, draw::Align::BOTTOM_RIGHT);
         }
     }
 
@@ -235,11 +272,11 @@ namespace ace { namespace scene {
         }
         
         
+        this->map_display.draw();
+
         this->scene.shaders.sprite.bind();
         this->scene.shaders.sprite.uniform("projection", projection);
         this->sprites.draw(scene.shaders.sprite);
-
-        this->map_display.draw();
         
         this->scene.shaders.text.bind();
         this->scene.client.fonts.draw(projection, scene.shaders.text);

@@ -176,7 +176,7 @@ namespace ace { namespace draw {
     DrawMap::DrawMap(scene::GameScene &s, const std::string &file_path) : DrawMap(s, read_file(file_path).get()) {
     }
 
-    DrawMap::DrawMap(scene::GameScene &s, uint8_t *buf) : AceMap(buf), scene(s), overview(this->get_overview()) {
+    DrawMap::DrawMap(scene::GameScene &s, uint8_t *buf) : AceMap(buf), scene(s) {
         this->gen_pillars();
     }
 
@@ -236,10 +236,11 @@ namespace ace { namespace draw {
         }
 
         // todo this sucks massive donkey balls why am i updating the texture 1 by 1 lol
+        // ok i made it suck more wow i dont know how to do engine design hahaaaaaaaa
         // i should batch updates and update by region the next frame, not per block
         uint8_t argb[4];
         unpack_color(this->get_color(x, y, this->get_z(x, y)), argb + 0, argb + 1, argb + 2, argb + 3);
-        glBindTexture(GL_TEXTURE_2D, this->overview.tex);
+        glBindTexture(GL_TEXTURE_2D, this->scene.hud.map_display.map->tex);
         glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, argb + 1);
 
         return ok;
@@ -288,7 +289,7 @@ namespace ace { namespace draw {
         return false;
     }
     
-    draw::SpriteGroup DrawMap::get_overview() {
+    draw::SpriteGroup *DrawMap::get_overview() {
         auto pixels(std::make_unique<uint8_t[]>(MAP_X * MAP_Y * 3));
         int p = 0;
         for(int y = 0; y < MAP_Y; y++) {
@@ -306,6 +307,6 @@ namespace ace { namespace draw {
                 pixels[p++] = r; pixels[p++] = g; pixels[p++] = b;
             }
         }
-        return draw::SpriteGroup(SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
+        return this->scene.hud.sprites.get("big_map_overview", SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
     }
 }}

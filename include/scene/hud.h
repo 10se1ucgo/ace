@@ -20,8 +20,8 @@ namespace ace { namespace scene {
         void draw();
 
         HUD &hud;
-        draw::Sprite big;
-        draw::SpriteGroup *marker;
+        draw::SpriteGroup *marker, *map;
+        draw::Sprite big, mini;
         bool visible{false};
     };
 

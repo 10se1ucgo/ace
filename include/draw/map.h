@@ -63,8 +63,6 @@ namespace ace { namespace draw {
         bool destroy_point(int x, int y, int z, std::vector<VXLBlock> &destroyed);
         bool damage_point(int x, int y, int z, uint8_t damage);
 
-        
-
         static glm::ivec3 next_block(int x, int y, int z, Face face) {
             switch(face) {
                 case Face::LEFT: return { x - 1, y, z };
@@ -91,13 +89,12 @@ namespace ace { namespace draw {
 
         Pillar &get_pillar(int x, int y, int z = 0);
 
+        draw::SpriteGroup *get_overview();
+
         scene::GameScene &scene;
         std::vector<Pillar> pillars;
         std::vector<std::pair<double, glm::ivec3>> damage_queue;
-
-        draw::SpriteGroup overview;
     private:
-        draw::SpriteGroup get_overview();
         void gen_pillars();
     };
 }}

@@ -1,7 +1,6 @@
 #include "SDL.h"
 
 #include <iostream>
-#include <chrono>
 
 #include "scene/game.h"
 #include "scene/loading.h"

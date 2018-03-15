@@ -5,9 +5,9 @@
 
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
-#include "glm/gtx/type_trait.hpp"
 
 namespace ace {
+    // Simple, generic wrappers around standard C++ <random>
     namespace random {
         inline std::default_random_engine &engine() {
             static std::default_random_engine eng(std::random_device{}());

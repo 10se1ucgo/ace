@@ -70,15 +70,16 @@ void Camera::keyboard(double dt) {
 }
 
 bool Camera::box_in_frustum(int x0, int y0, int z0, int x1, int y1, int z1) {
-    glm::vec3 points[8];
-    points[0] = { x0, y0, z0 };
-    points[1] = { x0, y0, z1 };
-    points[2] = { x0, y1, z0 };
-    points[3] = { x0, y1, z1 };
-    points[4] = { x1, y0, z0 };
-    points[5] = { x1, y0, z1 };
-    points[6] = { x1, y1, z0 };
-    points[7] = { x1, y1, z1 };
+    glm::vec3 points[8] {
+        { x0, y0, z0 },
+        { x0, y0, z1 },
+        { x0, y1, z0 },
+        { x0, y1, z1 },
+        { x1, y0, z0 },
+        { x1, y0, z1 },
+        { x1, y1, z0 },
+        { x1, y1, z1 }
+    };
 
     for(const auto &plane : planes) {
         bool in = false;

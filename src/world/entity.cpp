@@ -22,16 +22,21 @@ namespace ace { namespace world {
     }
 
     void Entity::draw() {
-        if (this->carrier < 32 && this->scene.get_ply(this->carrier, false) != nullptr) return;
+        if (!this->visible())
+            return;
 
         scene.shaders.model.bind();
         scene.shaders.model.uniform("replacement_color", this->scene.teams[this->team].float_color);
+        this->mesh.position = vox2draw(position);
         this->mesh.draw(scene.cam.matrix(), scene.shaders.model);
+    }
+
+    bool Entity::visible() const {
+        return this->carrier < 32 || this->scene.get_ply(this->carrier, false) == nullptr;
     }
 
     void Entity::set_position(glm::vec3 pos) {
         this->position = pos;
-        this->mesh.position = vox2draw(position);
     }
 
     void Entity::set_team(net::TEAM team) {

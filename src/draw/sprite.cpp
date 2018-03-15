@@ -16,12 +16,11 @@ namespace ace { namespace draw {
         return {data, is_bmp};
     }
 
-    SpriteGroup::SpriteGroup(const std::string& file_name) : SpriteGroup(load_image(file_name)) {
+    SpriteGroup::SpriteGroup(const std::string& file_name, int order) : SpriteGroup(load_image(file_name), order) {
     }
 
-    SpriteGroup::SpriteGroup(SDL_Surface* data, bool color_key) {
-        this->w = data->w;
-        this->h = data->h;
+    SpriteGroup::SpriteGroup(SDL_Surface* data, bool color_key, int order) :
+        w(data->w), h(data->h), order(order) {
 
         if (color_key) {
             // AoS has some BMPs that use a color key for transparency
@@ -59,26 +58,28 @@ namespace ace { namespace draw {
         glBindBuffer(GL_ARRAY_BUFFER, models);
         glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, tint)));
         glEnableVertexAttribArray(1); // tint
-        glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 0));
-        glEnableVertexAttribArray(2); // model col 1                                                  offsetof(SpriteVert, model[0]) should work REEEEEE
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 1));
-        glEnableVertexAttribArray(3); // model col 2
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 2));
-        glEnableVertexAttribArray(4); // model col 3
+        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, region)));
+        glEnableVertexAttribArray(2); // tint
+        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 0));
+        glEnableVertexAttribArray(3); // model col 1                                                  offsetof(SpriteVert, model[0]) should work REEEEEE
+        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 1));
+        glEnableVertexAttribArray(4); // model col 2
+        glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 2));
+        glEnableVertexAttribArray(5); // model col 3
 
         glVertexAttribDivisor(0, 0);
-        for(int i = 1; i <= 4; i++) {
+        for(int i = 1; i <= 5; i++) {
             glVertexAttribDivisor(i, 1);
         }
 
         SDL_FreeSurface(data);
     }
 
-    void SpriteGroup::draw(glm::vec4 tint, glm::mat3 model) {
-        this->verts.emplace_back(tint, model);
+    void SpriteGroup::draw(glm::vec4 tint, glm::mat3 model, glm::vec4 region) {
+        this->verts.emplace_back(tint, model, region);
     }
 
-    void SpriteGroup::draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale, Align align) {
+    void SpriteGroup::draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale, Align align, glm::vec4 region) {
         if (tint.a <= 0.f) return;
 
         const glm::vec2 aligned_position(get_aligned_position(position, scale, {w, h}, align));
@@ -90,7 +91,7 @@ namespace ace { namespace draw {
         model = rotate(model, glm::radians(rotation));
         model = translate(model, -anchor);
         model = glm::scale(model, scale);
-        this->verts.emplace_back(tint, model);
+        this->verts.emplace_back(tint, model, region);
     }
 
     void SpriteGroup::draw(ShaderProgram &s) {
@@ -118,6 +119,20 @@ namespace ace { namespace draw {
                 return &sprites.emplace(name, data).first->second;
             }
             return &sprites.emplace(name, "png/" + name).first->second;
+        }
+    }
+
+    void SpriteManager::draw(ShaderProgram &s) {
+        std::vector<SpriteGroup *> groups;
+        groups.reserve(this->sprites.size());
+
+        for (auto &kv : this->sprites) {
+            groups.push_back(&kv.second);
+        }
+
+        std::sort(groups.begin(), groups.end(), [](const SpriteGroup *lhs, const SpriteGroup *rhs) { return lhs->order < rhs->order; });
+        for(auto &x : groups) {
+            x->draw(s);
         }
     }
 }}
