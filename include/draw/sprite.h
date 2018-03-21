@@ -10,13 +10,7 @@
 
 
 namespace ace { namespace draw {
-    struct SpriteVert {
-        glm::vec4 tint;
-        glm::vec4 region;
-        glm::mat3 model;
 
-        SpriteVert(glm::vec4 tint, glm::mat3 model, glm::vec4 region = {0, 0, 1, 1}) : tint(tint), region(region), model(model) { }
-    };
 
     struct SpriteGroup {
         SpriteGroup(const std::string &file_name, int order=0);
@@ -26,14 +20,24 @@ namespace ace { namespace draw {
 
         void draw(glm::vec4 tint, glm::mat3 model, glm::vec4 region = { 0, 0, 1, 1 });
         void draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale = { 1.0, 1.0 }, Align align = Align::TOP_LEFT, glm::vec4 region = { 0, 0, 1, 1 });
-        void draw(ShaderProgram &s);
+        void draw(gl::ShaderProgram &s);
 
         int w{}, h{}, order{};
-        gl::vao vao;
-        gl::vbo vbo, models;
         gl::texture tex;
+    private:
+#pragma pack(push, 1)
+        struct SpriteVert {
+            glm::vec4 tint;
+            glm::vec4 region;
+            glm::mat3 model;
 
-        std::vector<SpriteVert> verts;
+            SpriteVert(glm::vec4 tint, glm::mat3 model, glm::vec4 region = { 0, 0, 1, 1 }) : tint(tint), region(region), model(model) { }
+        };
+#pragma pack(pop)
+
+        gl::experimental::vao vao;
+        gl::experimental::vbo<glm::vec2> vbo;
+        gl::experimental::vbo<SpriteVert> models{ GL_STREAM_DRAW };
     };
 
     inline glm::vec2 get_aligned_position(glm::vec2 position, const glm::vec2 &scale, const glm::vec2 &size, Align alignment) {
@@ -70,7 +74,7 @@ namespace ace { namespace draw {
             this->group->draw(this->tint, this->position, this->rotation, this->scale, this->alignment, this->region);
         }
 
-        void flush(ShaderProgram& s) {
+        void flush(gl::ShaderProgram& s) {
             this->group->draw(s);
         }
 
@@ -107,7 +111,7 @@ namespace ace { namespace draw {
     struct SpriteManager {
         SpriteGroup *get(const std::string &name, SDL_Surface *data = nullptr);
 
-        void draw(ShaderProgram &s);
+        void draw(gl::ShaderProgram &s);
     private:
         std::unordered_map<std::string, SpriteGroup> sprites;
     };

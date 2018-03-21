@@ -3,7 +3,6 @@
 #include <SDL_image.h>
 
 #include "scene/scene.h"
-#include "net.h"
 
 
 namespace ace {
@@ -23,7 +22,7 @@ namespace ace {
 #define SDL_ERROR(msg) THROW_ERROR("{}: {}\n", msg, SDL_GetError())
 
     GameClient::GameClient(std::string caption, int w, int h, WINDOW_STYLE style):
-        tasks(*this), window_title(std::move(caption)) {
+        net(*this), tasks(*this), window_title(std::move(caption)) {
 
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
             SDL_ERROR("SDL_Init");
@@ -84,18 +83,12 @@ namespace ace {
         this->w = w;
         this->h = h;
 
-        enet_initialize();
-        this->net = std::make_unique<net::NetworkClient>(*this);
-
-        this->shaders = std::make_unique<ShaderManager>();
+        this->shaders = std::make_unique<gl::ShaderManager>();
 
         SDL_StopTextInput();
     }
 
     GameClient::~GameClient() {
-        this->net.reset();
-        enet_deinitialize();
-
         SDL_GL_DeleteContext(context);
         SDL_DestroyWindow(window);
         IMG_Quit();
@@ -118,8 +111,8 @@ namespace ace {
     void GameClient::update(double dt) {
         this->poll_events();
         this->update_fps();
-        tasks.update(dt);
-        if(this->net) this->net->update(dt);
+        this->tasks.update(dt);
+        this->net.update(dt);
         this->sound.update(dt);
         this->scene->update(dt);
         this->draw();

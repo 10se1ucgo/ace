@@ -18,7 +18,7 @@ namespace ace { namespace scene {
 
         this->on_window_resize(0, 0);
 
-        if (client.net->state == net::NetState::DISCONNECTED || client.net->state == net::NetState::UNCONNECTED)
+        if (client.net.state == net::NetState::DISCONNECTED || client.net.state == net::NetState::UNCONNECTED)
             this->client.toggle_text_input();
 
         glEnable(GL_BLEND);
@@ -34,7 +34,7 @@ namespace ace { namespace scene {
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
         std::string str;
-        switch(client.net->state) {
+        switch(client.net.state) {
             case net::NetState::UNCONNECTED:
             case net::NetState::DISCONNECTED:
                 if(this->client.text_input_active())
@@ -45,8 +45,8 @@ namespace ace { namespace scene {
                 str = "CONNECTING...";
                 break;
             case net::NetState::MAP_TRANSFER: {
-                int max = client.net->map_writer.vec.capacity();
-                int cur = client.net->map_writer.vec.size();
+                int max = client.net.map_writer.vec.capacity();
+                int cur = client.net.map_writer.vec.size();
                 str = fmt::format("{}% | {} out of {}", int(cur / float(max) * 100), cur, max);
             } break;
             default: 
@@ -67,10 +67,10 @@ namespace ace { namespace scene {
     }
 
     void LoadingScene::on_text_finished() {
-        if (client.net->state != net::NetState::DISCONNECTED && client.net->state != net::NetState::UNCONNECTED) return;
+        if (client.net.state != net::NetState::DISCONNECTED && client.net.state != net::NetState::UNCONNECTED) return;
 
-        client.net->connect(server);
-        client.net->ply_name = this->client.input_buffer;
+        client.net.connect(server);
+        client.net.ply_name = this->client.input_buffer;
     }
 
     void LoadingScene::on_window_resize(int ow, int oh) {
@@ -80,13 +80,13 @@ namespace ace { namespace scene {
     void LoadingScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) {
         if(type == net::PACKET::StateData) {
             auto &client = this->client;
-            auto buf(net::inflate(client.net->map_writer.vec.data(), client.net->map_writer.vec.size()));
+            auto buf(net::inflate(client.net.map_writer.vec.data(), client.net.map_writer.vec.size()));
             auto saved_loaders(std::move(this->saved_loaders));
 
             // hey so im pretty sure calling client.set_scene invalidates this object (this->scene.reset() destroys this)
             // so im gonna quickly copy/move all of the important stuff out of the class before we destroy it
             // is this bad design? absolutely. i think.
-            client.set_scene<GameScene>(*reinterpret_cast<net::StateData *>(packet.get()), client.net->ply_name, buf.get());
+            client.set_scene<GameScene>(*reinterpret_cast<net::StateData *>(packet.get()), client.net.ply_name, buf.get());
             for (auto &pkt : saved_loaders) {
                 client.scene->on_packet(pkt.first, std::move(pkt.second));
             }

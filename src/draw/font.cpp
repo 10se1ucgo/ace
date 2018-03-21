@@ -39,13 +39,14 @@ namespace ace { namespace draw {
             height = std::max(height, g->bitmap.rows);
         }
 
-        glBindVertexArray(vao);
-
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, pos_tex)));
-        glEnableVertexAttribArray(1);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, color)));
-        glEnableVertexAttribArray(0);
+//        glBindVertexArray(vao);
+//
+//        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+        this->vao.attrib_pointer("4f,3f", this->vbo.handle);
+//        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, pos_tex)));
+//        glEnableVertexAttribArray(1);
+//        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, color)));
+//        glEnableVertexAttribArray(0);
 
 
         glActiveTexture(GL_TEXTURE0);
@@ -84,22 +85,23 @@ namespace ace { namespace draw {
         FT_Done_Face(face);
     }
 
-    void Font::draw(const glm::mat4 &pv, ShaderProgram &s) {
-        if (this->vertices.empty()) return;
+    void Font::draw(const glm::mat4 &pv, gl::ShaderProgram &s) {
+        if (this->vbo->empty()) return;
 
         s.uniform("mvp", pv);
-
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-//        glInvalidateBufferData(vbo);
-        glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(detail::GlyphVertex), this->vertices.data(), GL_STREAM_DRAW);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex);
 
-        glDrawArrays(GL_TRIANGLES, 0, this->vertices.size());
 
-        this->vertices.clear();
+        vbo.upload();
+//        glBindBuffer(GL_ARRAY_BUFFER, vbo);
+//        glInvalidateBufferData(vbo);
+//        glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(GlyphVertex), this->vertices.data(), GL_STREAM_DRAW);
+
+        this->vao.draw(GL_TRIANGLES, this->vbo.draw_count, this->vbo.draw_offset);
+//
+//        this->vertices.clear();
     }
 
     glm::vec2 Font::measure(const std::string& str, glm::vec2 scale) const {
@@ -150,12 +152,12 @@ namespace ace { namespace draw {
 
             if (!w || !h) continue;
 
-            vertices.push_back({ { x2,     -y2    , chars[c].tx, 0 }, color });
-            vertices.push_back({ { x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
-            vertices.push_back({ { x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
-            vertices.push_back({ { x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
-            vertices.push_back({ { x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
-            vertices.push_back({ { x2 + w, -y2 + h, chars[c].tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height) }, color });
+            vbo->push_back({ { x2,     -y2    , chars[c].tx, 0 }, color });
+            vbo->push_back({ { x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
+            vbo->push_back({ { x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
+            vbo->push_back({ { x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
+            vbo->push_back({ { x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
+            vbo->push_back({ { x2 + w, -y2 + h, chars[c].tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height) }, color });
         }
     }
 
@@ -176,7 +178,7 @@ namespace ace { namespace draw {
         }
     }
 
-    void FontManager::draw(const glm::mat4& pv, ShaderProgram& s) {
+    void FontManager::draw(const glm::mat4& pv, gl::ShaderProgram& s) {
         for(auto &kv : this->fonts) {
             kv.second.draw(pv, s);
         }

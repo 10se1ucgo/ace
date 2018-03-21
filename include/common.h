@@ -37,6 +37,14 @@ namespace ace {
         std::enable_if_t<std::is_same<T, bool>::value, T> random(double p = 0.5) {
             return std::bernoulli_distribution(p)(engine());
         }
+
+        template<typename T>
+        std::enable_if_t<std::is_enum<T>::value, T> choice_range(T first, T last) {
+            using underlying = std::underlying_type_t<T>;
+            using type = std::conditional_t<std::is_same_v<signed char, std::make_signed_t<underlying>>, int, underlying>;
+            // uniform_int_distribution prohibits char types, for whatever reason.
+            return T(random::random(type(first), type(last)));
+        }
     }
 
     inline glm::vec3 rand_normalized() {

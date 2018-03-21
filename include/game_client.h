@@ -6,6 +6,7 @@
 #include "sound/sound.h"
 #include "draw/font.h"
 #include "util/event.h"
+#include "net.h"
 
 namespace net {
     struct NetworkClient;
@@ -56,8 +57,8 @@ namespace ace {
         }
         
         friend net::NetworkClient;
-        std::unique_ptr<net::NetworkClient> net; // unique_ptr because enet has to be intialized before constructed (maybe i can use comma operator)
-        std::unique_ptr<ShaderManager> shaders; // uniqe_ptr because GL context needs to be created before the shaders can be compiled and loaded.
+        net::NetworkClient net;
+        std::unique_ptr<gl::ShaderManager> shaders; // uniqe_ptr because GL context needs to be created before the shaders can be compiled and loaded.
         sound::SoundManager sound;
         util::TaskScheduler tasks;
         draw::FontManager fonts;

@@ -8,18 +8,26 @@
 #include "gl/shader.h"
 #include "gl/gl_util.h"
 
+namespace detail {
+#pragma pack(push, 1)
+    struct KV6Vertex {
+        glm::vec3 vertex;
+        glm::vec3 color;
+        glm::vec3 normal; // face normal
+        glm::vec3 kv6norm; // kv6 normal
+    };
+#pragma pack(pop)
+}
 
 struct KV6Mesh {
     KV6Mesh(const std::string &name);
 
     void draw() const {
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, this->vertices);
+        this->vao.draw(GL_TRIANGLES, this->vbo.draw_count);
     }
 
-    ace::gl::vao vao;
-    ace::gl::vbo vbo;
-    GLsizei vertices;
+    ace::gl::experimental::vao vao;
+    ace::gl::experimental::vbo<detail::KV6Vertex> vbo;
 
     long xsiz, ysiz, zsiz, num_voxels;
     float xpiv, ypiv, zpiv;
@@ -43,7 +51,7 @@ struct KV6 {
         return ace::model_matrix(local_position, rot, local_scale);
     }
 
-    void draw(const glm::mat4 &pv, ShaderProgram &s) const {
+    void draw(const glm::mat4 &pv, ace::gl::ShaderProgram &s) const {
         const glm::mat4 model(this->get_model());
         s.uniform("mvp", pv * model);
         s.uniform("normal_matrix", glm::mat3(transpose(inverse(model))));
@@ -51,7 +59,7 @@ struct KV6 {
         this->mesh->draw();
     }
 
-    void draw_local(const glm::mat4 &p, ShaderProgram &s) const {
+    void draw_local(const glm::mat4 &p, ace::gl::ShaderProgram &s) const {
         s.uniform("mvp", p * this->get_local_model());
         s.uniform("normal_matrix", glm::mat3(transpose(inverse(this->get_model())))); // for lighting and stuff. WHAT AM I DOING
         this->mesh->draw();

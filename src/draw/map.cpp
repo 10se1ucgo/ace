@@ -3,15 +3,13 @@
 #include "scene/game.h"
 
 namespace ace { namespace draw {
+    using namespace ace::draw::detail;
+
     namespace {
-        struct Vertex {
-            glm::vec3 vertex;
-            glm::vec3 color;
-            GLubyte face;
-        };
+
         
 
-        void gen_faces(const float x, const float y, const float z, const uint8_t vis, const glm::vec3 color, std::vector<Vertex> &v) {
+        void gen_faces(const float x, const float y, const float z, const uint8_t vis, const glm::vec3 color, std::vector<VXLVertex> &v) {
             const float x0 = x, x1 = x + 1.0f;
             const float y0 = -z - 1.0f, y1 = -z;
             const float z0 = y, z1 = y + 1.0f;
@@ -72,8 +70,6 @@ namespace ace { namespace draw {
     VXLBlocks::VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) : scale(1), rotation(0), position(0) {
         this->centroid += center;
 
-        std::vector<Vertex> v;
-        v.reserve(blocks.size() * sizeof(Vertex));
         for (const VXLBlock &block : blocks) {
             uint8_t r, g, b, a;
             unpack_color(block.color, &a, &r, &g, &b);
@@ -82,82 +78,48 @@ namespace ace { namespace draw {
                 block.position.x - this->centroid.x,
                 block.position.y - this->centroid.y,
                 block.position.z - this->centroid.z,
-                block.vis, glm::vec3{ r, g, b } / 255.f, v
+                block.vis, glm::vec3{ r, g, b } / 255.f, this->vbo.data
             );
         }
-        this->vertices = v.size();
-
-        glBindVertexArray(vao);
-
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(Vertex), v.data(), GL_STATIC_DRAW);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, vertex)));
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, color)));
-        // glVertexAttribIPointer(1, 3, GL_UNSIGNED_BYTE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, color)));
-        glEnableVertexAttribArray(1);
-        glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, face)));
-        glEnableVertexAttribArray(2);
+        
+        this->vao.attrib_pointer("3f,3f,1B", this->vbo.handle);
+        this->vbo.upload();
     }
 
-    void VXLBlocks::draw(const glm::mat4& pv, ShaderProgram& s) const {
+    void VXLBlocks::draw(const glm::mat4& pv, gl::ShaderProgram& s) const {
         s.uniform("mvp", pv * model_matrix(this->position, this->rotation, this->scale));
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, this->vertices);
+        this->vao.draw(GL_TRIANGLES, this->vbo.draw_count);
     }
 
-    Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y), vbo_size(0), vertices(0) {
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-
-        glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, vertex)));
-        glEnableVertexAttribArray(0);
-        glVertexAttribPointer(1, 3, GL_FLOAT, GL_TRUE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, color)));
-        glEnableVertexAttribArray(1);
-        glVertexAttribIPointer(2, 1, GL_UNSIGNED_BYTE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, face)));
-        glEnableVertexAttribArray(2);
+    Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {
+        this->vao.attrib_pointer("3f,3f,1B", this->vbo.handle);
     }
 
     void Pillar::update() {
-        std::vector<Vertex> v;
-        v.reserve(4096 * 24);
-
         for (size_t ax = this->x; ax < this->x + PILLAR_SIZE; ax++) {
             for (size_t ay = this->y; ay < this->y + PILLAR_SIZE; ay++) {
                 for (size_t az = 0; az < MAP_Z; az++) {
                     uint8_t vis = map.get_vis(ax, ay, az, true);
-                    if (az == MAP_Z - 1) vis = vis & (1 << int(Face::TOP));
+                    if (az == MAP_Z - 1) vis &= 1 << int(Face::TOP);
                     if (vis == 0) continue;
 
                     const uint32_t col = map.get_color(ax, ay, az);
                     uint8_t r, g, b, a;
                     unpack_color(col, &a, &r, &g, &b);
 
-                    gen_faces(ax, ay, az, vis, (glm::vec3{ r, g, b } * (map.sunblock(ax, ay, az) / 127.f) * (a / 127.f)) / 255.f, v);
+                    gen_faces(ax, ay, az, vis, (glm::vec3{ r, g, b } * (map.sunblock(ax, ay, az) / 127.f) * (a / 127.f)) / 255.f, this->vbo.data);
                 }
             }
         }
-        this->vertices = v.size();
 
-        glBindVertexArray(vao);
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        if (true /* this->vertices * sizeof(Vertex) > vbo_size */) {
-//            glInvalidateBufferData(vbo);
-            glBufferData(GL_ARRAY_BUFFER, this->vertices * sizeof(Vertex), v.data(), GL_DYNAMIC_DRAW);
-            vbo_size = this->vertices * sizeof(Vertex);
-        } else {
-            glBufferSubData(GL_ARRAY_BUFFER, 0, this->vertices * sizeof(Vertex), v.data());
-        }
-
+        this->vbo.upload();
         this->dirty = false;
     }
 
     void Pillar::draw() {
         if (dirty) this->update();
 
-        glBindVertexArray(vao);
-        glDrawArrays(GL_TRIANGLES, 0, this->vertices);
+        this->vao.draw(GL_TRIANGLES, this->vbo.draw_count);
     }
 
     std::unique_ptr<uint8_t[]> read_file(const std::string &file_path) {
@@ -194,7 +156,7 @@ namespace ace { namespace draw {
         }
     }
 
-    void DrawMap::draw(const glm::vec3 &position, ShaderProgram &shader) {
+    void DrawMap::draw(const glm::vec3 &position, gl::ShaderProgram &shader) {
         for (auto &p : this->pillars) {
             if (this->scene.cam.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
                 p.draw();

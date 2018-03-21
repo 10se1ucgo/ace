@@ -12,6 +12,15 @@
 
 
 namespace ace { namespace draw {
+    namespace detail {
+#pragma pack(push, 1)
+        struct VXLVertex {
+            glm::vec3 vertex;
+            glm::vec3 color;
+            GLubyte face;
+        };
+#pragma pack(pop)
+    }
     constexpr size_t PILLAR_SIZE = 16;
 
     constexpr bool valid_build_pos(const int x, const int y, const int z) {
@@ -30,11 +39,10 @@ namespace ace { namespace draw {
     struct VXLBlocks {
         VXLBlocks(const std::vector<VXLBlock> &blocks) : VXLBlocks(blocks, get_centroid(blocks)) { }
         VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
-        void draw(const glm::mat4 &pv, ShaderProgram &s) const;
+        void draw(const glm::mat4 &pv, gl::ShaderProgram &s) const;
 
-        gl::vao vao;
-        gl::vbo vbo;
-        GLsizei vertices;
+        gl::experimental::vao vao;
+        gl::experimental::vbo<detail::VXLVertex> vbo;
         glm::vec3 scale, rotation, position, centroid;
     };
 
@@ -46,9 +54,9 @@ namespace ace { namespace draw {
 
         bool dirty;
         AceMap &map;
-        size_t x, y, vbo_size, vertices;
-        gl::vao vao;
-        gl::vbo vbo;
+        size_t x, y;
+        gl::experimental::vao vao;
+        gl::experimental::vbo<detail::VXLVertex> vbo{GL_DYNAMIC_DRAW};
     };
 
     struct DrawMap : AceMap {
@@ -56,7 +64,7 @@ namespace ace { namespace draw {
         DrawMap(scene::GameScene &s, uint8_t *buf = nullptr);
 
         void update(double dt);
-        void draw(const glm::vec3 &position, ShaderProgram& shader);
+        void draw(const glm::vec3 &position, gl::ShaderProgram& shader);
 
         bool set_point(int x, int y, int z, bool solid, uint32_t color) override;
         bool build_point(int x, int y, int z, const glm::ivec3 &color, bool force=false);

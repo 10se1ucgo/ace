@@ -10,14 +10,6 @@
 #include "glm/gtc/type_ptr.hpp"
 
 
-struct Shader {
-    Shader(const std::string &file, GLenum type);
-    ~Shader();
-    ACE_NO_COPY_MOVE(Shader)
-
-    GLuint handle;
-};
-
 #define DECLARE_UNIFORM_FUNC(T_TYPE, T_FUNC) \
 void uniform(const std::string &name, T_TYPE v0) { return glUniform1##T_FUNC(this->uniform_loc(name), v0); } \
 void uniform(const std::string &name, T_TYPE v0, T_TYPE v1) { return glUniform2##T_FUNC(this->uniform_loc(name), v0, v1); } \
@@ -35,65 +27,100 @@ void uniform(const std::string &name, const T_TYPE##2 &vec) { glUniform2##T_FUNC
 void uniform(const std::string &name, const T_TYPE##3 &vec) { glUniform3##T_FUNC##v(this->uniform_loc(name), 1, value_ptr(vec)); } \
 void uniform(const std::string &name, const T_TYPE##4 &vec) { glUniform4##T_FUNC##v(this->uniform_loc(name), 1, value_ptr(vec)); } \
 
-struct ShaderProgram {
-    ShaderProgram(std::initializer_list<Shader> shaders);
-    ~ShaderProgram();
-    ACE_NO_COPY_MOVE(ShaderProgram)
 
-    void bind() const {
-        if (bound_program == this->program) return;
-        glUseProgram(this->program);
-        bound_program = this->program;
-    }
-    static void unbind() { glUseProgram(0); }
+namespace ace { namespace gl {
+    template<typename T>
+    using uni_arg = std::pair<const char *, T>;
 
-    void uniform(const std::string &name, std::initializer_list<GLint> values);
-    void uniform(const std::string &name, std::initializer_list<GLuint> values);
-    void uniform(const std::string &name, std::initializer_list<GLfloat> values);
+    // inspired by fmtlib UDL syntax :') 
+    struct UniformArgument {
+        const char *str;
 
-    DECLARE_UNIFORM_FUNC(GLint, i)
-    DECLARE_UNIFORM_FUNC(GLuint, ui)
-    DECLARE_UNIFORM_FUNC(GLfloat, f)
-
-    DECLARE_UNIFORM_M_FUNC(2)
-    DECLARE_UNIFORM_M_FUNC(3)
-    DECLARE_UNIFORM_M_FUNC(4)
-    DECLARE_UNIFORM_M_FUNC(2x3)
-    DECLARE_UNIFORM_M_FUNC(3x2)
-    DECLARE_UNIFORM_M_FUNC(2x4)
-    DECLARE_UNIFORM_M_FUNC(4x2)
-    DECLARE_UNIFORM_M_FUNC(3x4)
-    DECLARE_UNIFORM_M_FUNC(4x3)
-
-    DECLARE_UNIFORM_V_FUNC(glm::ivec, i)
-    DECLARE_UNIFORM_V_FUNC(glm::uvec, ui)
-    DECLARE_UNIFORM_V_FUNC(glm::fvec, f)
-
-    GLuint uniform_loc(const std::string &name) {
-        try {
-            return uniform_cache.at(name);
-        } catch (const std::out_of_range &) {
-            const GLuint loc = glGetUniformLocation(this->program, name.c_str());
-            this->uniform_cache[name] = loc;
-            return loc;
+        template <typename T>
+        uni_arg<T> operator=(T &&value) const {
+            return { str, std::forward<T>(value) };
         }
-        
+    };
+
+    inline namespace literals {
+        inline UniformArgument operator""_u(const char *s, std::size_t) { return UniformArgument{ s }; }
     }
 
-    GLuint program;
-    std::unordered_map<std::string, GLuint> uniform_cache;
+    struct Shader {
+        Shader(const std::string &file, GLenum type);
+        ~Shader();
+        ACE_NO_COPY_MOVE(Shader)
 
-    static GLuint bound_program;
-};
+        GLuint handle;
+    };
 
+    struct ShaderProgram {
+        ShaderProgram(std::initializer_list<Shader> shaders);
+        ~ShaderProgram();
+        ACE_NO_COPY_MOVE(ShaderProgram)
 
-#undef DECLARE_UNIFORM
-#undef DECLARE_UNIFORM_M_FUNC
-#undef DECLARE_UNIFORM_V_FUNC
+        void bind() const {
+            if (bound_program == this->program) return;
+            glUseProgram(this->program);
+            bound_program = this->program;
+        }
+        static void unbind() { glUseProgram(0); }
 
-struct ShaderManager {
-    ShaderManager();
+        void uniform(const std::string &name, std::initializer_list<GLint> values);
+        void uniform(const std::string &name, std::initializer_list<GLuint> values);
+        void uniform(const std::string &name, std::initializer_list<GLfloat> values);
 
-    ShaderProgram model, map, sprite, billboard, text;
-};
+        DECLARE_UNIFORM_FUNC(GLint, i)
+        DECLARE_UNIFORM_FUNC(GLuint, ui)
+        DECLARE_UNIFORM_FUNC(GLfloat, f)
 
+        DECLARE_UNIFORM_M_FUNC(2)
+        DECLARE_UNIFORM_M_FUNC(3)
+        DECLARE_UNIFORM_M_FUNC(4)
+        DECLARE_UNIFORM_M_FUNC(2x3)
+        DECLARE_UNIFORM_M_FUNC(3x2)
+        DECLARE_UNIFORM_M_FUNC(2x4)
+        DECLARE_UNIFORM_M_FUNC(4x2)
+        DECLARE_UNIFORM_M_FUNC(3x4)
+        DECLARE_UNIFORM_M_FUNC(4x3)
+
+        DECLARE_UNIFORM_V_FUNC(glm::ivec, i)
+        DECLARE_UNIFORM_V_FUNC(glm::uvec, ui)
+        DECLARE_UNIFORM_V_FUNC(glm::fvec, f)
+
+        template<typename THead, typename... TTail>
+        void uniform(const uni_arg<THead> &head, const uni_arg<TTail> & ...uniforms) {
+            this->uniform(std::string(head.first), head.second);
+            return this->uniform(uniforms...);
+        }
+
+        GLuint uniform_loc(const std::string &name) {
+            try {
+                return uniform_cache.at(name);
+            } catch (const std::out_of_range &) {
+                const GLuint loc = glGetUniformLocation(this->program, name.c_str());
+                this->uniform_cache[name] = loc;
+                return loc;
+            }
+        
+        }
+
+        GLuint program;
+        std::unordered_map<std::string, GLuint> uniform_cache;
+
+        static GLuint bound_program;
+
+    private:
+        void uniform() { }
+    };
+
+    struct ShaderManager {
+        ShaderManager();
+
+        ShaderProgram model, map, sprite, billboard, text;
+    };
+
+    #undef DECLARE_UNIFORM
+    #undef DECLARE_UNIFORM_M_FUNC
+    #undef DECLARE_UNIFORM_V_FUNC
+}}

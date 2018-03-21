@@ -9,11 +9,6 @@
 
 
 namespace net {
-//    template<typename T>
-//    void ByteWriter::write<glm::tvec3<float>>(glm::vec3 value) {
-//
-//    }
-
     std::unique_ptr<uint8_t[]> inflate(uint8_t *data, size_t len) {
         z_stream infstream;
         infstream.zalloc = Z_NULL;
@@ -39,6 +34,9 @@ namespace net {
     }
 
     constexpr int VERSION = 3;
+
+    // lmao awful design, or GENIUS?
+    BaseNetClient::enet_initer BaseNetClient::initer;
 
     BaseNetClient::~BaseNetClient() {
         enet_host_flush(this->host);
@@ -172,7 +170,7 @@ namespace net {
         }
     }
 
-    void NetworkClient::send_packet(PACKET id, Loader &pkt, enet_uint32 flags) const {
+    void NetworkClient::send_packet(PACKET id, const Loader &pkt, enet_uint32 flags) const {
         ByteWriter writer;
         writer.write(static_cast<uint8_t>(id));
         pkt.write(writer);

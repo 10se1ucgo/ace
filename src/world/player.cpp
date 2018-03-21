@@ -269,7 +269,7 @@ namespace ace { namespace world {
             if(old_switch > 0 && this->switch_time <= 0.0) {
                 net::SetTool pkt;
                 pkt.tool = this->tool;
-                this->scene.client.net->send_packet(net::PACKET::SetTool, pkt);
+                this->scene.client.net.send_packet(net::PACKET::SetTool, pkt);
             }
 
             if (!this->scene.client.text_input_active()) {
@@ -409,7 +409,7 @@ namespace ace { namespace world {
         if(local_player) {
             net::SetColor pkt;
             pkt.color = color;
-            this->scene.client.net->send_packet(net::PACKET::SetColor, pkt);
+            this->scene.client.net.send_packet(net::PACKET::SetColor, pkt);
         }
     }
 

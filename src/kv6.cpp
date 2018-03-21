@@ -11,6 +11,9 @@
 #include "common.h"
 #include "util/except.h"
 
+
+using namespace detail;
+
 namespace {
     // adapted from SLAB6.C by Ken Silverman (http://advsys.net/ken)
     constexpr float GOLDRAT = 0.3819660112501052f;
@@ -47,15 +50,7 @@ namespace {
         uint16_t height;
     };
 
-    struct Vertex {
-        glm::vec3 vertex;
-        glm::vec3 color;
-        glm::vec3 normal; // face normal
-        glm::vec3 kv6norm; // kv6 normal
-//        uint8_t face; // extra face shading
-    };
-
-    void gen_faces(float x, float y, float z, glm::vec3 color, glm::vec3 kv6norm, uint8_t vis, std::vector<Vertex> &v) {
+    void gen_faces(float x, float y, float z, glm::vec3 color, glm::vec3 kv6norm, uint8_t vis, std::vector<KV6Vertex> &v) {
         const float x0 = x - 0.5f, x1 = x + 0.5f;
         const float y0 = y - 0.5f, y1 = y + 0.5f;
         const float z0 = z - 0.5f, z1 = z + 0.5f;
@@ -136,7 +131,8 @@ KV6Mesh::KV6Mesh(const std::string &name) {
 
     
 
-    KV6Vox *blocks = new KV6Vox[num_voxels];
+//    KV6Vox *blocks = new KV6Vox[num_voxels];
+    std::unique_ptr<KV6Vox[]> blocks(std::make_unique<KV6Vox[]>(num_voxels));
     for (long i = 0; i < num_voxels; i++) {
         uint8_t b = fgetc(f);
         uint8_t g = fgetc(f);
@@ -150,49 +146,30 @@ KV6Mesh::KV6Mesh(const std::string &name) {
     }
     fseek(f, xsiz * 4, SEEK_CUR);
 
-    uint16_t *xyoffset = new uint16_t[xsiz * ysiz];
+//    uint16_t *xyoffset = new uint16_t[xsiz * ysiz];
+    std::unique_ptr<uint16_t[]> xyoffset(std::make_unique<uint16_t[]>(xsiz * ysiz));
 //    fread(&xyoffset, sizeof(uint16_t), xsiz * ysiz, f);
     for (int i = 0; i < xsiz * ysiz; ++i) {
-        fread(xyoffset + i, sizeof(*xyoffset), 1, f);
+        fread(&xyoffset[i], sizeof(decltype(xyoffset)::element_type), 1, f);
     }
     fclose(f);
     
-    std::vector<Vertex> v;
-    v.reserve(24 * num_voxels);
+    this->vbo->reserve(24 * num_voxels);
 
     int p = 0;
     for(long x = 0; x < xsiz; x++) {
         for(long y = 0; y < ysiz; y++) {
             uint16_t siz = xyoffset[x * ysiz + y];
             for (uint16_t i = 0; i < siz; i++) {
-                KV6Vox b = blocks[p];
-                gen_faces(x - xpiv, -b.height + zpiv, y - ypiv, glm::vec3{ b.r, b.g, b.b } / 255.f, TABLE[b.normal], b.vis, v);
+                KV6Vox &b = blocks[p];
+                gen_faces(x - xpiv, -b.height + zpiv, y - ypiv, glm::vec3{ b.r, b.g, b.b } / 255.f, TABLE[b.normal], b.vis, this->vbo.data);
                 p++;
             }
         }
     }
 
-
-    glBindVertexArray(vao);
-
-    glBindBuffer(GL_ARRAY_BUFFER, vbo);
-    glBufferData(GL_ARRAY_BUFFER, v.size() * sizeof(Vertex), v.data(), GL_STATIC_DRAW);
-
-    glVertexAttribPointer(0, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, vertex)));
-    glEnableVertexAttribArray(0);
-    glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, color)));
-    glEnableVertexAttribArray(1);                                               
-    glVertexAttribPointer(2, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, normal)));
-    glEnableVertexAttribArray(2);                                             
-    glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(Vertex), reinterpret_cast<void*>(offsetof(Vertex, kv6norm)));
-    glEnableVertexAttribArray(3);
-//    glVertexAttribIPointer(4, 1, GL_UNSIGNED_BYTE, sizeof(Vertex),  reinterpret_cast<void*>(offsetof(Vertex, face)));
-//    glEnableVertexAttribArray(4);
-
-    this->vertices = v.size();
-
-    delete[] blocks;
-    delete[] xyoffset;
+    this->vao.attrib_pointer("3f,3f,3f,3f", this->vbo.handle);
+    this->vbo.upload();
 }
 
 // p0 -> position of ray

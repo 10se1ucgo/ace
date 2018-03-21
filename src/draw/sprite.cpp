@@ -32,51 +32,28 @@ namespace ace { namespace draw {
             data = rgba;
         }
 
-        glBindTexture(GL_TEXTURE_2D, tex);
+        glBindTexture(GL_TEXTURE_2D, this->tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
 
         auto format = data->format->BytesPerPixel == 3 ? GL_RGB : GL_RGBA;
-        glTexImage2D(GL_TEXTURE_2D, 0, format, w, h, 0, format, GL_UNSIGNED_BYTE, data->pixels);
-
-        GLfloat vertices[] = {
-            0.f, 0.f,
-            0.f,   h,
-            w,   0.f,
-            w,     h,
-        };
-
-        glBindVertexArray(vao);
-
-        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-        glBufferData(GL_ARRAY_BUFFER, sizeof(vertices), vertices, GL_STATIC_DRAW);
-        glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 2 * sizeof(GLfloat), nullptr);
-        glEnableVertexAttribArray(0); // vert
-
-        glBindBuffer(GL_ARRAY_BUFFER, models);
-        glVertexAttribPointer(1, 4, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, tint)));
-        glEnableVertexAttribArray(1); // tint
-        glVertexAttribPointer(2, 4, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, region)));
-        glEnableVertexAttribArray(2); // tint
-        glVertexAttribPointer(3, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 0));
-        glEnableVertexAttribArray(3); // model col 1                                                  offsetof(SpriteVert, model[0]) should work REEEEEE
-        glVertexAttribPointer(4, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 1));
-        glEnableVertexAttribArray(4); // model col 2
-        glVertexAttribPointer(5, 3, GL_FLOAT, GL_FALSE, sizeof(SpriteVert), reinterpret_cast<void*>(offsetof(SpriteVert, model) + sizeof(glm::mat3::col_type) * 2));
-        glEnableVertexAttribArray(5); // model col 3
-
-        glVertexAttribDivisor(0, 0);
-        for(int i = 1; i <= 5; i++) {
-            glVertexAttribDivisor(i, 1);
-        }
-
+        glTexImage2D(GL_TEXTURE_2D, 0, format, this->w, this->h, 0, format, GL_UNSIGNED_BYTE, data->pixels);
         SDL_FreeSurface(data);
+
+        this->vbo->emplace_back(0.0f, 0.0f);
+        this->vbo->emplace_back(0.0f, h);
+        this->vbo->emplace_back(w, 0.0f);
+        this->vbo->emplace_back(w, h);
+        this->vbo.upload();
+
+        this->vao.attrib_pointer("2f", this->vbo.handle)
+                 .attrib_pointer("4f,4f,3x3f", this->models.handle, 1);
     }
 
     void SpriteGroup::draw(glm::vec4 tint, glm::mat3 model, glm::vec4 region) {
-        this->verts.emplace_back(tint, model, region);
+        this->models->emplace_back(tint, model, region);
     }
 
     void SpriteGroup::draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale, Align align, glm::vec4 region) {
@@ -91,24 +68,19 @@ namespace ace { namespace draw {
         model = rotate(model, glm::radians(rotation));
         model = translate(model, -anchor);
         model = glm::scale(model, scale);
-        this->verts.emplace_back(tint, model, region);
+        this->models->emplace_back(tint, model, region);
     }
 
-    void SpriteGroup::draw(ShaderProgram &s) {
-        if (this->verts.empty()) return;
+    void SpriteGroup::draw(gl::ShaderProgram &s) {
+        if (this->models->empty()) return;
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex);
         s.uniform("sprite_tex", 0);
 
-        
-        glBindBuffer(GL_ARRAY_BUFFER, models);
-//        glInvalidateBufferData(models);
-        glBufferData(GL_ARRAY_BUFFER, this->verts.size() * sizeof(SpriteVert), this->verts.data(), GL_STREAM_DRAW);
+        this->models.upload();
 
-        glBindVertexArray(vao);
-        glDrawArraysInstanced(GL_TRIANGLE_STRIP, 0, 4, this->verts.size());
-        this->verts.clear();
+        this->vao.draw_instanced(GL_TRIANGLE_STRIP, 4, this->models.draw_count);
     }
 
     SpriteGroup *SpriteManager::get(const std::string &name, SDL_Surface *data) {
@@ -122,7 +94,7 @@ namespace ace { namespace draw {
         }
     }
 
-    void SpriteManager::draw(ShaderProgram &s) {
+    void SpriteManager::draw(gl::ShaderProgram &s) {
         std::vector<SpriteGroup *> groups;
         groups.reserve(this->sprites.size());
 
@@ -134,5 +106,8 @@ namespace ace { namespace draw {
         for(auto &x : groups) {
             x->draw(s);
         }
+//        for (auto &x : sorted_view(this->sprites.begin(), this->sprites.end(), [](auto *lhs, auto *rhs) { return lhs->second.order < rhs->second.order; })) {
+//            x->second.draw(s);
+//        }
     }
 }}

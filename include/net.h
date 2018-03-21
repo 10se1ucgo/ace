@@ -70,6 +70,11 @@ namespace net {
 
         ENetHost *host;
         ENetPeer *peer;
+
+        static struct enet_initer {
+            enet_initer() { enet_initialize(); }
+            ~enet_initer() { enet_deinitialize(); }
+        } initer;
     };
 
     struct NetworkClient : BaseNetClient {
@@ -84,7 +89,7 @@ namespace net {
         void on_disconnect(const ENetEvent& event) final;
         void on_receive(const ENetEvent& event) final;
 
-        void send_packet(PACKET id, Loader &pkt, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
+        void send_packet(PACKET id, const Loader &pkt, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
         
         ByteWriter map_writer;
         std::vector<net::ExistingPlayer> players;

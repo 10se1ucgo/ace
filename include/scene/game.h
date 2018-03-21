@@ -55,7 +55,7 @@ namespace ace { namespace scene {
         void on_mouse_button(int button, bool pressed) override;
         void on_window_resize(int ow, int oh) override;
         
-        void on_packet(net::PACKET type, std::unique_ptr<net::Loader> loader) override;
+        void on_packet(net::PACKET type, std::unique_ptr<net::Loader> ploader) override;
 
         bool on_text_typing(const std::string &text) override;
         void on_text_finished() override;
@@ -65,16 +65,18 @@ namespace ace { namespace scene {
         bool damage_point(int x, int y, int z, uint8_t damage, Face f=Face::INVALID, bool destroy = true);
 
         void set_zoom(bool zoom);
-        void set_fog_color(glm::vec3 color);
+        void set_fog_color(glm::vec3 color) const;
 
+        void send_block_action(int x, int y, int z, net::ACTION type = net::ACTION::BUILD) const;
+        void send_position_update() const;
+        void send_orientation_update() const;
+        void send_input_update() const;
+        void send_grenade(float fuse) const;
+        void send_team_change(net::TEAM new_team) const;
+        void send_weapon_change(net::WEAPON new_weapon) const;
+        void send_this_player(net::TEAM team, net::WEAPON weapon) const;
 
-        void send_block_action(int x, int y, int z, net::ACTION type = net::ACTION::BUILD);
-        void send_position_update();
-        void send_orientation_update();
-        void send_input_update();
-        void send_grenade(float fuse);
-        void send_team_change(net::TEAM new_team);
-        void send_weapon_change(net::WEAPON new_weapon);
+        void respawn_entities();
 
         template<typename TObj, typename... TArgs, typename = std::enable_if_t<std::is_base_of<world::WorldObject, TObj>::value>>
         world::WorldObject *create_object(TArgs&&... args) {
@@ -82,7 +84,7 @@ namespace ace { namespace scene {
             return queued_objects.back().get();
         }
 
-        ShaderManager &shaders;
+        gl::ShaderManager &shaders;
         draw::BillboardManager billboards;
         KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
         Camera cam;

@@ -248,7 +248,7 @@ namespace net {
     struct Loader {
         virtual ~Loader() = default;
         virtual void read(ByteReader &reader) = 0;
-        virtual void write(ByteWriter &writer) = 0;
+        virtual void write(ByteWriter &writer) const = 0;
     };
 
     struct PositionData : Loader {
@@ -257,7 +257,7 @@ namespace net {
         void read(ByteReader &reader) override {
             this->position = reader.read_vec3<float>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(position);
         }
     };
@@ -268,7 +268,7 @@ namespace net {
         void read(ByteReader &reader) override {
             this->orientation = reader.read_vec3<float>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->orientation);
         }
     };
@@ -284,7 +284,7 @@ namespace net {
                 items.emplace_back(p, o);
             }
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             
         }
     };
@@ -305,7 +305,7 @@ namespace net {
             this->sneak = flags & (1 << 6);
             this->sprint = flags & (1 << 7);
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             uint8_t flags =
                 this->up << 0 |
@@ -330,7 +330,7 @@ namespace net {
             this->primary = flags & (1 << 0);
             this->secondary = flags & (1 << 1);
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             uint8_t flags = this->primary << 0 | this->secondary << 1;
             writer.write(flags);
@@ -345,7 +345,7 @@ namespace net {
             this->pid = reader.read<uint8_t>();
             this->value = reader.read<HIT>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->value);
         }
@@ -361,7 +361,7 @@ namespace net {
             this->type = reader.read<DAMAGE>();
             this->source = reader.read_vec3<float>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->hp);
             writer.write(this->type);
             writer.write(this->source);
@@ -379,7 +379,7 @@ namespace net {
             this->position = reader.read_vec3<float>();
             this->velocity = reader.read_vec3<float>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->fuse);
             writer.write(this->position);
@@ -395,7 +395,7 @@ namespace net {
             this->pid = reader.read<uint8_t>();
             this->tool = reader.read<TOOL>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->tool);
         }
@@ -409,7 +409,7 @@ namespace net {
             this->pid = reader.read<uint8_t>();
             this->color = reader.read_color();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write_color(this->color);
         }
@@ -433,7 +433,7 @@ namespace net {
             this->color = reader.read_color();
             this->name = reader.read_bytes();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->team);
             writer.write(this->weapon);
@@ -453,7 +453,7 @@ namespace net {
             this->team = reader.read<int8_t>();
             this->weapon = reader.read<uint8_t>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->team);
             writer.write(this->weapon);
@@ -470,7 +470,7 @@ namespace net {
             this->state = reader.read<TEAM>();
             this->position = reader.read_vec3<float>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->type);
             writer.write(this->state);
             writer.write(this->position);
@@ -491,7 +491,7 @@ namespace net {
             this->position = reader.read_vec3<float>();
             this->name = reader.read_bytes();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->weapon);
             writer.write(this->team);
@@ -510,7 +510,7 @@ namespace net {
             this->value = reader.read<ACTION>();
             this->position = reader.read_vec3<uint32_t>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->value);
             writer.write(this->position);
@@ -526,7 +526,7 @@ namespace net {
             this->start = reader.read_vec3<uint32_t>();
             this->end = reader.read_vec3<uint32_t>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->start);
             writer.write(this->end);
@@ -605,7 +605,7 @@ namespace net {
                 // TODO: territory control state
             }
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write_color(this->fog_color);
             writer.write_color(this->team1_color);
@@ -628,7 +628,7 @@ namespace net {
             this->type = reader.read<KILL>();
             this->respawn_time = reader.read<uint8_t>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->killer);
             writer.write(this->type);
@@ -646,7 +646,7 @@ namespace net {
             this->type = reader.read<CHAT>();
             this->message = reader.read_bytes();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->type);
             writer.write(this->message);
@@ -659,7 +659,7 @@ namespace net {
         void read(ByteReader &reader) override {
             this->pid = reader.read<uint8_t>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
         }
     };
@@ -674,7 +674,7 @@ namespace net {
             this->winning = reader.read<TEAM>();
             this->state = reader.read<TEAM>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->object);
             writer.write(this->winning);
             writer.write(this->state);
@@ -693,7 +693,7 @@ namespace net {
             this->rate = reader.read<int8_t>();
             this->progress = reader.read<float>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->object);
             writer.write(this->team);
             writer.write(this->rate);
@@ -708,7 +708,7 @@ namespace net {
             this->pid = reader.read<uint8_t>();
             this->winning = reader.read<uint8_t>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->winning);
         }
@@ -720,7 +720,7 @@ namespace net {
         void read(ByteReader &reader) override {
             this->pid = reader.read<uint8_t>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
         }
     };
@@ -733,7 +733,7 @@ namespace net {
             this->pid = reader.read<uint8_t>();
             this->pos = reader.read_vec3<float>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->pos);
         }
@@ -745,7 +745,7 @@ namespace net {
         void read(ByteReader &reader) override {
             this->pid = reader.read<uint8_t>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
         }
     };
@@ -756,7 +756,7 @@ namespace net {
         void read(ByteReader &reader) override {
             this->color = glm::u8vec4(reader.read_color(), reader.read<uint8_t>()); // read BGR into RGB, then read A to form RGBA
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(glm::u8vec3(this->color)); // write RGB as BGR, then write A to form BGRA.
             writer.write(this->color.a);
         }
@@ -770,7 +770,7 @@ namespace net {
             this->primary = reader.read<uint8_t>();
             this->secondary = reader.read<uint8_t>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->primary);
             writer.write(this->secondary);
@@ -785,7 +785,7 @@ namespace net {
             this->pid = reader.read<uint8_t>();
             this->team = reader.read<TEAM>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->team);
         }
@@ -799,7 +799,7 @@ namespace net {
             this->pid = reader.read<uint8_t>();
             this->weapon = reader.read<WEAPON>();
         }
-        void write(ByteWriter &writer) override {
+        void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             writer.write(this->weapon);
         }

@@ -278,29 +278,24 @@ namespace ace {
     bool Weapon::reload() {
         if (!this->ply.local_player) return true;
 
-        if (this->reloading || this->secondary_ammo == 0 || this->primary_ammo == this->max_primary())
+        if (this->secondary_ammo == 0 || this->primary_ammo == this->max_primary())
             return false;
+
+                                                // whatever data we send is ignored anyways
+        this->ply.scene.client.net.send_packet(net::PACKET::WeaponReload, net::WeaponReload{});
+
+        if (!this->one_by_one() && !this->reloading)
+            this->ply.play_sound(this->reload_sound());
 
         this->reloading = true;
 
-        net::WeaponReload x; // whatever data we send is ignored anyways
-        x.pid = this->ply.pid;
-        x.primary = this->primary_ammo;
-        x.secondary = this->secondary_ammo;
-        this->ply.scene.client.net->send_packet(net::PACKET::WeaponReload, x);
-        if (!this->one_by_one())
-            this->ply.play_sound(this->reload_sound());
-
-        // playsound
         return true;
     }
 
     void Weapon::on_reload(net::WeaponReload *pkt) {
-        if (!this->ply.local_player || this->one_by_one()) {
-            this->ply.play_sound(this->reload_sound());
-        }
-
-        if (pkt != nullptr) {
+        if (pkt == nullptr) {
+            this->restock(true);
+        } else {
             this->primary_ammo = pkt->primary;
             this->secondary_ammo = pkt->secondary;
         }
@@ -379,30 +374,15 @@ namespace ace {
                     net::HitPacket hp;
                     hp.pid = kv.second->pid;
                     hp.value = type;
-                    this->ply.scene.client.net->send_packet(net::PACKET::HitPacket, hp);
+                    this->ply.scene.client.net.send_packet(net::PACKET::HitPacket, hp);
                     break;
                 }
             }
         }
 
-
-        if (!this->ply.local_player)
-            return true;
-
-        ////    this->ply.mdl_arms.scale = glm::vec3{ 1.0f };
-        //    glm::mat4 model = model_matrix(this->ply.mdl_arms.position, this->ply.mdl_arms.rotation, {1, 1, 1});
-        //    glm::vec3 ss = -draw2vox(glm::vec3{ model[0] });
-        //    glm::vec3 sh = -draw2vox(glm::vec3{ model[1] });
-        //    glm::vec3 sf = draw2vox(glm::vec3{ model[2] });
-        //
-        //    fmt::print("F: {}, ARMS F: {}\n", to_string(this->ply.f), to_string(sf));
-        //    fmt::print("S: {}, ARMS S: {}\n", to_string(this->ply.s), to_string(ss));
-        //    fmt::print("H: {}, ARMS H: {}\n", to_string(this->ply.h), to_string(sh));
-        ////    this->ply.mdl_arms.scale = glm::vec3{ 0.1f };
-
         this->primary_ammo--;
 
-        if (this->ply.scene.thirdperson)
+        if (!this->ply.local_player || this->ply.scene.thirdperson)
             return true;
 
         auto recoil = this->recoil();
@@ -424,8 +404,6 @@ namespace ace {
 
         this->ply.scene.cam.yaw += yaw * 60;
         this->ply.scene.cam.pitch -= pitch * 60;
-
-
         return true;
     }
 

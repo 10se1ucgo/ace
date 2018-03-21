@@ -5,21 +5,23 @@
 #include "gl/shader.h"
 
 namespace ace { namespace draw {
+#pragma pack(push, 1)
     struct Billboard {
         glm::vec3 position;
         glm::vec3 color;
         float size;
     };
+#pragma pack(pop)
 
     struct BillboardManager {
         BillboardManager();
 
         void draw(Billboard bb);
-        void draw(const glm::mat4 &pv, ShaderProgram &s);
+        void draw(const glm::mat4 &pv, gl::ShaderProgram &s);
 
-        gl::vao vao;
-        gl::vbo vbo;
-        glm::vec3 position;
-        std::vector<Billboard> billboards;
+        gl::experimental::vao vao;
+        gl::experimental::streaming_vbo<Billboard> vbo;
+//        gl::vbo vbo;
+//        std::vector<Billboard> billboards;
     };
 }}

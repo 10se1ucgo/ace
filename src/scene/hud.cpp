@@ -101,6 +101,9 @@ namespace ace { namespace scene {
 
         for (auto &kv : this->hud.scene.players) {
             auto &ply = kv.second;
+#ifdef NDEBUG
+            if (ply->team != this->hud.scene.ply->team) continue;
+#endif
             if (!ply->alive) continue;
 
             glm::vec2 p(ply->p);
@@ -345,7 +348,7 @@ namespace ace { namespace scene {
         net::ChatMessage cm;
         cm.type = this->cur_chat_type;
         cm.message = this->scene.client.input_buffer;
-        this->scene.client.net->send_packet(net::PACKET::ChatMessage, cm);
+        this->scene.client.net.send_packet(net::PACKET::ChatMessage, cm);
 
         this->cur_chat_type = net::CHAT::INVALID;
     }

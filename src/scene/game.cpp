@@ -7,6 +7,7 @@
 #include "world/falling_blocks.h"
 #include "util/except.h"
 
+using namespace ace::gl::literals;
 
 namespace ace { namespace scene {
     void Team::update_players(GameScene &scene) {
@@ -32,61 +33,30 @@ namespace ace { namespace scene {
         pd_upd(this->client.tasks.call_every(1, false, &GameScene::send_position_update, this)),
         od_upd(this->client.tasks.call_every(1/30.f, false, &GameScene::send_orientation_update, this)),
         ply_name(std::move(ply_name)) {
-
         // pyspades has a dumb system where sending more
         // than one PositionData packet every 0.7 seconds will cause you to rubberband
         // `if current_time - last_update < 0.7: rubberband()`
         // If anything, that < really should be a > but oh well.
-        
-
 
         this->set_fog_color(glm::vec3(state_data.fog_color) / 255.f);
-
-        this->shaders.model.bind();
-        this->shaders.model.uniform("light_pos", glm::normalize(glm::vec3{ -0.16, 0.8, 0.56 }));
-
-        glCullFace(GL_FRONT);
-        glEnable(GL_MULTISAMPLE);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        fmt::print("{} {} {}\n", state_data.pid, state_data.team1_name, state_data.team2_name);
-
-        
-//        for(auto &ply : players) {
-//            auto *p = this->get_ply(ply.pid);
-//            p->pid = ply.pid;
-//            p->team = ply.team;
-//            p->name = ply.name;
-//            p->set_weapon(ply.weapon);
-//            p->set_tool(ply.tool);
-//            p->set_color(ply.color);
-//            p->kills = ply.kills;
-//        }
-
-        if(state_data.mode == 0) {
-            auto &mode = state_data.state.ctf;
-            // uint8_t id, glm::vec3 position, net::TEAM team, uint8_t carrier
-            entities.emplace(uint8_t(net::OBJECT::BLUE_BASE), std::make_unique<world::CommandPost>(*this, 0, mode.team1_base, net::TEAM::TEAM1, 255));
-            entities.emplace(uint8_t(net::OBJECT::GREEN_BASE), std::make_unique<world::CommandPost>(*this, 0, mode.team2_base, net::TEAM::TEAM2, 255));
-            entities.emplace(uint8_t(net::OBJECT::BLUE_FLAG), std::make_unique<world::Flag>(*this, 0, mode.team1_flag, net::TEAM::TEAM1, mode.team1_carrier));
-            entities.emplace(uint8_t(net::OBJECT::GREEN_FLAG), std::make_unique<world::Flag>(*this, 0, mode.team2_flag, net::TEAM::TEAM2, mode.team2_carrier));
-
-            auto &t1 = this->get_team(net::TEAM::TEAM1);
-            t1.score = mode.team1_score; t1.max_score = mode.cap_limit;
-            auto &t2 = this->get_team(net::TEAM::TEAM2);
-            t2.score = mode.team2_score; t2.max_score = mode.cap_limit;
-        }
 
         this->ply = this->get_ply(state_data.pid, true, true);
         auto p = this->map.get_random_point();
         this->ply->set_position(p.x, p.y, p.z - 32);
 
-
-        this->client.sound.play("intro.wav", {}, 100, true);
+        this->respawn_entities();
 
         cam.set_projection(75.0f, client.width(), client.height(), 0.1f, 128.f);
-
+        
         this->client.set_exclusive_mouse(true);
+        this->client.sound.play("intro.wav", {}, 100, true);
+
+#ifdef NDEBUG
+        this->client.tasks.call_later(0.0, [this] { this->send_this_player(random::choice_range(net::TEAM::TEAM1, net::TEAM::TEAM2), random::choice_range(net::WEAPON::SEMI, net::WEAPON::SHOTGUN)); });
+#endif
+
+        glEnable(GL_MULTISAMPLE);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     GameScene::~GameScene() {
@@ -100,12 +70,11 @@ namespace ace { namespace scene {
         // 3d
         glDisable(GL_BLEND);
         glEnable(GL_CULL_FACE);
+        glCullFace(GL_FRONT);
         glEnable(GL_DEPTH_TEST);
 
         shaders.map.bind();
-        shaders.map.uniform("mvp", cam.matrix());
-        shaders.map.uniform("alpha", 1.0f);
-        shaders.map.uniform("replacement_color", glm::vec3(0.f));
+        shaders.map.uniform("mvp"_u = cam.matrix(), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
         map.draw({ this->cam.position.x, this->cam.position.z, -this->cam.position.y }, shaders.map);
 
 
@@ -126,8 +95,7 @@ namespace ace { namespace scene {
         }
 
         this->shaders.billboard.bind();
-        this->shaders.billboard.uniform("cam_right", -this->cam.right);
-        this->shaders.billboard.uniform("cam_up", this->cam.up);
+        this->shaders.billboard.uniform("cam_right"_u = -this->cam.right, "cam_up"_u = this->cam.up);
         this->billboards.draw(this->cam.matrix(), this->shaders.billboard);
 
         if (!this->thirdperson)
@@ -162,7 +130,7 @@ namespace ace { namespace scene {
         }
 
         while(!queued_objects.empty()) {
-            auto it = queued_objects.begin();
+            const auto it = queued_objects.begin();
             this->objects.emplace_back(std::move(*it));
             queued_objects.erase(it);
         }
@@ -181,31 +149,35 @@ namespace ace { namespace scene {
         hud.on_key(scancode, modifiers, pressed);
 
         if (pressed) {
+#ifndef NDEBUG
             net::WEAPON wep = net::WEAPON::INVALID;
-
+#endif
             switch(scancode) {
             case SDL_SCANCODE_1: this->ply->set_tool(net::TOOL::SPADE); break;
             case SDL_SCANCODE_2: this->ply->set_tool(net::TOOL::BLOCK); break;
             case SDL_SCANCODE_3: this->ply->set_tool(net::TOOL::WEAPON); break;
             case SDL_SCANCODE_4: this->ply->set_tool(net::TOOL::GRENADE); break;
+            case SDL_SCANCODE_R: this->ply->get_tool()->reload(); break;
+#ifndef NDEBUG
             case SDL_SCANCODE_5: wep = net::WEAPON::SEMI; break;
             case SDL_SCANCODE_6: wep = net::WEAPON::SMG; break;
             case SDL_SCANCODE_7: wep = net::WEAPON::SHOTGUN; break;
-            case SDL_SCANCODE_R: this->ply->get_tool()->reload(); break;
-#ifndef NDEBUG
+
             case SDL_SCANCODE_F2: this->thirdperson = !this->thirdperson; break;
             case SDL_SCANCODE_F3: this->ply->alive = !this->ply->alive; break;
 #endif
             default: break;
             }
 
+#ifndef NDEBUG
             if(wep != net::WEAPON::INVALID) {
                 net::ExistingPlayer x;
                 x.name = this->ply_name;
                 x.team = net::TEAM::TEAM1;
                 x.weapon = wep;
-                this->client.net->send_packet(net::PACKET::ExistingPlayer, x);
+                this->client.net.send_packet(net::PACKET::ExistingPlayer, x);
             }
+#endif
         }
     };
 
@@ -505,32 +477,32 @@ namespace ace { namespace scene {
         cam.set_projection(zoom ? 37.5f : 75.0f, client.width(), client.height(), 0.1f, 128.f);
     }
 
-    void GameScene::send_block_action(int x, int y, int z, net::ACTION type) {
+    void GameScene::send_block_action(int x, int y, int z, net::ACTION type) const {
         if (type == net::ACTION::GRENADE) return;
 
         net::BlockAction pkt;
         pkt.position = { x, y, z };
         pkt.value = type;
-        this->client.net->send_packet(net::PACKET::BlockAction, pkt);
+        this->client.net.send_packet(net::PACKET::BlockAction, pkt);
     }
 
-    void GameScene::send_position_update() {
+    void GameScene::send_position_update() const {
         if (!this->ply || !this->ply->alive) return;
 
         net::PositionData pd;
         pd.position = this->ply->p;
-        this->client.net->send_packet(net::PACKET::PositionData, pd, ENET_PACKET_FLAG_UNSEQUENCED);
+        this->client.net.send_packet(net::PACKET::PositionData, pd, ENET_PACKET_FLAG_UNSEQUENCED);
     }
 
-    void GameScene::send_orientation_update() {
+    void GameScene::send_orientation_update() const {
         if (!this->ply || !this->ply->alive) return;
 
         net::OrientationData od;
         od.orientation = this->ply->f;
-        this->client.net->send_packet(net::PACKET::OrientationData, od, ENET_PACKET_FLAG_UNSEQUENCED);
+        this->client.net.send_packet(net::PACKET::OrientationData, od, ENET_PACKET_FLAG_UNSEQUENCED);
     }
 
-    void GameScene::send_input_update() {
+    void GameScene::send_input_update() const {
         if (!this->ply || !this->ply->alive) return;
 
         net::InputData id;
@@ -543,42 +515,67 @@ namespace ace { namespace scene {
         id.jump = this->ply->jump;
         id.sneak = this->ply->sneak;
         id.sprint = this->ply->sprint;
-        this->client.net->send_packet(net::PACKET::InputData, id);
+        this->client.net.send_packet(net::PACKET::InputData, id);
 
         net::WeaponInput wi;
         wi.primary = this->ply->primary_fire;
         wi.secondary = this->ply->secondary_fire;
-        this->client.net->send_packet(net::PACKET::WeaponInput, wi);
+        this->client.net.send_packet(net::PACKET::WeaponInput, wi);
     }
 
-    void GameScene::send_grenade(float fuse) {
+    void GameScene::send_grenade(float fuse) const {
         if (!this->ply || !this->ply->alive) return;
 
         net::GrenadePacket gp;
         gp.position = this->ply->p;
         gp.velocity = this->ply->f + this->ply->v;
         gp.fuse = fuse;
-        this->client.net->send_packet(net::PACKET::GrenadePacket, gp);
+        this->client.net.send_packet(net::PACKET::GrenadePacket, gp);
     }
 
-    void GameScene::send_team_change(net::TEAM new_team) {
+    void GameScene::send_team_change(net::TEAM new_team) const {
         net::ChangeTeam ct;
         ct.team = new_team;
-        this->client.net->send_packet(net::PACKET::ChangeTeam, ct);
+        this->client.net.send_packet(net::PACKET::ChangeTeam, ct);
     }
 
-    void GameScene::send_weapon_change(net::WEAPON new_weapon) {
+    void GameScene::send_weapon_change(net::WEAPON new_weapon) const {
         net::ChangeWeapon cw;
         cw.weapon = new_weapon;
-        this->client.net->send_packet(net::PACKET::ChangeWeapon, cw);
+        this->client.net.send_packet(net::PACKET::ChangeWeapon, cw);
     }
 
-    void GameScene::set_fog_color(glm::vec3 color) {
+    void GameScene::send_this_player(net::TEAM team, net::WEAPON weapon) const {
+        net::ExistingPlayer x;
+        x.name = this->ply_name;
+        x.team = team;
+        x.weapon = weapon;
+        this->client.net.send_packet(net::PACKET::ExistingPlayer, x);
+    }
+
+    void GameScene::respawn_entities() {
+        this->entities.clear();
+        if (this->state_data.mode == 0) {
+            auto &mode = this->state_data.state.ctf;
+            // uint8_t id, glm::vec3 position, net::TEAM team, uint8_t carrier
+            this->entities.emplace(uint8_t(net::OBJECT::BLUE_BASE), std::make_unique<world::CommandPost>(*this, 0, mode.team1_base, net::TEAM::TEAM1, 255));
+            this->entities.emplace(uint8_t(net::OBJECT::GREEN_BASE), std::make_unique<world::CommandPost>(*this, 0, mode.team2_base, net::TEAM::TEAM2, 255));
+            this->entities.emplace(uint8_t(net::OBJECT::BLUE_FLAG), std::make_unique<world::Flag>(*this, 0, mode.team1_flag, net::TEAM::TEAM1, mode.team1_carrier));
+            this->entities.emplace(uint8_t(net::OBJECT::GREEN_FLAG), std::make_unique<world::Flag>(*this, 0, mode.team2_flag, net::TEAM::TEAM2, mode.team2_carrier));
+
+            auto &t1 = this->get_team(net::TEAM::TEAM1);
+            t1.score = mode.team1_score; t1.max_score = mode.cap_limit;
+            auto &t2 = this->get_team(net::TEAM::TEAM2);
+            t2.score = mode.team2_score; t2.max_score = mode.cap_limit;
+        }
+    }
+
+    void GameScene::set_fog_color(glm::vec3 color) const {
         glClearColor(color.r, color.g, color.b, 1.0f);
         // todo: uniform buffer?
-        shaders.map.bind();
-        shaders.map.uniform("fog_color", color);
-        shaders.model.bind();
-        shaders.model.uniform("fog_color", color);
+        this->shaders.map.bind();
+        this->shaders.map.uniform("fog_color", color);
+        this->shaders.model.bind();
+        this->shaders.model.uniform("fog_color"_u = color, "light_pos"_u = normalize(glm::vec3{ -0.16, 0.8, 0.56 }));
     }
 }}

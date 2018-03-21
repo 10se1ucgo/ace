@@ -13,22 +13,26 @@
 
 namespace ace { namespace draw {
     namespace detail {
-        struct GlyphVertex {
-            glm::vec4 pos_tex;
-            glm::vec3 color;
-        };
+
     }
 
     struct Font {
         Font(const std::string &name, int size, bool monochrome, FT_Library ft);
         void draw(const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
-        void draw(const glm::mat4 &pv, ShaderProgram &s);
+        void draw(const glm::mat4 &pv, gl::ShaderProgram &s);
         glm::vec2 measure(const std::string &str, glm::vec2 scale) const;
         int size() const { return size_; }
 
     private:
-        gl::vao vao;
-        gl::vbo vbo;
+#pragma pack(push, 1)
+        struct GlyphVertex {
+            glm::vec4 pos_tex;
+            glm::vec3 color;
+        };
+#pragma pack(pop)
+
+        gl::experimental::vao vao;
+        gl::experimental::streaming_vbo<GlyphVertex> vbo;
         gl::texture tex;
 
         unsigned int width, height;
@@ -39,7 +43,9 @@ namespace ace { namespace draw {
             float tx;
         } chars[256];
 
-        std::vector<detail::GlyphVertex> vertices;
+
+
+//        std::vector<GlyphVertex> vertices;
     };
 
     struct FontManager {
@@ -48,7 +54,7 @@ namespace ace { namespace draw {
         ACE_NO_COPY_MOVE(FontManager)
 
         Font *get(const std::string &name, int size, bool antialias=true);
-        void draw(const glm::mat4 &pv, ShaderProgram &s);
+        void draw(const glm::mat4 &pv, gl::ShaderProgram &s);
     private:
         FT_Library ftl;
         std::unordered_map<std::string, Font> fonts;

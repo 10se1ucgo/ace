@@ -3,7 +3,6 @@
 #include "scene/game.h"
 
 namespace ace { namespace world {
-
     FallingBlocks::FallingBlocks(scene::GameScene& scene, const std::vector<VXLBlock>& blocks):
         WorldObject(scene),
         mesh(blocks),
@@ -35,12 +34,12 @@ namespace ace { namespace world {
         }
 
         this->mesh.rotation += this->direction * float(80 * dt);
-        this->mesh.position = { this->position.x, -this->position.z, this->position.y };
+        this->mesh.position = ace::vox2draw(this->position);
         return false;
     }
 
     void FallingBlocks::draw() {
-        ShaderProgram &s = scene.shaders.map;
+        gl::ShaderProgram &s = scene.shaders.map;
         s.bind();
         s.uniform("alpha", alpha);
 
