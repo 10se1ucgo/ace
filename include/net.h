@@ -8,7 +8,7 @@
 namespace ace { class GameClient; }
 
 namespace net {
-    std::unique_ptr<uint8_t[]> inflate(uint8_t *data, size_t len);
+    std::vector<uint8_t> inflate(uint8_t *data, size_t len, size_t initial_size = 2 << 16);
 
     enum class NetState {
         UNCONNECTED,

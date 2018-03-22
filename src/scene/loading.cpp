@@ -86,7 +86,7 @@ namespace ace { namespace scene {
             // hey so im pretty sure calling client.set_scene invalidates this object (this->scene.reset() destroys this)
             // so im gonna quickly copy/move all of the important stuff out of the class before we destroy it
             // is this bad design? absolutely. i think.
-            client.set_scene<GameScene>(*reinterpret_cast<net::StateData *>(packet.get()), client.net.ply_name, buf.get());
+            client.set_scene<GameScene>(*reinterpret_cast<net::StateData *>(packet.get()), client.net.ply_name, buf.data());
             for (auto &pkt : saved_loaders) {
                 client.scene->on_packet(pkt.first, std::move(pkt.second));
             }

@@ -6,29 +6,52 @@
 #include "scene/loading.h"
 
 
-
-
 namespace net {
-    std::unique_ptr<uint8_t[]> inflate(uint8_t *data, size_t len) {
-        z_stream infstream;
-        infstream.zalloc = Z_NULL;
-        infstream.zfree = Z_NULL;
-        infstream.opaque = Z_NULL;
+    // inspired by Python std zlib.decompressobj()
+//    struct InflateObject {
+//        InflateObject() {
+//            stream.zalloc = Z_NULL;
+//            stream.zfree = Z_NULL;
+//            stream.opaque = Z_NULL;
+//            stream.avail_in = 0;
+//            stream.next_in = Z_NULL;
+//            inflateInit(&stream);
+//        }
+//    private:
+//        z_stream stream;
+//    };
 
-        auto alloc_len = 1024 * 1024 * 8; // 8 mb
-        std::unique_ptr<uint8_t[]> buf = std::make_unique<uint8_t[]>(alloc_len);
-//        uint8_t *buf = new uint8_t[alloc_len];
+    std::vector<uint8_t> inflate(uint8_t *data, size_t len, size_t initial_size) {
+        z_stream stream;
 
-        infstream.avail_in = len; // size of input
-        infstream.next_in = data; // input char array
-        infstream.avail_out = alloc_len; // size of output
-        infstream.next_out = buf.get(); // output char array
+        stream.zalloc = Z_NULL;
+        stream.zfree = Z_NULL;
+        stream.opaque = Z_NULL;
 
-        inflateInit(&infstream);
-        fmt::print("{}\n", inflate(&infstream, Z_FINISH));
-        inflateEnd(&infstream);
+        std::vector<uint8_t> buf(initial_size);
 
-        // TODO make this not awful
+        stream.next_in = data;
+        stream.avail_in = len;
+        stream.next_out = buf.data();
+        stream.avail_out = buf.size();
+        
+        int status = inflateInit(&stream);
+        do {
+            if (status != Z_OK && status != Z_BUF_ERROR) {
+                inflateEnd(&stream);
+                THROW_ERROR("ERROR INFLATING DATA (size {}): {}", len, zError(status));
+            }
+
+            status = inflate(&stream, Z_FINISH);
+
+            size_t position = stream.next_out - buf.data();
+            if (position >= buf.size()) {
+                buf.resize(position * 2);
+            }
+            stream.avail_out = buf.size() - position;
+            stream.next_out = buf.data() + position;
+        } while (status != Z_STREAM_END);
+        inflateEnd(&stream);
 
         return buf;
     }
