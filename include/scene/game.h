@@ -68,6 +68,7 @@ namespace ace { namespace scene {
         void set_fog_color(glm::vec3 color) const;
 
         void send_block_action(int x, int y, int z, net::ACTION type = net::ACTION::BUILD) const;
+        void send_block_line(glm::ivec3 p1, glm::ivec3 p2) const;
         void send_position_update() const;
         void send_orientation_update() const;
         void send_input_update() const;

@@ -250,6 +250,7 @@ namespace ace { namespace scene {
             net::BlockLine *pkt = static_cast<net::BlockLine *>(loader);
             auto *ply = this->get_ply(pkt->pid);
             std::vector<glm::ivec3> blocks = this->map.block_line(pkt->start, pkt->end);
+            ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
             for(auto &block : blocks) {
                 this->build_point(block.x, block.y, block.z, ply ? ply->color : glm::vec3{ 255, 255, 255 }, true);
             }
@@ -480,10 +481,17 @@ namespace ace { namespace scene {
     void GameScene::send_block_action(int x, int y, int z, net::ACTION type) const {
         if (type == net::ACTION::GRENADE) return;
 
-        net::BlockAction pkt;
-        pkt.position = { x, y, z };
-        pkt.value = type;
-        this->client.net.send_packet(net::PACKET::BlockAction, pkt);
+        net::BlockAction ba;
+        ba.position = { x, y, z };
+        ba.value = type;
+        this->client.net.send_packet(net::PACKET::BlockAction, ba);
+    }
+
+    void GameScene::send_block_line(glm::ivec3 p1, glm::ivec3 p2) const {
+        net::BlockLine bl;
+        bl.start = p1;
+        bl.end = p2;
+        this->client.net.send_packet(net::PACKET::BlockLine, bl);
     }
 
     void GameScene::send_position_update() const {

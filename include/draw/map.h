@@ -39,11 +39,15 @@ namespace ace { namespace draw {
     struct VXLBlocks {
         VXLBlocks(const std::vector<VXLBlock> &blocks) : VXLBlocks(blocks, get_centroid(blocks)) { }
         VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
+        void update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center, bool gen_vis=false);
         void draw(const glm::mat4 &pv, gl::ShaderProgram &s) const;
 
         gl::experimental::vao vao;
         gl::experimental::vbo<detail::VXLVertex> vbo;
         glm::vec3 scale, rotation, position, centroid;
+
+    private:
+        uint8_t get_vis(std::unordered_set<glm::ivec3> &map, glm::ivec3 pos);
     };
 
     struct Pillar {
@@ -72,15 +76,20 @@ namespace ace { namespace draw {
         bool damage_point(int x, int y, int z, uint8_t damage);
 
         static glm::ivec3 next_block(int x, int y, int z, Face face) {
+            glm::ivec3 pos;
             switch(face) {
-                case Face::LEFT: return { x - 1, y, z };
-                case Face::RIGHT: return { x + 1, y, z };
-                case Face::BACK: return { x, y - 1, z };
-                case Face::FRONT: return { x, y + 1, z };
-                case Face::TOP: return { x, y, z - 1 };
-                case Face::BOTTOM: return { x, y, z + 1 };
-                default: return {-1, -1, -1};
+                case Face::LEFT: pos = { x - 1, y, z }; break;
+                case Face::RIGHT: pos = { x + 1, y, z }; break;
+                case Face::BACK: pos = { x, y - 1, z }; break;
+                case Face::FRONT: pos = { x, y + 1, z }; break;
+                case Face::TOP: pos = { x, y, z - 1 }; break;
+                case Face::BOTTOM: pos = { x, y, z + 1 }; break;
+                default: return { -1, -1, -1 };
             }
+            if(is_valid_pos(pos.x, pos.y, pos.z)) {
+                return pos;
+            }
+            return { -1, -1, -1 };
         }
 
         static glm::vec3 get_face(int x, int y, int z, Face face) {

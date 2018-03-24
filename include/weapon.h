@@ -81,6 +81,8 @@ namespace ace {
         bool on_primary() final;
         bool on_secondary() final;
 
+        void spade(bool secondary);
+
         KV6 mdl;
         bool last_secondary;
     };
@@ -97,7 +99,7 @@ namespace ace {
         int max_secondary() final { return 1; }
 
         float primary_rate() final { return 0.5f; }
-        float secondary_rate() final { return 0.1f; }
+        float secondary_rate() final { return -1; }
 
         void restock(bool primary = false) final { Tool::restock(true); }
 
@@ -110,8 +112,12 @@ namespace ace {
         bool on_primary() final;
         bool on_secondary() final;
 
+        void ghost_block_line();
+
         KV6 mdl;
         std::unique_ptr<draw::VXLBlocks> ghost_block;
+        glm::ivec3 m1, m2;
+        bool last_secondary;
     };
 
     struct GrenadeTool final : Tool {
@@ -125,8 +131,8 @@ namespace ace {
         int max_primary() final { return 3; }
         int max_secondary() final { return 0; }
 
-        float primary_rate() final { return 0.2f; }
-        float secondary_rate() final { return 0.0f; }
+        float primary_rate() final { return -1; }
+        float secondary_rate() final { return -1; }
 
         void restock(bool primary = false) final { Tool::restock(true); }
 
@@ -136,6 +142,7 @@ namespace ace {
 
         bool on_primary() final;
 
+        void deploy() final;
 
         KV6 mdl;
         bool last_primary;

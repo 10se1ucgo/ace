@@ -7,6 +7,9 @@
 #include "world/tracer.h"
 #include "world/grenade.h"
 #include "world/debris.h"
+#include "draw/map.h"
+#include <glm/gtx/string_cast.hpp>
+
 
 namespace ace {
     Tool::Tool(world::DrawPlayer& ply) : ply(ply) {
@@ -21,8 +24,7 @@ namespace ace {
                 if (this->on_primary())
                     this->next_primary = this->ply.scene.time + this->primary_rate();
             }
-        }
-        else if (this->ply.secondary_fire && this->secondary_rate() > 0.f) {
+        } else if (this->ply.secondary_fire && this->secondary_rate() > 0.f) {
             if ((this->secondary_ammo > 0 || this->max_secondary() < 0) && this->ply.scene.time >= this->next_secondary) {
                 if (this->on_secondary())
                     this->next_secondary = this->ply.scene.time + this->secondary_rate();
@@ -31,7 +33,7 @@ namespace ace {
     }
 
     SpadeTool::SpadeTool(world::DrawPlayer& ply) : Tool(ply), mdl(ply.scene.models.get("spade.kv6"), 0.05f) {
-        last_secondary = this->ply.secondary_fire;
+        this->last_secondary = this->ply.secondary_fire;
     }
 
     std::string SpadeTool::display_ammo() { return this->ply.blocks.display_ammo(); }
@@ -39,10 +41,10 @@ namespace ace {
     std::string SpadeTool::ammo_icon() { return this->ply.blocks.ammo_icon(); }
 
     void SpadeTool::update(double dt) {
-        if (this->ply.secondary_fire && !last_secondary) {
+        if (this->ply.secondary_fire && !this->last_secondary) {
             this->next_secondary = this->ply.scene.time + this->secondary_rate();
         }
-        last_secondary = this->ply.secondary_fire;
+        this->last_secondary = this->ply.secondary_fire;
         Tool::update(dt);
     }
 
@@ -56,26 +58,29 @@ namespace ace {
     }
 
     bool SpadeTool::on_primary() {
-        glm::ivec3 hit;
-        Face f = this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit);
-        if (f != Face::INVALID && all(lessThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
-            this->ply.play_sound("hitground.wav");
-            this->ply.scene.damage_point(hit.x, hit.y, hit.z, this->ply.local_player ? 64 : 0, f);
-        }
-        else {
-            this->ply.play_sound("woosh.wav");
-        }
-        // glm::distance2;
+        this->spade(false);
         return true;
     }
 
     bool SpadeTool::on_secondary() {
+        this->spade(true);
+        return true;
+    }
+
+    void SpadeTool::spade(bool secondary) {
         glm::ivec3 hit;
         Face f = this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit);
-        if (f != Face::INVALID && this->ply.local_player && distance2(this->ply.p, glm::vec3(hit)) < 3 * 3) {
-            this->ply.scene.destroy_point(hit.x, hit.y, hit.z, net::ACTION::SPADE);
+
+        if (f == Face::INVALID || !all(lessThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
+            return this->ply.play_sound("woosh.wav");;
         }
-        return true;
+
+        if (secondary) {
+            if(this->ply.local_player) this->ply.scene.destroy_point(hit.x, hit.y, hit.z, net::ACTION::SPADE);
+        } else {
+            this->ply.scene.damage_point(hit.x, hit.y, hit.z, this->ply.local_player ? 64 : 0, f);
+        }
+        this->ply.play_sound("hitground.wav");
     }
 
     void SpadeTool::transform() {
@@ -99,12 +104,36 @@ namespace ace {
         this->mdl.local_rotation = this->ply.mdl_arms.local_rotation;
     }
 
-    BlockTool::BlockTool(world::DrawPlayer& ply) : Tool(ply), mdl(ply.scene.models.get("block.kv6"), 0.05f) {
+    BlockTool::BlockTool(world::DrawPlayer& ply) : Tool(ply), mdl(ply.scene.models.get("block.kv6"), 0.065f), m1(-1), m2(-1) {
         this->mdl.local_rotation.y = 1;
-        this->mdl.scale = glm::vec3(0.065);
+        this->mdl.local_scale = glm::vec3(0.05f);
+        this->last_secondary = this->ply.secondary_fire;
     }
 
     void BlockTool::update(double dt) {
+        if (this->ply.local_player) {
+            glm::ivec3 hit;
+            Face face = this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit);
+            hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
+
+
+
+            if(!this->ply.secondary_fire) {
+                if(this->last_secondary) {
+                    this->ply.scene.send_block_line(this->m1, this->m2);
+                    this->m1 = this->m2 = hit;
+                    this->ghost_block_line(); // revert ghost block to single block (inefficient i know)
+                }
+                this->m1 = hit;
+            } else {
+                if (this->m2 != hit) {
+                    this->m2 = hit;
+                    this->ghost_block_line();
+                }
+            }
+
+            this->last_secondary = this->ply.secondary_fire;
+        }
         Tool::update(dt);
     }
 
@@ -122,7 +151,7 @@ namespace ace {
         if (!this->ply.local_player) return;
 
         this->ply.scene.shaders.map.bind();
-        this->ply.scene.shaders.map.uniform("alpha", 0.25f);
+        this->ply.scene.shaders.map.uniform("alpha", 0.5f);
         this->ply.scene.shaders.map.uniform("replacement_color", glm::vec3{ this->ply.color } / 255.f);
         glEnable(GL_BLEND);
         glDepthMask(GL_FALSE);
@@ -142,7 +171,7 @@ namespace ace {
         if (face == Face::INVALID) {
             return false;
         }
-        hit = this->ply.scene.map.next_block(hit.x, hit.y, hit.z, face);
+        hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
         this->ply.scene.build_point(hit.x, hit.y, hit.z, this->ply.color, false);
         this->ply.play_sound("switch.wav", 50);
         //    auto dir = rand_normalized();
@@ -154,19 +183,32 @@ namespace ace {
     }
 
     bool BlockTool::on_secondary() {
-        if (!this->ply.local_player) return true;
-
-
-        glm::ivec3 hit;
-        if (this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit) != Face::INVALID) {
-            uint8_t a, r, g, b;
-            unpack_color(this->ply.scene.map.get_color(hit.x, hit.y, hit.z), &a, &r, &g, &b);
-            this->ply.set_color({ r, g, b });
-            this->ply.scene.hud.palret.position = glm::vec2(-50, -50);
-
-            //        this->ply.scene.destroy_point(hit.x, hit.y, hit.z);
-        }
         return true;
+
+//        if (!this->ply.local_player) return true;
+//
+//
+//        glm::ivec3 hit;
+//        if (this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit) != Face::INVALID) {
+//            uint8_t a, r, g, b;
+//            unpack_color(this->ply.scene.map.get_color(hit.x, hit.y, hit.z), &a, &r, &g, &b);
+//            this->ply.set_color({ r, g, b });
+//            this->ply.scene.hud.palret.position = glm::vec2(-50, -50);
+//
+//            //        this->ply.scene.destroy_point(hit.x, hit.y, hit.z);
+//        }
+//        return true;
+    }
+
+    void BlockTool::ghost_block_line() {
+        if (!this->ply.local_player) return;
+
+        auto blocks(this->ply.scene.map.block_line(this->m1, this->m2));
+        std::vector<VXLBlock> d_blocks;
+        for(auto &x : blocks) {
+            d_blocks.push_back({x, 0xFF000000});
+        }
+        this->ghost_block->update(d_blocks, this->m2, true);
     }
 
     void BlockTool::transform() {
@@ -192,16 +234,11 @@ namespace ace {
             this->ghost_block = std::make_unique<draw::VXLBlocks>(std::vector<VXLBlock>{ VXLBlock{ { 0, 0, 0 }, 0xFF000000, 0b11111111 } });
         }
 
-        glm::ivec3 hit;
-        Face face = this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit);
-        glm::ivec3 h = this->ply.scene.map.next_block(hit.x, hit.y, hit.z, face);
-
-        this->ghost_block->position = { h.x, -h.z, h.y };
+        this->ghost_block->position = vox2draw(this->ply.secondary_fire ? this->m2 : this->m1);
     }
 
     GrenadeTool::GrenadeTool(world::DrawPlayer& ply) : Tool(ply), mdl(ply.scene.models.get("grenade.kv6"), 0.05f) {
-        this->last_primary = this->ply.primary_fire;
-        this->fuse = MAX_FUSE;
+        this->deploy();
     }
 
     void GrenadeTool::update(double dt) {
@@ -237,6 +274,11 @@ namespace ace {
         this->ply.scene.create_object<world::Grenade>(this->ply.p, this->ply.f + this->ply.v, this->fuse);
         this->primary_ammo--;
         return true;
+    }
+
+    void GrenadeTool::deploy() {
+        this->last_primary = this->ply.primary_fire;
+        this->fuse = MAX_FUSE;
     }
 
     void GrenadeTool::transform() {

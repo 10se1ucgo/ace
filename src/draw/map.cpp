@@ -68,7 +68,19 @@ namespace ace { namespace draw {
     }
 
     VXLBlocks::VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) : scale(1), rotation(0), position(0) {
-        this->centroid += center;
+        this->vao.attrib_pointer("3f,3f,1B", this->vbo.handle);
+        this->update(blocks, center);
+    }
+
+    void VXLBlocks::update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center, bool gen_vis) {
+        this->centroid = center;
+
+        std::unordered_set<glm::ivec3> bmap;
+        if(gen_vis) {
+            for (const VXLBlock &block : blocks) {
+                bmap.emplace(block.position.x, block.position.y, block.position.z);
+            }
+        }
 
         for (const VXLBlock &block : blocks) {
             uint8_t r, g, b, a;
@@ -78,17 +90,28 @@ namespace ace { namespace draw {
                 block.position.x - this->centroid.x,
                 block.position.y - this->centroid.y,
                 block.position.z - this->centroid.z,
-                block.vis, glm::vec3{ r, g, b } / 255.f, this->vbo.data
+                gen_vis ? get_vis(bmap, block.position) : block.vis, glm::vec3{ r, g, b } / 255.f, this->vbo.data
             );
         }
-        
-        this->vao.attrib_pointer("3f,3f,1B", this->vbo.handle);
         this->vbo.upload();
     }
 
     void VXLBlocks::draw(const glm::mat4& pv, gl::ShaderProgram& s) const {
         s.uniform("mvp", pv * model_matrix(this->position, this->rotation, this->scale));
         this->vao.draw(GL_TRIANGLES, this->vbo.draw_count);
+    }
+
+    uint8_t VXLBlocks::get_vis(std::unordered_set<glm::ivec3> &map, glm::ivec3 pos) {
+        if (!map.count(pos)) return 0;
+
+        uint8_t vis = 0;
+        if (!map.count({pos.x - 1, pos.y, pos.z})) vis |= 1 << int(Face::LEFT);
+        if (!map.count({pos.x + 1, pos.y, pos.z})) vis |= 1 << int(Face::RIGHT);
+        if (!map.count({pos.x, pos.y - 1, pos.z})) vis |= 1 << int(Face::BACK);
+        if (!map.count({pos.x, pos.y + 1, pos.z})) vis |= 1 << int(Face::FRONT);
+        if (!map.count({pos.x, pos.y, pos.z - 1})) vis |= 1 << int(Face::TOP);
+        if (!map.count({pos.x, pos.y, pos.z + 1})) vis |= 1 << int(Face::BOTTOM);
+        return vis;
     }
 
     Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {
