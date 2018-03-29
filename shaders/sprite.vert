@@ -1,6 +1,5 @@
 #version 330 core
 layout (location = 0) in vec2 pos;
-
 layout (location = 1) in vec4 tint;
 layout (location = 2) in vec4 region; // xy == bottom left, zw == top right
 layout (location = 3) in mat3 model;
@@ -10,6 +9,7 @@ out vec2 f_tex;
 out vec4 f_tint;
 
 uniform mat4 projection;
+uniform vec2 dims;
 
 // const vec2 tcoords[4] = vec2[](
 //     vec2(0.0, 0.0),

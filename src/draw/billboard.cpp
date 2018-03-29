@@ -1,6 +1,4 @@
 #include "draw/billboard.h"
-#include <glm/gtx/string_cast.hpp>
-
 namespace ace { namespace draw {
     // at this point BillboardManager is now probably defunct, and now replaceable with
     // a generic vao/vbo pair.

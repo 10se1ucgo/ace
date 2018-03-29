@@ -33,14 +33,19 @@ void Camera::update_view() {
     right = normalize(cross(world_up, forward));
     up = cross(forward, right);
 
+    if (!this->scene.thirdperson && this->scene.ply)
+        this->scene.ply->set_orientation(this->forward.x, this->forward.z, -this->forward.y);
+    this->scene.client.sound.set_listener(this->position, this->forward, this->up);
+
     if (old_pv == pv) return;
 
-    planes[FRUSTUM_LEFT] = normalize(row(pv, 3) + row(pv, 0));
-    planes[FRUSTUM_RIGHT] = normalize(row(pv, 3) - row(pv, 0));
-    planes[FRUSTUM_TOP] = normalize(row(pv, 3) - row(pv, 1));
-    planes[FRUSTUM_BOTTOM] = normalize(row(pv, 3) + row(pv, 1));
-    planes[FRUSTUM_NEAR] = normalize(row(pv, 3) + row(pv, 2));
-    planes[FRUSTUM_FAR] = normalize(row(pv, 3) - row(pv, 2));
+    const auto r3(row(pv, 3));
+    planes[FRUSTUM_LEFT] = normalize(r3 + row(pv, 0));
+    planes[FRUSTUM_RIGHT] = normalize(r3 - row(pv, 0));
+    planes[FRUSTUM_TOP] = normalize(r3 - row(pv, 1));
+    planes[FRUSTUM_BOTTOM] = normalize(r3 + row(pv, 1));
+    planes[FRUSTUM_NEAR] = normalize(r3 + row(pv, 2));
+    planes[FRUSTUM_FAR] = normalize(r3 - row(pv, 2));
 }
 
 void Camera::mouse(double dt) {

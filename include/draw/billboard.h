@@ -21,7 +21,5 @@ namespace ace { namespace draw {
 
         gl::experimental::vao vao;
         gl::experimental::streaming_vbo<Billboard> vbo;
-//        gl::vbo vbo;
-//        std::vector<Billboard> billboards;
     };
 }}

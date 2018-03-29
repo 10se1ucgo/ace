@@ -10,7 +10,7 @@ in Billboard {
 
 out vec3 frag_color;
 
-uniform vec3 cam_right, cam_up;
+uniform vec3 cam_left, cam_up;
 uniform mat4 pv;
 
 
@@ -23,16 +23,16 @@ void main() {
 
     mat4 mvp = pv * m;
 
-    gl_Position = mvp * vec4(-(cam_right + cam_up) * size, 1.0);
+    gl_Position = mvp * vec4(-(cam_left + cam_up) * size, 1.0);
     frag_color = color;
     EmitVertex();
-    gl_Position = mvp * vec4(-(cam_right - cam_up) * size, 1.0);
+    gl_Position = mvp * vec4(-(cam_left - cam_up) * size, 1.0);
     frag_color = color;
     EmitVertex();
-    gl_Position = mvp * vec4((cam_right - cam_up) * size, 1.0);
+    gl_Position = mvp * vec4((cam_left - cam_up) * size, 1.0);
     frag_color = color;
     EmitVertex();
-    gl_Position = mvp * vec4((cam_right + cam_up) * size, 1.0);
+    gl_Position = mvp * vec4((cam_left + cam_up) * size, 1.0);
     frag_color = color;
     EmitVertex();
 

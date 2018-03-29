@@ -46,7 +46,7 @@ namespace ace { namespace scene {
 
         this->respawn_entities();
 
-        cam.set_projection(75.0f, client.width(), client.height(), 0.1f, 128.f);
+        this->cam.set_projection(75.0f, client.width(), client.height(), 0.1f, 128.f);
         
         this->client.set_exclusive_mouse(true);
         this->client.sound.play("intro.wav", {}, 100, true);
@@ -57,6 +57,8 @@ namespace ace { namespace scene {
 
         glEnable(GL_MULTISAMPLE);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        glFrontFace(GL_CW);
     }
 
     GameScene::~GameScene() {
@@ -69,14 +71,13 @@ namespace ace { namespace scene {
 
         // 3d
         glDisable(GL_BLEND);
-        glEnable(GL_CULL_FACE);
-        glCullFace(GL_FRONT);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_CULL_FACE);
+        glCullFace(GL_BACK);
 
         shaders.map.bind();
         shaders.map.uniform("mvp"_u = cam.matrix(), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
-        map.draw({ this->cam.position.x, this->cam.position.z, -this->cam.position.y }, shaders.map);
-
+        map.draw(draw2vox(this->cam.position), shaders.map);
 
         shaders.model.bind();
         for (auto &kv : players) {
@@ -95,7 +96,7 @@ namespace ace { namespace scene {
         }
 
         this->shaders.billboard.bind();
-        this->shaders.billboard.uniform("cam_right"_u = -this->cam.right, "cam_up"_u = this->cam.up);
+        this->shaders.billboard.uniform("cam_left"_u = -this->cam.right, "cam_up"_u = this->cam.up);
         this->billboards.draw(this->cam.matrix(), this->shaders.billboard);
 
         if (!this->thirdperson)
@@ -113,17 +114,13 @@ namespace ace { namespace scene {
             kv.second.update_players(*this);
         }
 
+        map.update(dt);
 
         cam.update(dt);
-        if (!this->thirdperson)
-            this->ply->set_orientation(this->cam.forward.x, this->cam.forward.z, -this->cam.forward.y);
         for (auto &kv : players) {
             kv.second->update(dt);
         }
         cam.update_view();
-        client.sound.set_listener(this->cam.position, this->cam.forward, this->cam.up);
-
-        map.update(dt);
 
         for (auto &kv : entities) {
             kv.second->update(dt);

@@ -5,12 +5,6 @@
 #include "scene/game.h"
 
 namespace ace { namespace scene {
-//    LoadingScene::LoadingScene(GameClient &client, const char *host, int port):
-//        Scene(client),
-//        server(std::string(host), port),
-//        font(client.fonts.get("fixedsys.ttf", 48, false)) {
-//    }
-
     LoadingScene::LoadingScene(GameClient& client, const std::string &address):
         Scene(client),
         font(client.fonts.get("fixedsys.ttf", 48, false)),
@@ -37,8 +31,10 @@ namespace ace { namespace scene {
         switch(client.net.state) {
             case net::NetState::UNCONNECTED:
             case net::NetState::DISCONNECTED:
-                if(this->client.text_input_active())
+                if (this->client.text_input_active())
                     str = fmt::format("ENTER NAME: {}_", this->client.input_buffer);
+                else
+                    str = "DISCONNECTED";
                 break;
             case net::NetState::CONNECTING:
             case net::NetState::CONNECTED: 

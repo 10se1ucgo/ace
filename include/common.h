@@ -3,8 +3,11 @@
 #include <chrono>
 #include <cmath>
 
+#include "fmt/format.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
+#include "glm/gtx/type_trait.hpp"
+#include "glm/gtx/string_cast.hpp"
 
 namespace ace {
     // Simple, generic wrappers around standard C++ <random>
@@ -82,6 +85,14 @@ namespace ace {
         model = rotate(model, rot.y, { 0, 1, 0 });
         model = rotate(model, rot.x, { 1, 0, 0 });
         return  scale(model, m_scale);
+    }
+}
+
+namespace fmt {
+    // got tired of having to do glm::to_string zzz
+    template <typename ArgFormatter, template <typename, glm::precision> class matType, typename T, glm::precision P>
+    void format_arg(fmt::BasicFormatter<char, ArgFormatter> &f, const char *&format_str, const matType<T, P> &x) {
+        f.writer() << glm::to_string(x);
     }
 }
 

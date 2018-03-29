@@ -8,16 +8,19 @@
 
 
 namespace ace { namespace sound {
+
+#ifdef NDEBUG
+#define CHECK_AL_ERROR() 
+#else
 #define CHECK_AL_ERROR() do { ALenum error = alGetError(); \
-        if(error != AL_NO_ERROR) { \
+        if(error != AL_NO_ERROR && error != AL_OUT_OF_MEMORY) { \
             THROW_ERROR("OPENAL ERROR: {}\n", alGetString(error)); \
         } \
     } while (0)
+#endif
 
     SoundBuffer::SoundBuffer(const std::string& name) {
         SDL_AudioSpec spec;
-//        spec.channels = 1;
-//        spec.format = AUDIO_U16;
         Uint32 length;
         Uint8 *buffer;
         if(SDL_LoadWAV(name.c_str(), &spec, &buffer, &length) == nullptr) {
@@ -36,19 +39,13 @@ namespace ace { namespace sound {
         }
 
 
-        alGenBuffers(1, &abo);
         CHECK_AL_ERROR();
         alBufferData(abo, format, buffer, length, spec.freq);
         CHECK_AL_ERROR();
         SDL_FreeWAV(buffer);
     }
 
-    SoundBuffer::~SoundBuffer() {
-        alDeleteBuffers(1, &abo);
-    }
-
     Sound::Sound(SoundBuffer *buf) : position(0), velocity(0), volume(1), pitch(1), local(true) {
-        alGenSources(1, &snd);
         CHECK_AL_ERROR();
         alSourcei(snd, AL_BUFFER, buf->abo);
         CHECK_AL_ERROR();
@@ -57,18 +54,12 @@ namespace ace { namespace sound {
         alGetBufferi(buf->abo, AL_CHANNELS, &channels);
     }
 
-    Sound::~Sound() {
-        alDeleteSources(1, &snd);
-    }
-
     void Sound::play(bool loop) {
         this->update();
         alSourcei(snd, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
         CHECK_AL_ERROR();
         alSourcePlay(snd);
         CHECK_AL_ERROR();
-
-       
     }
 
     void Sound::stop() {
@@ -117,6 +108,8 @@ namespace ace { namespace sound {
     }
 
     Sound *SoundManager::play(const std::string &name, glm::vec3 position, float volume, bool local) {
+        if (sources.size() > 128) return nullptr;
+         
         sources.emplace_back(std::make_unique<Sound>(this->get(name)));
         Sound *snd = sources.back().get();
         snd->position = position;
@@ -149,11 +142,10 @@ namespace ace { namespace sound {
 
     SoundBuffer *SoundManager::get(const std::string& name) {
         try {
-            return buffers.at(name).get();
+            return &buffers.at(name);
         }
         catch (std::out_of_range &) {
-            auto x = std::make_unique<SoundBuffer>("wav/" + name);
-            return buffers.insert({ name, std::move(x) }).first->second.get();
+            return &buffers.emplace(name, "wav/" + name).first->second;
         }
     }
 }}

@@ -8,7 +8,6 @@
 #include "world/grenade.h"
 #include "world/debris.h"
 #include "draw/map.h"
-#include <glm/gtx/string_cast.hpp>
 
 
 namespace ace {
@@ -89,7 +88,7 @@ namespace ace {
         if (transform < 0)
             this->ply.mdl_arms.rotation.x -= transform * 180;
 
-        this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f + ply.scene.cam.up * .125f;
+        this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f + ply.scene.cam.world_up * .125f;
         this->mdl.rotation = this->ply.mdl_arms.rotation;
 
 
@@ -116,11 +115,14 @@ namespace ace {
             Face face = this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit);
             hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
 
-
-
             if(!this->ply.secondary_fire) {
                 if(this->last_secondary) {
-                    this->ply.scene.send_block_line(this->m1, this->m2);
+                    // this is bad im bad at designing things
+                    if ((this->primary_ammo > 0 || this->max_primary() < 0) && this->ply.scene.time >= this->next_primary) {
+                        this->ply.scene.send_block_line(this->m1, this->m2);
+                        this->next_primary = this->ply.scene.time + this->primary_rate(); 
+                        this->ply.play_sound("switch.wav", 50);
+                    }
                     this->m1 = this->m2 = hit;
                     this->ghost_block_line(); // revert ghost block to single block (inefficient i know)
                 }
@@ -142,8 +144,7 @@ namespace ace {
 
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
-        }
-        else {
+        } else {
             this->mdl.draw_local(this->ply.scene.cam.projection, this->ply.scene.shaders.model);
         }
 
@@ -151,13 +152,15 @@ namespace ace {
         if (!this->ply.local_player) return;
 
         this->ply.scene.shaders.map.bind();
-        this->ply.scene.shaders.map.uniform("alpha", 0.5f);
+        this->ply.scene.shaders.map.uniform("alpha", 0.6f);
         this->ply.scene.shaders.map.uniform("replacement_color", glm::vec3{ this->ply.color } / 255.f);
+
         glEnable(GL_BLEND);
         glDepthMask(GL_FALSE);
         this->ghost_block->draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.map);
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
+
         this->ply.scene.shaders.model.bind();
     }
 
@@ -174,30 +177,12 @@ namespace ace {
         hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
         this->ply.scene.build_point(hit.x, hit.y, hit.z, this->ply.color, false);
         this->ply.play_sound("switch.wav", 50);
-        //    auto dir = rand_normalized();
-        //    auto angs = dir2ang(dir);
-        //    fmt::print("DIR: {}, DIR->ANG(): {}, DIR->ANG->DIR(): {}", to_string(dir), to_string(angs), to_string(ang2dir(-angs.y, -angs.x + 90)));
-
 
         return true;
     }
 
     bool BlockTool::on_secondary() {
         return true;
-
-//        if (!this->ply.local_player) return true;
-//
-//
-//        glm::ivec3 hit;
-//        if (this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit) != Face::INVALID) {
-//            uint8_t a, r, g, b;
-//            unpack_color(this->ply.scene.map.get_color(hit.x, hit.y, hit.z), &a, &r, &g, &b);
-//            this->ply.set_color({ r, g, b });
-//            this->ply.scene.hud.palret.position = glm::vec2(-50, -50);
-//
-//            //        this->ply.scene.destroy_point(hit.x, hit.y, hit.z);
-//        }
-//        return true;
     }
 
     void BlockTool::ghost_block_line() {
@@ -311,8 +296,7 @@ namespace ace {
     void Weapon::draw() {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
-        }
-        else {
+        } else {
             this->mdl.draw_local(this->ply.scene.cam.projection, this->ply.scene.shaders.model);
         }
     }
@@ -346,8 +330,7 @@ namespace ace {
             this->reloading = this->primary_ammo != this->max_primary() && this->secondary_ammo > 0;
             const std::string sound = this->reloading ? this->reload_sound() : "cock.wav"; // todo `virtual std::string reload_done_sound();` or smth
             this->ply.play_sound(sound);
-        }
-        else {
+        } else {
             this->reloading = false;
             if (!this->ply.local_player) {
                 this->ply.play_sound(this->reload_sound());

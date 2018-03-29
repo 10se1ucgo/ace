@@ -8,22 +8,23 @@
 #include "glm/vec3.hpp"
 
 #include "common.h"
+#include "gl/gl_util.h"
 
 
 namespace ace { namespace sound {
+    // is this cheating
+    using abo = gl::GLObj<alGenBuffers, alDeleteBuffers, ALuint>;
+    using aso = gl::GLObj<alGenSources, alDeleteSources, ALuint>;
+
     struct SoundBuffer {
         SoundBuffer(const std::string &name);
-        ~SoundBuffer();
-        ACE_NO_COPY_MOVE(SoundBuffer)
 
-        ALuint abo;
+        abo abo;
         ALuint format;
     };
 
     struct Sound {
         Sound(SoundBuffer *snd);
-        ~Sound();
-        ACE_NO_COPY_MOVE(Sound)
 
         void play(bool loop=false);
         void stop();
@@ -36,7 +37,7 @@ namespace ace { namespace sound {
         float volume, pitch;
         bool local;
 
-        ALuint snd;
+        aso snd;
     };
 
     struct SoundManager {
@@ -56,7 +57,7 @@ namespace ace { namespace sound {
 
         SoundBuffer *get(const std::string &name);
     private:
-        std::unordered_map<std::string, std::unique_ptr<SoundBuffer>> buffers;
+        std::unordered_map<std::string, SoundBuffer> buffers;
         std::vector<std::unique_ptr<Sound>> sources;
         ALCdevice *device;
         ALCcontext *context;

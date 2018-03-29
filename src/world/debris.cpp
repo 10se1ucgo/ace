@@ -3,7 +3,12 @@
 #include "scene/game.h"
 
 namespace ace { namespace world {
-    Debris::Debris(DebrisGroup& group, glm::vec3 position, glm::vec3 velocity) : group(group), p(position), v(velocity) {
+    Debris::Debris(DebrisGroup& group, glm::vec3 position, glm::vec3 velocity, glm::u8vec3 color) :
+        group(group),
+        p(position),
+        v(velocity),
+        color(color) {
+        this->color /= 255.f;
     }
 
     bool Debris::update(double dt) {
@@ -28,13 +33,12 @@ namespace ace { namespace world {
         return false;
     }
 
-    DebrisGroup::DebrisGroup(scene::GameScene& scene, glm::vec3 position, glm::vec3 color, float vel_mod, int num):
+    DebrisGroup::DebrisGroup(scene::GameScene& scene, glm::vec3 position, glm::u8vec3 color, float vel_mod, int num):
         WorldObject(scene),
-        color(color / 255.f),
         life(MAX_LIFE) {
         debris.reserve(num);
         for (int i = 0; i < num; i++) {
-            debris.emplace_back(*this, position, rand_normalized() * vel_mod);
+            debris.emplace_back(*this, position, rand_normalized() * vel_mod, jit_color(color));
         }
     }
 
@@ -51,8 +55,7 @@ namespace ace { namespace world {
     void DebrisGroup::draw() {
         float size = life * .1f;
         for(const auto &d : debris) {
-            glm::vec3 p = vox2draw(d.p);
-            this->scene.billboards.draw({ p, color, size });
+            this->scene.billboards.draw({ vox2draw(d.p), d.color, size });
         }
     }
 }}
