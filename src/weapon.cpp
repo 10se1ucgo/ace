@@ -15,18 +15,24 @@ namespace ace {
 
     }
 
+    bool Tool::can_primary() {
+        return (this->primary_ammo > 0 || this->max_primary() < 0) && this->ply.scene.time >= this->next_primary;
+    }
+
+    bool Tool::can_secondary() {
+        return (this->secondary_ammo > 0 || this->max_secondary() < 0) && this->ply.scene.time >= this->next_secondary;
+    }
+
     void Tool::update(double dt) {
         if (this->ply.sprint || this->ply.switch_time > 0) return;
 
         if (this->ply.primary_fire && this->primary_rate() > 0.f) {
-            if ((this->primary_ammo > 0 || this->max_primary() < 0) && this->ply.scene.time >= this->next_primary) {
-                if (this->on_primary())
-                    this->next_primary = this->ply.scene.time + this->primary_rate();
+            if (this->can_primary() && this->on_primary()) {
+                this->next_primary = this->ply.scene.time + this->primary_rate();
             }
         } else if (this->ply.secondary_fire && this->secondary_rate() > 0.f) {
-            if ((this->secondary_ammo > 0 || this->max_secondary() < 0) && this->ply.scene.time >= this->next_secondary) {
-                if (this->on_secondary())
-                    this->next_secondary = this->ply.scene.time + this->secondary_rate();
+            if (this->can_secondary() && this-> on_secondary()) {
+                this->next_secondary = this->ply.scene.time + this->secondary_rate();
             }
         }
     }
@@ -50,8 +56,7 @@ namespace ace {
     void SpadeTool::draw() {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
-        }
-        else {
+        } else {
             this->mdl.draw_local(this->ply.scene.cam.projection, this->ply.scene.shaders.model);
         }
     }
@@ -75,7 +80,7 @@ namespace ace {
         }
 
         if (secondary) {
-            if(this->ply.local_player) this->ply.scene.destroy_point(hit.x, hit.y, hit.z, net::ACTION::SPADE);
+            if (this->ply.local_player) this->ply.scene.destroy_point(hit.x, hit.y, hit.z, net::ACTION::SPADE);
         } else {
             this->ply.scene.damage_point(hit.x, hit.y, hit.z, this->ply.local_player ? 64 : 0, f);
         }
@@ -115,12 +120,12 @@ namespace ace {
             Face face = this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit);
             hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
 
-            if(!this->ply.secondary_fire) {
-                if(this->last_secondary) {
+            if (!this->ply.secondary_fire) {
+                if (this->last_secondary) {
                     // this is bad im bad at designing things
                     if ((this->primary_ammo > 0 || this->max_primary() < 0) && this->ply.scene.time >= this->next_primary) {
                         this->ply.scene.send_block_line(this->m1, this->m2);
-                        this->next_primary = this->ply.scene.time + this->primary_rate(); 
+                        this->next_primary = this->ply.scene.time + this->primary_rate();
                         this->ply.play_sound("switch.wav", 50);
                     }
                     this->m1 = this->m2 = hit;
@@ -133,7 +138,6 @@ namespace ace {
                     this->ghost_block_line();
                 }
             }
-
             this->last_secondary = this->ply.secondary_fire;
         }
         Tool::update(dt);
@@ -149,7 +153,7 @@ namespace ace {
         }
 
 
-        if (!this->ply.local_player) return;
+        if (!this->ply.local_player || !this->can_primary()) return;
 
         this->ply.scene.shaders.map.bind();
         this->ply.scene.shaders.map.uniform("alpha", 0.6f);
@@ -190,8 +194,8 @@ namespace ace {
 
         auto blocks(this->ply.scene.map.block_line(this->m1, this->m2));
         std::vector<VXLBlock> d_blocks;
-        for(auto &x : blocks) {
-            d_blocks.push_back({x, 0xFF000000});
+        for (auto &x : blocks) {
+            d_blocks.push_back({ x, 0xFF000000 });
         }
         this->ghost_block->update(d_blocks, this->m2, true);
     }
@@ -245,8 +249,7 @@ namespace ace {
     void GrenadeTool::draw() {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
-        }
-        else {
+        } else {
             this->mdl.draw_local(this->ply.scene.cam.projection, this->ply.scene.shaders.model);
         }
     }
@@ -422,8 +425,7 @@ namespace ace {
         }
         if (this->ply.airborne) {
             yaw *= 2; pitch *= 2;
-        }
-        else if (this->ply.crouch) {
+        } else if (this->ply.crouch) {
             yaw /= 2; pitch /= 2;
         }
 

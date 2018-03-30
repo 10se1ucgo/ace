@@ -27,12 +27,15 @@ namespace ace {
         virtual float secondary_rate() = 0;
         virtual float use_rate() { return 0.0f; }
 
+        virtual bool on_primary() { return true; }
+        virtual bool on_secondary() { return true; }
+
+        virtual bool can_primary();
+        virtual bool can_secondary();
+
         virtual void update(double dt);
         virtual void draw() = 0;
         virtual void transform() = 0;
-
-        virtual bool on_primary() { return true; }
-        virtual bool on_secondary() { return true; }
 
         virtual void deploy() {}
         virtual void holster() {}
