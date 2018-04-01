@@ -91,13 +91,15 @@ namespace ace { namespace scene {
         Camera cam;
         draw::DrawMap map;
         HUD hud;
-        world::DrawPlayer *ply;
+        world::DrawPlayer *ply{nullptr};
         net::StateData state_data;
 
         bool thirdperson{};
 
         std::unordered_map<int, std::unique_ptr<world::DrawPlayer>> players;
+        std::unordered_map<int, glm::u8vec3> block_colors;
         std::unordered_map<net::TEAM, Team> teams;
+
         std::unordered_map<uint8_t, std::unique_ptr<world::Entity>> entities;
         std::vector<std::unique_ptr<world::WorldObject>> objects;
         std::vector<std::unique_ptr<world::WorldObject>> queued_objects;

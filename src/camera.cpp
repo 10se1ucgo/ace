@@ -54,7 +54,7 @@ void Camera::mouse(double dt) {
 }
 
 void Camera::keyboard(double dt) {
-    if (!scene.thirdperson) return;
+    if (!scene.thirdperson && this->scene.ply) return;
 
     const Uint8 *keyboard = scene.client.keyboard.keys;
     float speed = this->speed * dt;

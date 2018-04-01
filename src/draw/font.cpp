@@ -92,16 +92,9 @@ namespace ace { namespace draw {
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex);
-
-
-        vbo.upload();
-//        glBindBuffer(GL_ARRAY_BUFFER, vbo);
-//        glInvalidateBufferData(vbo);
-//        glBufferData(GL_ARRAY_BUFFER, this->vertices.size() * sizeof(GlyphVertex), this->vertices.data(), GL_STREAM_DRAW);
-
+        
+        this->vbo.upload();
         this->vao.draw(GL_TRIANGLES, this->vbo.draw_count, this->vbo.draw_offset);
-//
-//        this->vertices.clear();
     }
 
     glm::vec2 Font::measure(const std::string& str, glm::vec2 scale) const {
@@ -159,6 +152,11 @@ namespace ace { namespace draw {
             vbo->push_back({ { x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
             vbo->push_back({ { x2 + w, -y2 + h, chars[c].tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height) }, color });
         }
+    }
+
+    void Font::draw_shadowed(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
+        this->draw(str, pos + glm::vec2(2), glm::vec3(0.5), scale, alignment); // B)
+        this->draw(str, pos, color, scale, alignment);
     }
 
     FontManager::FontManager() {

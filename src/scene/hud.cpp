@@ -82,7 +82,7 @@ namespace ace { namespace scene {
         this->big.position.x = hud.scene.client.width() / 2.f;
         this->big.position.y = hud.scene.client.height() / 2.f;
         this->mini.position = { hud.scene.client.width() - 15, 15 };
-        glm::vec2 d(this->hud.scene.ply->p);
+        glm::vec2 d(draw2vox(this->hud.scene.cam.position));
         this->mini.set_region(d - glm::vec2{64}, d + glm::vec2{64});
     }
 
@@ -102,7 +102,7 @@ namespace ace { namespace scene {
         for (auto &kv : this->hud.scene.players) {
             auto &ply = kv.second;
 #ifdef NDEBUG
-            if (ply->team != this->hud.scene.ply->team) continue;
+            if (this->hud.scene.ply && ply->team != this->hud.scene.ply->team) continue;
 #endif
             if (!ply->alive) continue;
 
@@ -167,7 +167,11 @@ namespace ace { namespace scene {
     void HUD::update(double dt) {
         if (this->scene.client.keyboard.keys[SDL_SCANCODE_F6]) return;
 
+        this->map_display.update(dt);
 
+        this->big_message_time = std::max(0.0, this->big_message_time - dt);
+
+        if (!this->scene.ply) return;
 
         if (!this->scene.ply->alive) {
             float old_rt = this->respawn_time;
@@ -181,25 +185,11 @@ namespace ace { namespace scene {
                 }
             }
         }
-
-        this->big_message_time = std::max(0.0, this->big_message_time - dt);
-
         this->hit_indicator.rotation = angle2d(this->last_hit - this->scene.ply->p, this->scene.ply->f);
         this->hit_indicator.tint.a = std::max(0.0, this->hit_indicator.tint.a - dt);
-
-        
-
-        this->map_display.update(dt);
     }
 
     void HUD::draw() {
-//        auto p(draw2vox(this->scene.cam.position + this->scene.cam.forward * 3.f));
-//        auto o(draw2vox(this->scene.cam.forward));
-//        ply.set_position(p.x, p.y, p.z);
-//        ply.set_orientation(-o.x, -o.y, -o.z);
-//        ply.draw();
-
-
         glEnable(GL_BLEND);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
@@ -207,12 +197,10 @@ namespace ace { namespace scene {
 
         if (this->scene.client.keyboard.keys[SDL_SCANCODE_F6]) return;
 
-
-        if (!this->scene.ply->alive) {
-            this->sys48->draw(fmt::format("INSERT COIN:{}", int(this->respawn_time)), { scene.client.width() / 2.f, scene.client.height() - 20 }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
-        }
-        else {
-            this->sys48->draw(std::to_string(this->scene.ply->health), { scene.client.width() / 2.f, scene.client.height() - 20 }, scene.ply->health <= 20 ? glm::vec3{ 1, 0, 0 } : glm::vec3{ 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+        if (this->scene.ply && !this->scene.ply->alive) {
+            this->sys48->draw_shadowed(fmt::format("INSERT COIN:{}", int(this->respawn_time)), { scene.client.width() / 2.f, scene.client.height() - 20 }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+        } else if(this->scene.ply) {
+            this->sys48->draw_shadowed(std::to_string(this->scene.ply->health), { scene.client.width() / 2.f, scene.client.height() - 20 }, scene.ply->health <= 20 ? glm::vec3{ 1, 0, 0 } : glm::vec3{ 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
 
             this->ammo_icon.position = { scene.client.width(), scene.client.height() - 20 };
             if (this->scene.ply->tool == net::TOOL::BLOCK) {
@@ -225,7 +213,7 @@ namespace ace { namespace scene {
             }
 
             auto pos = glm::vec2(ammo_icon.position.x - ammo_icon.w(), ammo_icon.position.y);
-            this->sys48->draw(this->scene.ply->get_tool()->display_ammo(), pos, { 1, 1, 0 }, { 1, 1 }, draw::Align::BOTTOM_RIGHT);
+            this->sys48->draw_shadowed(this->scene.ply->get_tool()->display_ammo(), pos, { 1, 1, 0 }, { 1, 1 }, draw::Align::BOTTOM_RIGHT);
 
             
 

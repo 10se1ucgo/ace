@@ -29,7 +29,7 @@ namespace ace { namespace draw {
 
     // i hate initializer lists
     inline glm::vec3 get_centroid(const std::vector<VXLBlock> &blocks) {
-        glm::vec3 centroid;
+        glm::vec3 centroid(0.0);
         for (const VXLBlock &b : blocks) {
             centroid += b.position;
         }

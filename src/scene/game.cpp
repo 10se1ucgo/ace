@@ -40,9 +40,9 @@ namespace ace { namespace scene {
 
         this->set_fog_color(glm::vec3(state_data.fog_color) / 255.f);
 
-        this->ply = this->get_ply(state_data.pid, true, true);
-        auto p = this->map.get_random_point();
-        this->ply->set_position(p.x, p.y, p.z - 32);
+//        this->ply = this->get_ply(state_data.pid, true, true);
+//        auto p = this->map.get_random_point();
+//        this->ply->set_position(p.x, p.y, p.z - 32);
 
         this->respawn_entities();
 
@@ -99,10 +99,13 @@ namespace ace { namespace scene {
         this->shaders.billboard.uniform("cam_left"_u = -this->cam.right, "cam_up"_u = this->cam.up);
         this->billboards.draw(this->cam.matrix(), this->shaders.billboard);
 
-        if (!this->thirdperson)
-            glClear(GL_DEPTH_BUFFER_BIT);
-        this->shaders.model.bind();
-        this->ply->draw();
+
+        if(this->ply) {
+            if (!this->thirdperson)
+                glClear(GL_DEPTH_BUFFER_BIT);
+            this->shaders.model.bind();
+            this->ply->draw();
+        }
 
         hud.draw();
     }
@@ -127,7 +130,7 @@ namespace ace { namespace scene {
         }
 
         while(!queued_objects.empty()) {
-            const auto it = queued_objects.begin();
+            const auto it = queued_objects.end() - 1;
             this->objects.emplace_back(std::move(*it));
             queued_objects.erase(it);
         }
@@ -149,30 +152,29 @@ namespace ace { namespace scene {
 #ifndef NDEBUG
             net::WEAPON wep = net::WEAPON::INVALID;
 #endif
-            switch(scancode) {
-            case SDL_SCANCODE_1: this->ply->set_tool(net::TOOL::SPADE); break;
-            case SDL_SCANCODE_2: this->ply->set_tool(net::TOOL::BLOCK); break;
-            case SDL_SCANCODE_3: this->ply->set_tool(net::TOOL::WEAPON); break;
-            case SDL_SCANCODE_4: this->ply->set_tool(net::TOOL::GRENADE); break;
-            case SDL_SCANCODE_R: this->ply->get_tool()->reload(); break;
-#ifndef NDEBUG
-            case SDL_SCANCODE_5: wep = net::WEAPON::SEMI; break;
-            case SDL_SCANCODE_6: wep = net::WEAPON::SMG; break;
-            case SDL_SCANCODE_7: wep = net::WEAPON::SHOTGUN; break;
-
-            case SDL_SCANCODE_F2: this->thirdperson = !this->thirdperson; break;
-            case SDL_SCANCODE_F3: this->ply->alive = !this->ply->alive; break;
-#endif
-            default: break;
+            if (this->ply) {
+                switch (scancode) {
+                case SDL_SCANCODE_1: this->ply->set_tool(net::TOOL::SPADE); break;
+                case SDL_SCANCODE_2: this->ply->set_tool(net::TOOL::BLOCK); break;
+                case SDL_SCANCODE_3: this->ply->set_tool(net::TOOL::WEAPON); break;
+                case SDL_SCANCODE_4: this->ply->set_tool(net::TOOL::GRENADE); break;
+                case SDL_SCANCODE_R: this->ply->get_tool()->reload(); break;
+                default: break;
+                }
             }
 
 #ifndef NDEBUG
+            switch(scancode) {
+            case SDL_SCANCODE_5: wep = net::WEAPON::SEMI; break;
+            case SDL_SCANCODE_6: wep = net::WEAPON::SMG; break;
+            case SDL_SCANCODE_7: wep = net::WEAPON::SHOTGUN; break;
+            case SDL_SCANCODE_F2: this->thirdperson = !this->thirdperson; break;
+            case SDL_SCANCODE_F3: if(this->ply) this->ply->alive = !this->ply->alive; break;
+            default: break;
+            }
+
             if(wep != net::WEAPON::INVALID) {
-                net::ExistingPlayer x;
-                x.name = this->ply_name;
-                x.team = net::TEAM::TEAM1;
-                x.weapon = wep;
-                this->client.net.send_packet(net::PACKET::ExistingPlayer, x);
+                this->send_this_player(net::TEAM::TEAM1, wep);
             }
 #endif
         }
@@ -199,13 +201,14 @@ namespace ace { namespace scene {
         switch(type) {
         case net::PACKET::CreatePlayer: {
             net::CreatePlayer *pkt = static_cast<net::CreatePlayer *>(loader);
-            auto *ply = this->get_ply(pkt->pid);
+            auto *ply = this->get_ply(pkt->pid, true, pkt->pid == this->state_data.pid);
+            if (ply->local_player) this->ply = ply; // this->ply() should be a function tbh
             ply->pid = pkt->pid;
+            ply->team = pkt->team;
+            ply->name = pkt->name;
             ply->set_weapon(pkt->weapon);
             ply->set_tool(net::TOOL::WEAPON);
-            ply->team = pkt->team;
             ply->set_position(pkt->position.x, pkt->position.y, pkt->position.z);
-            ply->name = pkt->name;
             ply->set_alive(true);
         } break;
         case net::PACKET::ExistingPlayer: {
@@ -235,7 +238,7 @@ namespace ace { namespace scene {
             net::BlockAction *pkt = static_cast<net::BlockAction *>(loader);
             auto *ply = this->get_ply(pkt->pid);
             if(pkt->value == net::ACTION::BUILD) {
-                this->build_point(pkt->position.x, pkt->position.y, pkt->position.z, ply ? ply->color : glm::vec3{255, 255, 255}, true);
+                this->build_point(pkt->position.x, pkt->position.y, pkt->position.z, ply ? ply->color : this->block_colors[pkt->pid], true);
                 ply->get_tool(net::TOOL::BLOCK)->primary_ammo--;
             } else {
                 this->destroy_point(pkt->position.x, pkt->position.y, pkt->position.z, pkt->value, true);
@@ -249,7 +252,7 @@ namespace ace { namespace scene {
             std::vector<glm::ivec3> blocks = this->map.block_line(pkt->start, pkt->end);
             ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
             for(auto &block : blocks) {
-                this->build_point(block.x, block.y, block.z, ply ? ply->color : glm::vec3{ 255, 255, 255 }, true);
+                this->build_point(block.x, block.y, block.z, ply ? ply->color : this->block_colors[pkt->pid], true);
             }
         } break;
         case net::PACKET::InputData: {
@@ -269,7 +272,7 @@ namespace ace { namespace scene {
             fmt::print("{} killed {}. Respawning in {}\n", killer->name, ply->name, pkt->respawn_time);
             this->hud.add_killfeed_message(*killer, *ply, pkt->type);
 
-            if(ply->pid == this->ply->pid) {
+            if(this->ply && ply->pid == this->ply->pid) {
                 this->hud.respawn_time = pkt->respawn_time;
             }
         } break;
@@ -310,8 +313,11 @@ namespace ace { namespace scene {
         case net::PACKET::SetColor: {
             net::SetColor *pkt = static_cast<net::SetColor *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
-            if (ply == nullptr) break;
-            ply->set_color(pkt->color);
+            if (ply == nullptr) {
+                this->block_colors[pkt->pid] = pkt->color;
+            } else {
+                ply->set_color(pkt->color);
+            }
         } break;
         case net::PACKET::ChatMessage: {
             net::ChatMessage *pkt = static_cast<net::ChatMessage *>(loader);
