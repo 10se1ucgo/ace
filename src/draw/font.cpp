@@ -22,6 +22,33 @@ namespace ace { namespace draw {
         }
     }
 
+    Text::Text(Font *font, std::string str, glm::vec3 color, glm::vec2 scale, Align alignment):
+        font(font),
+        _str(std::move(str)),
+        _color(color),
+        _scale(scale),
+        _alignment(alignment) {
+        this->update();
+    }
+
+    void Text::update(std::string str, glm::vec3 color, glm::vec2 scale, Align alignment) {
+        this->_str = std::move(str);
+        this->_color = color;
+        this->_scale = scale;
+        this->_alignment = alignment;
+        this->update();
+    }
+
+    void Text::draw() {
+        this->font->draw(*this);
+    }
+
+    void Text::update() {
+        this->vertices.clear();
+        this->_size = this->font->measure(this->_str, this->_scale);
+        this->font->render(this->_str, this->font->get_aligned_pos({ 0, 0 }, this->_size, this->_alignment), this->_color, this->_scale, this->vertices);
+    }
+
     Font::Font(const std::string &name, int size, bool monochrome, FT_Library ft): width(0), height(0), size_(size) {
         FT_Face face;
         FT_New_Face(ft, name.c_str(), 0, &face);
@@ -39,15 +66,7 @@ namespace ace { namespace draw {
             height = std::max(height, g->bitmap.rows);
         }
 
-//        glBindVertexArray(vao);
-//
-//        glBindBuffer(GL_ARRAY_BUFFER, vbo);
         this->vao.attrib_pointer("4f,3f", this->vbo.handle);
-//        glVertexAttribPointer(0, 4, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, pos_tex)));
-//        glEnableVertexAttribArray(1);
-//        glVertexAttribPointer(1, 3, GL_FLOAT, GL_FALSE, sizeof(detail::GlyphVertex), reinterpret_cast<void *>(offsetof(detail::GlyphVertex, color)));
-//        glEnableVertexAttribArray(0);
-
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex);
@@ -81,6 +100,7 @@ namespace ace { namespace draw {
 
             x += g->bitmap.width + 1;
         }
+        glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
         FT_Done_Face(face);
     }
@@ -97,19 +117,8 @@ namespace ace { namespace draw {
         this->vao.draw(GL_TRIANGLES, this->vbo.draw_count, this->vbo.draw_offset);
     }
 
-    glm::vec2 Font::measure(const std::string& str, glm::vec2 scale) const {
-        glm::vec2 p;
-        p.y = -std::numeric_limits<float>::infinity();
-        for (unsigned char c : str) {
-            p.x += chars[c].advance.x;
-            p.y = std::max(p.y, float(chars[c].bearing.y));
-        }
-        return p * scale;
-    }
-
-    void Font::draw(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
-        auto size = this->measure(str, scale);
-        switch(alignment) {
+    glm::vec2 Font::get_aligned_pos(glm::vec2 pos, glm::vec2 size, Align alignment) const {
+        switch (alignment) {
         case Align::TOP_LEFT:
             pos.y += size.y;
             break;
@@ -134,10 +143,23 @@ namespace ace { namespace draw {
         default:
             break;
         }
+        return pos;
+    }
 
+    glm::vec2 Font::measure(const std::string& str, glm::vec2 scale) const {
+        glm::vec2 p;
+        p.y = -std::numeric_limits<float>::infinity();
         for (unsigned char c : str) {
-            float x2 = pos.x + chars[c].bearing.x * scale.x;
-            float y2 = -pos.y + chars[c].bearing.y * scale.y;
+            p.x += chars[c].advance.x;
+            p.y = std::max(p.y, float(chars[c].bearing.y));
+        }
+        return p * scale;
+    }
+
+    void Font::render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const {
+        for (unsigned char c : str) {
+            float x = pos.x + chars[c].bearing.x * scale.x;
+            float y = -pos.y + chars[c].bearing.y * scale.y;
             float w = chars[c].dim.x * scale.x;
             float h = chars[c].dim.y * scale.y;
 
@@ -145,13 +167,29 @@ namespace ace { namespace draw {
 
             if (!w || !h) continue;
 
-            vbo->push_back({ { x2,     -y2    , chars[c].tx, 0 }, color });
-            vbo->push_back({ { x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
-            vbo->push_back({ { x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
-            vbo->push_back({ { x2 + w, -y2    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
-            vbo->push_back({ { x2,     -y2 + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
-            vbo->push_back({ { x2 + w, -y2 + h, chars[c].tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height) }, color });
+            v.push_back({ { x,     -y    , chars[c].tx, 0 }, color });
+            v.push_back({ { x + w, -y    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
+            v.push_back({ { x,     -y + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
+            v.push_back({ { x + w, -y    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
+            v.push_back({ { x,     -y + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
+            v.push_back({ { x + w, -y + h, chars[c].tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height) }, color });
         }
+    }
+
+    void Font::draw(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
+        pos = this->get_aligned_pos(pos, this->measure(str, scale), alignment);
+        this->render(str, pos, color, scale, this->vbo.data);
+    }
+
+    void Font::draw(Text &r) {
+        this->vbo->reserve(this->vbo->size() + r.vertices.size());
+        for(auto &x : r.vertices) {
+            auto p(x.pos_tex);
+            p.x += r.position.x;
+            p.y += r.position.y;
+            this->vbo->push_back({ p, x.color });
+        }
+        // this->vbo->insert(this->vbo->end(), std::make_move_iterator(r.vertices.begin()), std::make_move_iterator(r.vertices.end()));
     }
 
     void Font::draw_shadowed(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {

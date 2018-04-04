@@ -172,6 +172,9 @@ namespace ace {
             case SDL_MOUSEBUTTONUP:
                 this->scene->on_mouse_button(event.button.button, false);
                 break;
+            case SDL_MOUSEMOTION:
+                this->scene->on_mouse_motion(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
+                break;
             case SDL_TEXTINPUT:
                 if(this->scene->on_text_typing(std::string(event.text.text)))
                     this->input_buffer.append(event.text.text);

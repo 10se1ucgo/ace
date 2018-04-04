@@ -2,8 +2,8 @@
 
 #include <iostream>
 
-#include "scene/game.h"
 #include "scene/loading.h"
+#include "scene/menu.h"
 
 int main(int argc, char **argv) {
     try {
@@ -15,8 +15,10 @@ int main(int argc, char **argv) {
     } catch (const std::exception &ex) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!", ex.what(), nullptr);
         std::cerr << ex.what() << std::endl;
+        throw;
     } catch (...) {
         SDL_ShowSimpleMessageBox(SDL_MESSAGEBOX_ERROR, "Error!", "An unknown error occured.", nullptr);
+        throw;
     }
     return 1;
 }

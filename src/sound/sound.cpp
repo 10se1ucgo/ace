@@ -7,6 +7,8 @@
 #include "util/except.h"
 
 
+#include "alure.h"
+
 namespace ace { namespace sound {
 
 #ifdef NDEBUG
@@ -20,98 +22,80 @@ namespace ace { namespace sound {
 #endif
 
     SoundBuffer::SoundBuffer(const std::string& name) {
-        SDL_AudioSpec spec;
-        Uint32 length;
-        Uint8 *buffer;
-        if(SDL_LoadWAV(name.c_str(), &spec, &buffer, &length) == nullptr) {
-            THROW_ERROR("FAILED TO LOAD SOUND FILE {} WITH ERROR {}\n", name, SDL_GetError());
-        }
-
-        switch(spec.channels) {
-        case 1:
-            format = spec.format == AUDIO_U8 ? AL_FORMAT_MONO8 : AL_FORMAT_MONO16;
-            break;
-        case 2:
-            format = spec.format == AUDIO_U8 ? AL_FORMAT_STEREO8 : AL_FORMAT_STEREO16;
-            break;
-        default:
-            THROW_ERROR("FAILED TO LOAD SOUND FILE {}: UNRECOGNIZED FORMAT {}\n", name, Uint16(spec.format));
-        }
-
-
         CHECK_AL_ERROR();
-        alBufferData(abo, format, buffer, length, spec.freq);
-        CHECK_AL_ERROR();
-        SDL_FreeWAV(buffer);
+        if(alureBufferDataFromFile(name.c_str(), this->abo) == AL_FALSE) {
+            THROW_ERROR("FAILED TO LOAD SOUND FILE {} WITH ERROR{}\n", name, alureGetErrorString());
+        }
     }
 
     Sound::Sound(SoundBuffer *buf) : position(0), velocity(0), volume(1), pitch(1), local(true) {
         CHECK_AL_ERROR();
-        alSourcei(snd, AL_BUFFER, buf->abo);
-        CHECK_AL_ERROR();
-
-        ALint channels;
-        alGetBufferi(buf->abo, AL_CHANNELS, &channels);
+        this->set_buf(buf);
     }
+
+    void Sound::set_buf(SoundBuffer *buf) {
+        if (buf != nullptr) {
+            alSourcei(this->snd, AL_BUFFER, buf->abo);
+            CHECK_AL_ERROR();
+        }
+    }
+
 
     void Sound::play(bool loop) {
         this->update();
-        alSourcei(snd, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
+        alSourcei(this->snd, AL_LOOPING, loop ? AL_TRUE : AL_FALSE);
         CHECK_AL_ERROR();
-        alSourcePlay(snd);
+        alSourcePlay(this->snd);
         CHECK_AL_ERROR();
     }
 
     void Sound::stop() {
-        alSourceStop(snd);
+        alSourceStop(this->snd);
         CHECK_AL_ERROR();
     }
 
     bool Sound::stopped() {
         ALint state;
-        alGetSourcei(snd, AL_SOURCE_STATE, &state);
+        alGetSourcei(this->snd, AL_SOURCE_STATE, &state);
         CHECK_AL_ERROR();
         return state == AL_STOPPED;
     }
 
     void Sound::update() {
-        alSourcefv(snd, AL_POSITION, glm::value_ptr(local ? glm::vec3(0, 0, 0) : this->position));
+        alSourcefv(this->snd, AL_POSITION, glm::value_ptr(local ? glm::vec3(0) : this->position));
         CHECK_AL_ERROR();
-        alSourcefv(snd, AL_VELOCITY, glm::value_ptr(this->velocity));
+        alSourcefv(this->snd, AL_VELOCITY, glm::value_ptr(this->velocity));
         CHECK_AL_ERROR();
-        alSourcef(snd, AL_ROLLOFF_FACTOR, 1.f);
+        alSourcef(this->snd, AL_ROLLOFF_FACTOR, 1.f);
         CHECK_AL_ERROR();
-        alSourcei(snd, AL_SOURCE_RELATIVE, local ? AL_TRUE : AL_FALSE);
+        alSourcei(this->snd, AL_SOURCE_RELATIVE, local ? AL_TRUE : AL_FALSE);
         CHECK_AL_ERROR();
-        alSourcef(snd, AL_GAIN, volume / 100.f);
+        alSourcef(this->snd, AL_GAIN, volume / 100.f);
         CHECK_AL_ERROR();
-        alSourcef(snd, AL_PITCH, pitch);
+        alSourcef(this->snd, AL_PITCH, pitch);
         CHECK_AL_ERROR();
-        alSourcef(snd, AL_REFERENCE_DISTANCE, 1.f);
+        alSourcef(this->snd, AL_REFERENCE_DISTANCE, 1.f);
         CHECK_AL_ERROR();
-        alSourcef(snd, AL_MAX_DISTANCE, 128.f);
+        alSourcef(this->snd, AL_MAX_DISTANCE, 128.f);
         CHECK_AL_ERROR();
     }
 
     SoundManager::SoundManager() {
-        device = alcOpenDevice(nullptr);
-        context = alcCreateContext(device, nullptr);
-        alcMakeContextCurrent(context);
+        alureInitDevice(nullptr, nullptr);
         alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
         this->set_listener({ 0, 0, 0 }, { 0, 0, 1 }, {0, 1, 0});
+        this->music = std::make_unique<Sound>(nullptr);
     }
 
     SoundManager::~SoundManager() {
-        alcMakeContextCurrent(nullptr);
-        alcDestroyContext(context);
-        alcCloseDevice(device);
+        alureShutdownDevice();
     }
 
     Sound *SoundManager::play(const std::string &name, glm::vec3 position, float volume, bool local) {
-        if (sources.size() > 128) return nullptr;
+        if (this->sources.size() > 128) return nullptr;
          
-        sources.emplace_back(std::make_unique<Sound>(this->get(name)));
-        Sound *snd = sources.back().get();
+        this->sources.emplace_back(this->get(name));
+        Sound *snd = &this->sources.back();
         snd->position = position;
         snd->volume = volume;
         snd->local = local;
@@ -119,9 +103,36 @@ namespace ace { namespace sound {
         return snd;
     }
 
+    void SoundManager::play_music(const std::string &name, float volume, bool loop) {
+        this->fading_out = false;
+        this->music->set_buf(this->get(name));
+        this->music->volume = volume;
+        this->music->local = false;
+        this->music->play(loop);
+    }
+
+    void SoundManager::stop_music(bool fadeout) {
+        this->fading_out = fadeout;
+        if(!fadeout)
+            this->music->stop();
+    }
+
+    bool SoundManager::music_playing() {
+        return !this->music->stopped();
+    }
+
     void SoundManager::update(double dt) {
+        if(this->fading_out) {
+            this->music->volume -= 25 * dt;
+            if(this->music->volume <= 0.0) {
+                this->music->stop();
+            } else {
+                this->music->update();
+            }
+        }
+
         for (auto i = sources.begin(); i != sources.end();) {
-            if ((*i)->stopped()) {
+            if (i->stopped()) {
                 i = sources.erase(i);
             } else {
                 ++i;

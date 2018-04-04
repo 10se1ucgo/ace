@@ -263,6 +263,10 @@ namespace ace { namespace world {
     }
 
     long DrawPlayer::update(double dt) {
+        if(!this->get_tool()->available()) {
+            this->set_tool(net::TOOL(uint8_t(this->tool) - 1));
+        }
+
         if (this->local_player && this->alive) {
             double old_switch = this->switch_time;
             this->switch_time = std::max(old_switch - dt, 0.0);
@@ -520,12 +524,12 @@ namespace ace { namespace world {
             }
         } else {
             float bob = ((scene.ms_time & 511) - 255.f) * std::max(std::fabs(v.x), std::fabs(v.y)) / 1000.f;
-            this->mdl_arms.local_position = { -0.01f, -0.45f + (v.z * 0.2f * airborne), 0.1f + (scene.ms_time & 1023) > 511 ? bob : -bob };
-            this->mdl_arms.local_rotation = { 0, 0, 0 };
-            this->mdl_arms.rotation = glm::vec3(-pitch, -yaw + 90, 0); // because lighting haHAA
+            this->mdl_arms.position = { -0.01f, -0.45f + (v.z * 0.2f * airborne), 0.1f + (scene.ms_time & 1023) > 511 ? bob : -bob };
+            this->mdl_arms.rotation = { 0, 0, 0 };
+            this->mdl_arms.lighting_rotation = glm::vec3(-pitch, -yaw + 90, 0); // because lighting haHAA
 
             float t = this->switch_time * 5;
-            this->mdl_arms.local_position -= glm::vec3{ -t, t, 0 };
+            this->mdl_arms.position -= glm::vec3{ -t, t, 0 };
         }
     }
 

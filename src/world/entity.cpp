@@ -32,7 +32,7 @@ namespace ace { namespace world {
     }
 
     bool Entity::visible() const {
-        return this->carrier < 32 || this->scene.get_ply(this->carrier, false) == nullptr;
+        return this->carrier >= 32 || this->scene.get_ply(this->carrier, false) == nullptr;
     }
 
     void Entity::set_position(glm::vec3 pos) {

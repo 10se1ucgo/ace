@@ -7,6 +7,7 @@
 #include "draw/font.h"
 #include "util/event.h"
 #include "net.h"
+#include "draw/sprite.h"
 
 namespace net {
     struct NetworkClient;
@@ -59,6 +60,7 @@ namespace ace {
         friend net::NetworkClient;
         net::NetworkClient net;
         std::unique_ptr<gl::ShaderManager> shaders; // uniqe_ptr because GL context needs to be created before the shaders can be compiled and loaded.
+        draw::SpriteManager sprites;
         sound::SoundManager sound;
         util::TaskScheduler tasks;
         draw::FontManager fonts;

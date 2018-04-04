@@ -38,6 +38,9 @@ namespace ace { namespace gl {
         ACE_NO_COPY(GLObj)
     private:
         void release() {
+            if (this->handle == 0) return; 
+            // i dont think OpenAL even considers 0 is an invalid id, but OH WELL OpenAL Soft does not generate id 0
+            // but im not sure what it does when it deletes id 0, so lets avoid that
             TDeleter(1, &this->handle);
             this->handle = 0;
         }

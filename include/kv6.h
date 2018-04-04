@@ -36,7 +36,7 @@ struct KV6Mesh {
 
 struct KV6 {
     KV6(KV6Mesh *mesh, float scale=0.1f): scale(scale), rotation(0), position(0),
-                                          local_scale(scale), local_rotation(0), local_position(0), mesh(mesh) {
+                                          lighting_rotation(0), mesh(mesh) {
     }
 
     bool sprhitscan(glm::vec3 p0, glm::vec3 v0, glm::vec3 *h);
@@ -46,9 +46,9 @@ struct KV6 {
     }
 
     glm::mat4 get_local_model() const {
-        glm::vec3 rot(local_rotation);
+        glm::vec3 rot(rotation);
         rot.y += 180;
-        return ace::model_matrix(local_position, rot, local_scale);
+        return ace::model_matrix(position, rot, scale);
     }
 
     void draw(const glm::mat4 &pv, ace::gl::ShaderProgram &s) const {
@@ -61,12 +61,13 @@ struct KV6 {
 
     void draw_local(const glm::mat4 &p, ace::gl::ShaderProgram &s) const {
         s.uniform("mvp", p * this->get_local_model());
-        s.uniform("normal_matrix", glm::mat3(transpose(inverse(this->get_model())))); // for lighting and stuff. WHAT AM I DOING
+        s.uniform("normal_matrix", glm::mat3(transpose(inverse(ace::model_matrix(position, lighting_rotation, scale))))); // for lighting and stuff. WHAT AM I DOING
         this->mesh->draw();
     }
 
-    glm::vec3 scale, rotation, position;
-    glm::vec3 local_scale, local_rotation, local_position; // what the hELL am i doing
+    glm::vec3 scale, rotation, position, lighting_rotation;
+
+//    glm::vec3 local_scale, local_rotation, local_position; // what the hELL am i doing
     KV6Mesh *mesh;
 };
 

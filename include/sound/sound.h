@@ -20,16 +20,15 @@ namespace ace { namespace sound {
         SoundBuffer(const std::string &name);
 
         abo abo;
-        ALuint format;
     };
 
     struct Sound {
-        Sound(SoundBuffer *snd);
+        Sound(SoundBuffer *snd = nullptr);
 
+        void set_buf(SoundBuffer *buf);
         void play(bool loop=false);
         void stop();
         bool stopped();
-
 
         void update();
 
@@ -43,6 +42,7 @@ namespace ace { namespace sound {
     struct SoundManager {
         SoundManager();
         ~SoundManager();
+        ACE_NO_COPY_MOVE(SoundManager)
 
         // fire and forget
         // THE RETURNED REFERENCE ISN'T GUARANTEED TO STAY VALID FOR VERY LONG
@@ -51,6 +51,11 @@ namespace ace { namespace sound {
         Sound *play_local(const std::string &name, float volume = 100.f) {
             return this->play(name, {}, volume, true);
         }
+
+        void play_music(const std::string &name, float volume = 100.f, bool loop = true);
+        void stop_music(bool fadeout = true);
+        bool music_playing();
+
         void update(double dt);
 
         void set_listener(glm::vec3 position, glm::vec3 forward, glm::vec3 up, glm::vec3 velocity = {0, 0, 0}) const;
@@ -58,8 +63,8 @@ namespace ace { namespace sound {
         SoundBuffer *get(const std::string &name);
     private:
         std::unordered_map<std::string, SoundBuffer> buffers;
-        std::vector<std::unique_ptr<Sound>> sources;
-        ALCdevice *device;
-        ALCcontext *context;
+        std::vector<Sound> sources;
+        std::unique_ptr<Sound> music;
+        bool fading_out{false};
     };
 }}

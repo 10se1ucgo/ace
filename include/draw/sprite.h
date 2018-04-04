@@ -2,15 +2,24 @@
 #include <string>
 
 #include "SDL.h"
+#include "SDL_image.h"
 #include "glm/glm.hpp"
 
 #include "gl/shader.h"
 #include "gl/gl_util.h"
 #include "draw/draw.h"
+#include "util/except.h"
 
 
 namespace ace { namespace draw {
+    inline std::pair<SDL_Surface *, bool> load_image(const std::string& file_name) {
 
+        SDL_RWops *rwop = SDL_RWFromFile(file_name.c_str(), "rb");
+        bool is_bmp = IMG_isBMP(rwop);
+        SDL_Surface *data = IMG_Load_RW(rwop, 1);
+        if (!data) THROW_ERROR("Couldn't load texture {0}! {1}", file_name, SDL_GetError());
+        return { data, is_bmp };
+    }
 
     struct SpriteGroup {
         SpriteGroup(const std::string &file_name, int order=0);
@@ -96,8 +105,9 @@ namespace ace { namespace draw {
             this->region = { bl.x / this->group->w, bl.y / this->group->h, tr.x / this->group->w, tr.y / this->group->h };
         }
 
-        int w() const { return group->w * scale.x; }
-        int h() const { return group->h * scale.y; }
+        float w() const { return group->w * scale.x; }
+        float h() const { return group->h * scale.y; }
+        glm::vec2 size() const { return { this->w(), this->h() }; }
 
         SpriteGroup *group;
 

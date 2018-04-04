@@ -55,7 +55,7 @@ namespace ace { namespace scene {
 
         GameScene &scene;
 
-        draw::SpriteManager sprites;
+        draw::SpriteManager &sprites;
 
         draw::Sprite reticle, pal, palret, hit_indicator, weapon_sight, ammo_icon;
         glm::mat4 projection;

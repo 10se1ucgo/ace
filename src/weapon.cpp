@@ -31,7 +31,7 @@ namespace ace {
                 this->next_primary = this->ply.scene.time + this->primary_rate();
             }
         } else if (this->ply.secondary_fire && this->secondary_rate() > 0.f) {
-            if (this->can_secondary() && this-> on_secondary()) {
+            if (this->can_secondary() && this->on_secondary()) {
                 this->next_secondary = this->ply.scene.time + this->secondary_rate();
             }
         }
@@ -90,27 +90,24 @@ namespace ace {
     void SpadeTool::transform() {
         float transform = this->ply.scene.time - this->next_primary;
 
-        if (transform < 0)
-            this->ply.mdl_arms.rotation.x -= transform * 180;
 
-        this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f + ply.scene.cam.world_up * .125f;
-        this->mdl.rotation = this->ply.mdl_arms.rotation;
+        if (!this->ply.local_player || this->ply.scene.thirdperson) {
+            if (transform < 0)
+                this->ply.mdl_arms.rotation.x -= transform * 180;
 
+            this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f + ply.scene.cam.world_up * .125f;
+            this->mdl.rotation = this->ply.mdl_arms.rotation;
+        } else {
+            if (transform < 0)
+                this->ply.mdl_arms.rotation.x += -transform * 490;
 
-
-        if (!this->ply.local_player) return;
-
-
-        if (transform < 0)
-            this->ply.mdl_arms.local_rotation.x += -transform * 490;
-
-        this->mdl.local_position = this->ply.mdl_arms.local_position + glm::vec3(0.4f, 0.125f, -0.9f);
-        this->mdl.local_rotation = this->ply.mdl_arms.local_rotation;
+            this->mdl.position = this->ply.mdl_arms.position + glm::vec3(0.4f, 0.125f, -0.9f);
+            this->mdl.rotation = this->ply.mdl_arms.rotation;
+            this->mdl.lighting_rotation = this->ply.mdl_arms.lighting_rotation;
+        }
     }
 
     BlockTool::BlockTool(world::DrawPlayer& ply) : Tool(ply), mdl(ply.scene.models.get("block.kv6"), 0.065f), m1(-1), m2(-1) {
-        this->mdl.local_rotation.y = 1;
-        this->mdl.local_scale = glm::vec3(0.05f);
         this->last_secondary = this->ply.secondary_fire;
     }
 
@@ -203,27 +200,31 @@ namespace ace {
     void BlockTool::transform() {
         float transform = this->ply.scene.time - this->next_primary;
 
-        if (transform < 0)
-            this->ply.mdl_arms.rotation.x -= transform * 60;
 
-        this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
-        this->mdl.rotation = this->ply.mdl_arms.rotation;
+        if (!this->ply.local_player || this->ply.scene.thirdperson) {
+            if (transform < 0)
+                this->ply.mdl_arms.rotation.x -= transform * 60;
 
+            this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
+            this->mdl.rotation = this->ply.mdl_arms.rotation;
+        } else {
+            this->mdl.rotation.y = 1;
+            this->mdl.scale = glm::vec3(0.05f);
 
-        if (!this->ply.local_player) return;
+            if (transform < 0) {
+                this->ply.mdl_arms.position += glm::vec3{ -transform, transform, 0 };
+            }
 
+            this->mdl.position = this->ply.mdl_arms.position + glm::vec3(0.4f, 0.0f, -1.0f);
+            this->mdl.lighting_rotation = this->ply.mdl_arms.lighting_rotation;
 
-        if (transform < 0) {
-            this->ply.mdl_arms.local_position += glm::vec3{ -transform, transform, 0 };
+            if (!this->ghost_block) {
+                this->ghost_block = std::make_unique<draw::VXLBlocks>(std::vector<VXLBlock>{ VXLBlock{ { 0, 0, 0 }, 0xFF000000, 0b11111111 } });
+            }
+
+            this->ghost_block->position = vox2draw(this->ply.secondary_fire ? this->m2 : this->m1);
+
         }
-
-        this->mdl.local_position = this->ply.mdl_arms.local_position + glm::vec3(0.4f, 0.0f, -1.0f);
-
-        if (!this->ghost_block) {
-            this->ghost_block = std::make_unique<draw::VXLBlocks>(std::vector<VXLBlock>{ VXLBlock{ { 0, 0, 0 }, 0xFF000000, 0b11111111 } });
-        }
-
-        this->ghost_block->position = vox2draw(this->ply.secondary_fire ? this->m2 : this->m1);
     }
 
     GrenadeTool::GrenadeTool(world::DrawPlayer& ply) : Tool(ply), mdl(ply.scene.models.get("grenade.kv6"), 0.05f) {
@@ -272,21 +273,22 @@ namespace ace {
     void GrenadeTool::transform() {
         float transform = fuse - MAX_FUSE;
 
-        if (transform < 0)
-            this->ply.mdl_arms.rotation.x += transform * 30;
+        if(!this->ply.local_player || this->ply.scene.thirdperson) {
+            if (transform < 0)
+                this->ply.mdl_arms.rotation.x += transform * 30;
 
-        this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f;
-        this->mdl.rotation = this->ply.mdl_arms.rotation;
+            this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f;
+            this->mdl.rotation = this->ply.mdl_arms.rotation;
+        } else {
+            if (transform < 0) {
+                this->ply.mdl_arms.position += glm::vec3{ transform * -1.5, transform * 0.5, 0 };
+                //        this->ply.mdl_arms.local_rotation.x += transform * 40;
+            }
 
-        if (!this->ply.local_player) return;
-
-        if (transform < 0) {
-            this->ply.mdl_arms.local_position += glm::vec3{ transform * -1.5, transform * 0.5, 0 };
-            //        this->ply.mdl_arms.local_rotation.x += transform * 40;
+            this->mdl.position = this->ply.mdl_arms.position + glm::vec3(0.4f, 0.125f, -0.9f);;
+            this->mdl.rotation = this->ply.mdl_arms.rotation;
+            this->mdl.lighting_rotation = this->ply.mdl_arms.lighting_rotation;
         }
-
-        this->mdl.local_position = this->ply.mdl_arms.local_position + glm::vec3(0.4f, 0.125f, -0.9f);;
-        this->mdl.local_rotation = this->ply.mdl_arms.local_rotation;
     }
 
     Weapon::Weapon(world::DrawPlayer& ply, const std::string &model) : Tool(ply), mdl(ply.scene.models.get(model), 0.05f) {
@@ -437,23 +439,24 @@ namespace ace {
     void Weapon::transform() {
         float transform = this->ply.scene.time - this->next_primary;
 
-        if (transform < 0)
-            this->ply.mdl_arms.rotation.x += transform * 45;
+        if(!this->ply.local_player || this->ply.scene.thirdperson) {
+            if (transform < 0)
+                this->ply.mdl_arms.rotation.x += transform * 45;
 
-        this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
-        this->mdl.rotation = this->ply.mdl_arms.rotation;
+            this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
+            this->mdl.rotation = this->ply.mdl_arms.rotation;
 
-        if (!this->ply.local_player) return;
+        } else {
+            if (transform < 0) {
+                float f = transform / 32;
+                float f2 = f * 10;
+                this->ply.mdl_arms.position += glm::vec3{ -f2, f2, 0 };
+                // this->ply.mdl_arms.local_rotation.x += f * 280;
+            }
 
-
-        if (transform < 0) {
-            float f = transform / 32;
-            float f2 = f * 10;
-            this->ply.mdl_arms.local_position += glm::vec3{ -f2, f2, 0 };
-            // this->ply.mdl_arms.local_rotation.x += f * 280;
+            this->mdl.position = this->ply.mdl_arms.position + glm::vec3(0.4, 0, -1.0f);
+            this->mdl.rotation = this->ply.mdl_arms.rotation;
+            this->mdl.lighting_rotation = this->ply.mdl_arms.lighting_rotation;
         }
-
-        this->mdl.local_position = this->ply.mdl_arms.local_position + glm::vec3(0.4, 0, -1.0f);
-        this->mdl.local_rotation = this->ply.mdl_arms.local_rotation;
     }
 }

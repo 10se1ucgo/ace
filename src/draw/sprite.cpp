@@ -7,15 +7,6 @@
 #include "util/except.h"
 
 namespace ace { namespace draw {
-    inline std::pair<SDL_Surface *, bool> load_image(const std::string& file_name) {
-
-        SDL_RWops *rwop = SDL_RWFromFile(file_name.c_str(), "rb");
-        bool is_bmp = IMG_isBMP(rwop);
-        SDL_Surface *data = IMG_Load_RW(rwop, 1);
-        if (!data) THROW_ERROR("Couldn't load texture {0}!", file_name);
-        return {data, is_bmp};
-    }
-
     SpriteGroup::SpriteGroup(const std::string& file_name, int order) : SpriteGroup(load_image(file_name), order) {
     }
 
@@ -35,8 +26,9 @@ namespace ace { namespace draw {
         glBindTexture(GL_TEXTURE_2D, this->tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_NEAREST);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
+        // todo make filter an option
 
         auto format = data->format->BytesPerPixel == 3 ? GL_RGB : GL_RGBA;
         glTexImage2D(GL_TEXTURE_2D, 0, format, this->w, this->h, 0, format, GL_UNSIGNED_BYTE, data->pixels);

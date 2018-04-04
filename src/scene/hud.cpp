@@ -145,8 +145,9 @@ namespace ace { namespace scene {
 
     HUD::HUD(GameScene& s) :
         scene(s),
-        reticle(sprites.get("target.png")), pal(gen_palette(sprites)), palret(gen_palret(sprites)), hit_indicator(sprites.get("indicator.bmp")),
-        weapon_sight(sprites.get("semi.png")), ammo_icon(sprites.get("semi.bmp")),
+        sprites(scene.client.sprites), reticle(sprites.get("target.png")), pal(gen_palette(sprites)), palret(gen_palret(sprites)),
+        hit_indicator(sprites.get("indicator.bmp")), weapon_sight(sprites.get("semi.png")),
+        ammo_icon(sprites.get("semi.bmp")),
         map_display(*this),
         ply(scene, false),
         sys48(scene.client.fonts.get("fixedsys.ttf", 48, false)),
