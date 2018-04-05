@@ -48,8 +48,9 @@ namespace ace { namespace scene {
                     }
                 }
             }
-
-            return manager.get("palette", SDL_CreateRGBSurfaceFrom(pixels, colors, colors, 32, 4 * colors, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
+            auto spr = manager.get("palette", SDL_CreateRGBSurfaceFrom(pixels, colors, colors, 32, 4 * colors, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
+            spr->set_antialias(false);
+            return spr;
         }
 
         draw::SpriteGroup *gen_palret(draw::SpriteManager &manager) {
@@ -61,7 +62,9 @@ namespace ace { namespace scene {
                 pixels[i * siz + 7] = { 255, 255, 255, 255 };
                 pixels[7 * siz + (7 - i)] = { 255, 255, 255, 255 };
             }
-            return manager.get("paletteret", SDL_CreateRGBSurfaceFrom(pixels, siz, siz, 32, 4 * siz, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
+            auto spr = manager.get("paletteret", SDL_CreateRGBSurfaceFrom(pixels, siz, siz, 32, 4 * siz, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
+            spr->set_antialias(false);
+            return spr;
         }
 
         float angle2d(glm::vec2 p, glm::vec2 o) {

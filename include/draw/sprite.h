@@ -31,6 +31,8 @@ namespace ace { namespace draw {
         void draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale = { 1.0, 1.0 }, Align align = Align::TOP_LEFT, glm::vec4 region = { 0, 0, 1, 1 });
         void draw(gl::ShaderProgram &s);
 
+        void set_antialias(bool antialias);
+
         int w{}, h{}, order{};
         gl::texture tex;
     private:

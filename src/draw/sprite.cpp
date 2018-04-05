@@ -75,6 +75,13 @@ namespace ace { namespace draw {
         this->vao.draw_instanced(GL_TRIANGLE_STRIP, 4, this->models.draw_count);
     }
 
+    void SpriteGroup::set_antialias(bool antialias) {
+        glBindTexture(GL_TEXTURE_2D, this->tex);
+        auto filter = antialias ? GL_LINEAR : GL_NEAREST;
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
+        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+    }
+
     SpriteGroup *SpriteManager::get(const std::string &name, SDL_Surface *data) {
         try {
             return &sprites.at(name);

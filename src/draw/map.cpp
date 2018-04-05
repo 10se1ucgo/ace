@@ -292,6 +292,8 @@ namespace ace { namespace draw {
                 pixels[p++] = r; pixels[p++] = g; pixels[p++] = b;
             }
         }
-        return this->scene.hud.sprites.get("big_map_overview", SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
+        auto overview = this->scene.client.sprites.get("map_overview", SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
+        overview->set_antialias(false);
+        return overview;
     }
 }}

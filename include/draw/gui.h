@@ -46,8 +46,8 @@ namespace ace { namespace draw {
         std::unordered_map<std::string, std::function<void()>> handlers;
     };
 
-    struct Button : GUIWidget {
-        Button(scene::Scene &scene, glm::vec2 position, glm::vec2 size);
+    struct BaseButton : GUIWidget {
+        BaseButton(scene::Scene &scene, glm::vec2 position, glm::vec2 size);
 
         void on_mouse_motion(int x, int y, int dx, int dy) override;
         void on_mouse_button(int button, bool pressed) override;
@@ -61,17 +61,27 @@ namespace ace { namespace draw {
         glm::vec2 _pos, _size;
         bool hovering{ false }, pressed{ false };
     };
-    
-    struct ButtonImages {
-        ButtonImages(scene::Scene &s, const std::string &button_name);
 
-        draw::SpriteGroup *left, *mid, *right;
-        draw::SpriteGroup *left_hover, *mid_hover, *right_hover;
-        draw::SpriteGroup *left_press, *mid_press, *right_press;
+    struct BitmapButton : BaseButton {
+        BitmapButton(scene::Scene &s, glm::vec2 position, glm::vec2 size, const std::string &image = "", const std::string &button = "button_square");
+
+        void draw() override;
+    protected:
+        draw::SpriteGroup *normal, *hover, *press;
+        draw::Sprite button, image;
+
+        void fire(const std::string &event) override {
+            BaseButton::fire(event);
+            this->update_images();
+        }
+
+        void update_images();
+        void update_position();
     };
+    
 
-    struct ImageTextButton : Button {
-        ImageTextButton(scene::Scene &s, std::string label, glm::vec2 position, glm::vec2 size, const std::string &font = "stencil.ttf", int font_size = 48, std::string button_name = "button_large");
+    struct Button : BaseButton {
+        Button(scene::Scene &s, std::string label, glm::vec2 position, glm::vec2 size, const std::string &font = "stencil.ttf", int font_size = 48, const std::string &button_name = "button_large");
 
         void draw() override;
 
@@ -79,16 +89,41 @@ namespace ace { namespace draw {
         void set_size(glm::vec2 size) override;
     protected:
         draw::Sprite left, mid, right;
-        draw::Font *font;
         draw::Text label;
-        ButtonImages images;
+
+        struct ButtonImages {
+            ButtonImages(scene::Scene &s, const std::string &button_name);
+
+            draw::SpriteGroup *left, *mid, *right;
+            draw::SpriteGroup *left_hover, *mid_hover, *right_hover;
+            draw::SpriteGroup *left_press, *mid_press, *right_press;
+        } images;
 
         void fire(const std::string &event) override {
-            Button::fire(event);
+            BaseButton::fire(event);
             this->update_images();
         }
 
         void update_images();
         void update_position();
+    };
+
+    struct ProgressBar : GUIWidget {
+        ProgressBar(scene::Scene &scene, glm::vec2 position, glm::vec2 size, const std::string &image = "ui/game_loading/loading_bar_bullet.png");
+
+        void draw() override;
+
+        int range{ 100 }, value{ 50 };
+
+        glm::vec2 position() override { return this->_pos; }
+        glm::vec2 size() override { return this->_size; }
+
+        void set_position(glm::vec2 position) override { this->_pos = position; }
+        void set_size(glm::vec2 size) override { this->_size = size; }
+    private:
+        draw::SpriteGroup *bar;
+        
+        glm::vec2 _pos, _size;
+        float scale;
     };
 }}

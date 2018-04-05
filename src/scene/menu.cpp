@@ -15,17 +15,18 @@ namespace ace { namespace scene {
     struct MainMenu : Menu {
         explicit MainMenu(scene::Scene &scene) : Menu(scene),
             background(scene.client.sprites.get("main.png")), splash(scene.client.sprites.get("splash.png")),
-            button1(this->add<draw::ImageTextButton>("weebs", glm::vec2{ 400, 400 }, glm::vec2{ 256, 128 }, "stencil.ttf", 55)),
-            button2(this->add<draw::ImageTextButton>("test2", glm::vec2{ 100, 400 }, glm::vec2{ 300, 55 })) {
+            weeb_button(this->add<draw::Button>("weebs", glm::vec2{ 400, 400 }, glm::vec2{ 256, 128 }, "stencil.ttf", 55)),
+            button2(this->add<draw::Button>("test2", glm::vec2{ 100, 400 }, glm::vec2{ 300, 55 })),
+            button3(this->add<draw::BitmapButton>(glm::vec2{300, 300}, glm::vec2(128), "ui/common_elements/scroll_bar/scroll_bar_arrow_right.png")),
+            pb(this->add<draw::ProgressBar>(glm::vec2{200, 200}, glm::vec2{414, 43})) {
 
-            background->order = -1;
+            this->background->order = -100;
 
-            glm::vec2 size = this->scene.client.size();
-            splash.position = size / 2.f;
-            splash.alignment = draw::Align::BOTTOM_CENTER;
-            splash.scale *= 0.5f;
+            this->splash.position = this->scene.client.size() / 2.f;
+            this->splash.alignment = draw::Align::BOTTOM_CENTER;
+            this->splash.scale *= 0.5f;
 
-            button1->on("press_end", []() { fmt::print("You pressed the button!\n"); });
+            this->weeb_button->on("press_end", []() { fmt::print("You pressed a button!\n"); });
         }
 
         void update(double dt) override {
@@ -44,7 +45,9 @@ namespace ace { namespace scene {
 
         draw::SpriteGroup *background;
         draw::Sprite splash;
-        draw::ImageTextButton *button1, *button2;
+        draw::Button *weeb_button, *button2;
+        draw::BitmapButton *button3;
+        draw::ProgressBar *pb;
     };
 
     MainMenuScene::MainMenuScene(GameClient &client) : Scene(client),
