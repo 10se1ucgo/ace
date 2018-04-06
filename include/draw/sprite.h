@@ -13,7 +13,6 @@
 
 namespace ace { namespace draw {
     inline std::pair<SDL_Surface *, bool> load_image(const std::string& file_name) {
-
         SDL_RWops *rwop = SDL_RWFromFile(file_name.c_str(), "rb");
         bool is_bmp = IMG_isBMP(rwop);
         SDL_Surface *data = IMG_Load_RW(rwop, 1);

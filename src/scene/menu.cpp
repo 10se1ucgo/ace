@@ -7,13 +7,17 @@
 #include "draw/sprite.h"
 
 namespace ace { namespace scene {
-    inline float wave(float x, float a, float b) {
-        return (sin(x) * (a - b) + (a + b)) / 2.f;
-    }
+
     
 
-    struct MainMenu : Menu {
-        explicit MainMenu(scene::Scene &scene) : Menu(scene),
+    struct MainMenu : draw::GUIPanel {
+        draw::SpriteGroup *background;
+        draw::Sprite splash;
+        draw::Button *weeb_button, *button2;
+        draw::BitmapButton *button3;
+        draw::ProgressBar *pb;
+
+        explicit MainMenu(scene::Scene &scene) : GUIPanel(scene),
             background(scene.client.sprites.get("main.png")), splash(scene.client.sprites.get("splash.png")),
             weeb_button(this->add<draw::Button>("weebs", glm::vec2{ 400, 400 }, glm::vec2{ 256, 128 }, "stencil.ttf", 55)),
             button2(this->add<draw::Button>("test2", glm::vec2{ 100, 400 }, glm::vec2{ 300, 55 })),
@@ -30,24 +34,19 @@ namespace ace { namespace scene {
         }
 
         void update(double dt) override {
-            Menu::update(dt);
+            GUIPanel::update(dt);
         
             splash.scale = glm::vec2(wave(this->scene.time / 0.45f, 0.49f, 0.52f));
             button2->set_size({ wave(this->scene.time, 200, 300),  wave(this->scene.time * 2, 55, 75) });
+            pb->value = int(wave(this->scene.time, 0.f, 100.f));
         }
 
         void draw() override {
-            Menu::draw();
+            GUIPanel::draw();
 
             background->draw({ 1, 1, 1, 1 }, { 0, 0 }, 0, this->scene.client.size() / glm::vec2(background->w, background->h));
             splash.draw();
         }
-
-        draw::SpriteGroup *background;
-        draw::Sprite splash;
-        draw::Button *weeb_button, *button2;
-        draw::BitmapButton *button3;
-        draw::ProgressBar *pb;
     };
 
     MainMenuScene::MainMenuScene(GameClient &client) : Scene(client),
@@ -79,7 +78,7 @@ namespace ace { namespace scene {
         this->client.sprites.draw(this->client.shaders->sprite);
 
         this->client.shaders->text.bind();
-        this->client.fonts.draw(projection, client.shaders->text);
+        this->client.fonts.draw(this->projection, this->client.shaders->text);
     }
 
     void MainMenuScene::update(double dt) {

@@ -43,6 +43,10 @@ namespace ace { namespace draw {
         this->font->draw(*this);
     }
 
+    void Text::draw_shadowed() {
+        this->font->draw_shadowed(*this);
+    }
+
     void Text::update() {
         this->vertices.clear();
         this->_size = this->font->measure(this->_str, this->_scale);
@@ -107,8 +111,6 @@ namespace ace { namespace draw {
 
     void Font::draw(const glm::mat4 &pv, gl::ShaderProgram &s) {
         if (this->vbo->empty()) return;
-
-        s.uniform("mvp", pv);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex);
@@ -192,6 +194,12 @@ namespace ace { namespace draw {
         // this->vbo->insert(this->vbo->end(), std::make_move_iterator(r.vertices.begin()), std::make_move_iterator(r.vertices.end()));
     }
 
+    void Font::draw_shadowed(Text &r) {
+        // TODO dont do this inefficient recalculation of every vertex
+        this->draw(r.str(), r.position + glm::vec2(2), glm::vec3(0.5), r.scale(), r.alignment());
+        this->draw(r);
+    }
+
     void Font::draw_shadowed(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
         this->draw(str, pos + glm::vec2(2), glm::vec3(0.5), scale, alignment); // B)
         this->draw(str, pos, color, scale, alignment);
@@ -215,6 +223,7 @@ namespace ace { namespace draw {
     }
 
     void FontManager::draw(const glm::mat4& pv, gl::ShaderProgram& s) {
+        s.uniform("mvp", pv);
         for(auto &kv : this->fonts) {
             kv.second.draw(pv, s);
         }

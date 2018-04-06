@@ -32,6 +32,7 @@ namespace ace { namespace draw {
                     glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
 
         void draw();
+        void draw_shadowed();
 
         const std::string &str() const { return this->_str; }
         glm::vec3 color() const { return this->_color; }
@@ -76,6 +77,7 @@ namespace ace { namespace draw {
     private:
         void render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const;
         void draw(Text &r);
+        void draw_shadowed(Text &r);
 
         gl::experimental::vao vao;
         gl::experimental::streaming_vbo<detail::GlyphVertex> vbo;

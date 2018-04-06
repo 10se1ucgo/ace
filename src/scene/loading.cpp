@@ -8,17 +8,38 @@ namespace ace { namespace scene {
     LoadingScene::LoadingScene(GameClient& client, const std::string &address):
         Scene(client),
         font(client.fonts.get("fixedsys.ttf", 48, false)),
-        server(address) {
+        aldo(client.fonts.get("AldotheApache.ttf", 48)),
+        server(address),
+        background(client.sprites.get("main.png")),
+        big_frame(client.sprites.get("ui/common_elements/frames/ui_frame_large.png")),
+        loading_frame(client.sprites.get("ui/game_loading/game_loading_content_frames.png")),
+        progress_bar(*this, {}, {}),
+        frame_text(this->aldo, "LOADING...", glm::vec3(1), glm::vec2(1), draw::Align::CENTER) {
+
 
         this->on_window_resize(0, 0);
 
-        if (client.net.state == net::NetState::DISCONNECTED || client.net.state == net::NetState::UNCONNECTED)
+        if (this->client.net.state == net::NetState::DISCONNECTED || this->client.net.state == net::NetState::UNCONNECTED)
             this->client.toggle_text_input();
+
+        this->big_frame.alignment = this->loading_frame.alignment = draw::Align::CENTER;
+        this->big_frame.position = loading_frame.position = this->client.size() / 2.f;
+        this->big_frame.scale = this->loading_frame.scale = (this->client.size() / big_frame.size()) * 0.9f;
+
+        this->background->order = -100;
+        this->big_frame.group->order = -11;
+        this->loading_frame.group->order = -10;
+
+        this->progress_bar.set_position(loading_frame.get_position(draw::Align::TOP_LEFT) + glm::vec2(70, 700) * loading_frame.scale);
+        this->progress_bar.set_size(glm::vec2{ 650, 70 } * loading_frame.scale);
+        this->frame_text.position = big_frame.get_position(draw::Align::TOP_LEFT) + glm::vec2(580, 60) * big_frame.scale;
 
         glEnable(GL_BLEND);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
         glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
+
+        
     }
 
     LoadingScene::~LoadingScene() {
@@ -27,35 +48,35 @@ namespace ace { namespace scene {
     void LoadingScene::draw() {
         glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
 
-        std::string str;
-        switch(client.net.state) {
-            case net::NetState::UNCONNECTED:
-            case net::NetState::DISCONNECTED:
-                if (this->client.text_input_active())
-                    str = fmt::format("ENTER NAME: {}_", this->client.input_buffer);
-                else
-                    str = "DISCONNECTED";
-                break;
-            case net::NetState::CONNECTING:
-            case net::NetState::CONNECTED: 
-                str = "CONNECTING...";
-                break;
-            case net::NetState::MAP_TRANSFER: {
-                int max = client.net.map_writer.vec.capacity();
-                int cur = client.net.map_writer.vec.size();
-                str = fmt::format("{}% | {} out of {}", int(cur / float(max) * 100), cur, max);
-            } break;
-            default: 
-                break;
+        this->background->draw({ 1, 1, 1, 1 }, { 0, 0 }, 0, this->client.size() / glm::vec2(this->background->w, this->background->h));
+        this->big_frame.draw();
+        this->frame_text.draw_shadowed();
+        this->loading_frame.draw();
+        this->progress_bar.draw();
+
+        
+        if(this->client.net.state == net::NetState::UNCONNECTED || this->client.net.state == net::NetState::DISCONNECTED) {
+            std::string str;
+            if (this->client.text_input_active())
+                str = fmt::format("ENTER NAME: {}_", this->client.input_buffer);
+            else
+                str = "DISCONNECTED";
+            font->draw(str, { client.width() / 2.f, client.height() / 2.f }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         }
-        font->draw(str, { client.width() / 2.f, client.height() / 2.f }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
-    
-        client.shaders->text.bind();
-        client.fonts.draw(projection, client.shaders->text);
+
+        this->client.shaders->sprite.bind();
+        this->client.shaders->sprite.uniform("projection", this->projection);
+        this->client.sprites.draw(this->client.shaders->sprite);
+
+        this->client.shaders->text.bind();
+        this->client.fonts.draw(this->projection, this->client.shaders->text);
     }
 
     void LoadingScene::update(double dt) {
         Scene::update(dt);
+        progress_bar.value = wave(this->time, 0, 101);
+        this->progress_bar.value = client.net.map_writer.vec.size();
+        this->progress_bar.range = std::max(1u, client.net.map_writer.vec.capacity());
     }
 
     bool LoadingScene::on_text_typing(const std::string &text) {

@@ -1,6 +1,7 @@
 #pragma once
 #include "scene/scene.h"
 #include "net.h"
+#include "draw/gui.h"
 
 
 namespace ace { namespace scene {
@@ -27,9 +28,14 @@ namespace ace { namespace scene {
         
 
         glm::mat4 projection;
-        draw::Font *font;
+        draw::Font *font, *aldo;
 
         net::Server server;
         std::vector<std::pair<net::PACKET, std::unique_ptr<net::Loader>>> saved_loaders;
+
+        draw::SpriteGroup *background;
+        draw::Sprite big_frame, loading_frame;
+        draw::ProgressBar progress_bar;
+        draw::Text frame_text;
     };
 }}

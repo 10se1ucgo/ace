@@ -86,6 +86,10 @@ namespace ace {
         model = rotate(model, rot.x, { 1, 0, 0 });
         return  scale(model, m_scale);
     }
+
+    inline float wave(float x, float a, float b) {
+        return (cos(x * glm::pi<float>()) * (a - b) + (a + b)) / 2.f;
+    }
 }
 
 namespace fmt {

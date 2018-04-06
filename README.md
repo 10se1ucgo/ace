@@ -7,23 +7,22 @@ this is just my journey into learning opengl, enjoy
 
 ~~currently it can do:~~
 
-
 ok that list has since expanded to be too much to list out so INSTEAD heres what it cant to:
-- no menus or loading screen
-- no weapon/team selection hud
-- minimap
-- territory control
-- 0.76
-- uhh yeah a bunch of other things i cant remember
+- Territory Control game mode
+- Protocol version 0.76
+- Some other things I don't remember
 
-# building
+# BUILDING
 
-i think you'll need something around C++14, but i may have accidentally used a C++17 stl feature here and there.
+You'll need a compiler supporting *at least* C++14.
 
 ## WINDOWS:
-The folder `ext` should be where all the libs go, refer to the CMakeLists.txt for detail
+The folder `ext` should be where all the libs go, refer to the CMakeLists.txt for details
 My ext tree looks something like this:
 ```
+├───alure
+│   ├───include
+│   └───lib
 ├───enet
 │   ├───include
 │   └───lib
@@ -45,13 +44,19 @@ My ext tree looks something like this:
     ├───include
     └───lib
 ```
-then run generate.bat and open the solution in `build/`
+Then run generate.bat and open the solution in `build/`
 
-# running
+# RUNNING
 
-on windows i have to copy the DLLs from all the `ext/` modules into the executable folder.  
-make sure you have all of the AoS resources there too + the shaders folder from the source tree.  
-you'll also need to get Fixedsys Excelsior and put it into `font/`, named `fixedsys.ttf`
+On Windows you'll likely have to copy the DLLs from all the `ext/` modules into the executable folder.
+
+Make sure it also has all of the AoS resources + the shaders folder from the source tree.
+
+You'll also need the following fonts in the `font/` folder:
+- `fixedsys.ttf` (Fixedsys Excelsior)
+- `AldotheApache.ttf` (Aldo the Apache)
+
+Obviously you can use any font you'd like but make sure they are named properly.
 
 
 # License

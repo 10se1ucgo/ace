@@ -7,12 +7,6 @@ namespace ace { namespace draw {
                position.y <= pos.y && pos.y <= position.y + size.y;
     }
 
-    BaseButton::BaseButton(scene::Scene &scene, glm::vec2 position, glm::vec2 size):
-        GUIWidget(scene),
-        _pos(position),
-        _size(size) {
-    }
-
     void BaseButton::on_mouse_motion(int x, int y, int dx, int dy) {
         bool was_hovering = this->hovering;
         this->hovering = point_in_rect(this->_pos, this->_size, { x, y });
@@ -116,16 +110,6 @@ namespace ace { namespace draw {
         this->label.draw();
     }
 
-    void Button::set_position(glm::vec2 position) {
-        BaseButton::set_position(position);
-        this->update_position();
-    }
-
-    void Button::set_size(glm::vec2 size) {
-        BaseButton::set_size(size);
-        this->update_position();
-    }
-
     void Button::update_images() {
         if (this->pressed) {
             this->left.group = this->images.left_press;
@@ -163,19 +147,15 @@ namespace ace { namespace draw {
     }
 
     ProgressBar::ProgressBar(scene::Scene &scene, glm::vec2 position, glm::vec2 size, const std::string &image) :
-        GUIWidget(scene),
-        bar(scene.client.sprites.get(image)),
-        _pos(position),
-        _size(size) {
-
-        this->scale = this->_size.y / this->bar->h;
+        GUIWidget(scene, position, size),
+        bar(scene.client.sprites.get(image)) {
     }
 
     void ProgressBar::draw() {
-        float space_between_bullets = (this->scale * bar->w + 5);
-        int total_bullets = this->_size.x / space_between_bullets;
+        float space_between_bullets = (this->scale * this->bar->w + this->padding);
+        int total_bullets = this->size().x / space_between_bullets;
         int filled_bullets = total_bullets * (this->value / float(this->range));
-        glm::vec2 draw_pos(this->_pos);
+        glm::vec2 draw_pos(this->position());
         for(int x = 0; x < filled_bullets; x++) {
             this->bar->draw(glm::vec4{ 1.0f }, draw_pos, 0.0f, glm::vec2(this->scale));
             draw_pos.x += space_between_bullets;

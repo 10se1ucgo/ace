@@ -20,14 +20,19 @@ namespace ace { namespace draw {
     };
 
     struct GUIWidget : InputHandler {
-        explicit GUIWidget(scene::Scene &scene) : InputHandler(scene) {
+        explicit GUIWidget(scene::Scene &scene, glm::vec2 position, glm::vec2 size) :
+            InputHandler(scene),
+            _pos(position),
+            _size(size) {
         }
 
-        virtual void set_position(glm::vec2 position) = 0;
-        virtual void set_size(glm::vec2 size) = 0;
+        void set_position(glm::vec2 position) { this->_pos = position; this->layout(); }
+        void set_size(glm::vec2 size) { this->_size = size; this->layout(); }
 
-        virtual glm::vec2 position() = 0;
-        virtual glm::vec2 size() = 0;
+        glm::vec2 position() { return this->_pos; }
+        glm::vec2 size() { return this->_size; }
+
+        virtual void layout() {}
 
         // i have no idea what im doing lol
 
@@ -43,22 +48,37 @@ namespace ace { namespace draw {
             }
         }
 
+        glm::vec2 _pos, _size;
         std::unordered_map<std::string, std::function<void()>> handlers;
     };
 
+    struct GUIPanel : draw::InputHandler {
+        GUIPanel(scene::Scene &scene) : InputHandler(scene) {
+        }
+
+        void update(double dt) override { for (auto &w : this->widgets) w->update(dt); }
+        void draw() override { for (auto &w : this->widgets) w->draw(); }
+        void on_key(SDL_Scancode scancode, int modifiers, bool pressed) override { for (auto &w : this->widgets) w->on_key(scancode, modifiers, pressed); }
+        void on_mouse_button(int button, bool pressed) override { for (auto &w : this->widgets) w->on_mouse_button(button, pressed); }
+        void on_mouse_motion(int x, int y, int dx, int dy) override { for (auto &w : this->widgets) w->on_mouse_motion(x, y, dx, dy); }
+
+        template<typename TWidget, typename... TArgs, typename = std::enable_if_t<std::is_base_of<draw::GUIWidget, TWidget>::value>>
+        TWidget *add(TArgs&&... args) {
+            std::unique_ptr<TWidget> obj = std::make_unique<TWidget>(this->scene, std::forward<TArgs>(args)...);
+            TWidget *ptr = obj.get(); // moving the unique_ptr shouldnt have an effect on the actual pointer
+            widgets.emplace_back(std::move(obj));
+            return ptr;
+        }
+
+        std::vector<std::unique_ptr<GUIWidget>> widgets;
+    };
+
     struct BaseButton : GUIWidget {
-        BaseButton(scene::Scene &scene, glm::vec2 position, glm::vec2 size);
+        BaseButton(scene::Scene &scene, glm::vec2 position, glm::vec2 size) : GUIWidget(scene, position, size) { }
 
         void on_mouse_motion(int x, int y, int dx, int dy) override;
         void on_mouse_button(int button, bool pressed) override;
-
-        void set_position(glm::vec2 position) override { this->_pos = position; }
-        void set_size(glm::vec2 size) override { this->_size = size; }
-
-        glm::vec2 position() override { return this->_pos; }
-        glm::vec2 size() override { return this->_size; }
     protected:
-        glm::vec2 _pos, _size;
         bool hovering{ false }, pressed{ false };
     };
 
@@ -66,13 +86,18 @@ namespace ace { namespace draw {
         BitmapButton(scene::Scene &s, glm::vec2 position, glm::vec2 size, const std::string &image = "", const std::string &button = "button_square");
 
         void draw() override;
+
+        void layout() override {
+            BaseButton::layout();
+            this->update_position();
+        }
     protected:
         draw::SpriteGroup *normal, *hover, *press;
         draw::Sprite button, image;
 
         void fire(const std::string &event) override {
-            BaseButton::fire(event);
             this->update_images();
+            BaseButton::fire(event);
         }
 
         void update_images();
@@ -85,8 +110,10 @@ namespace ace { namespace draw {
 
         void draw() override;
 
-        void set_position(glm::vec2 position) override;
-        void set_size(glm::vec2 size) override;
+        void layout() override {
+            BaseButton::layout();
+            this->update_position();
+        }
     protected:
         draw::Sprite left, mid, right;
         draw::Text label;
@@ -113,17 +140,15 @@ namespace ace { namespace draw {
 
         void draw() override;
 
+        void layout() override {
+            GUIWidget::layout();
+            this->scale = this->size().y / this->bar->h;
+        };
+
         int range{ 100 }, value{ 50 };
-
-        glm::vec2 position() override { return this->_pos; }
-        glm::vec2 size() override { return this->_size; }
-
-        void set_position(glm::vec2 position) override { this->_pos = position; }
-        void set_size(glm::vec2 size) override { this->_size = size; }
+        float padding{ 2.f };
     private:
         draw::SpriteGroup *bar;
-        
-        glm::vec2 _pos, _size;
         float scale;
     };
 }}
