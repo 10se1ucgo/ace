@@ -73,8 +73,8 @@ namespace ace { namespace scene {
     }
 
     MapDisplay::MapDisplay(HUD& hud): hud(hud), marker(hud.sprites.get("player.bmp")), map(hud.scene.map.get_overview()), big(map), mini(map) {
-        this->map->order = 4;
-        this->marker->order = 5;
+        this->map->order = draw::Layer::FOREGROUND + 4;
+        this->marker->order = this->map->order + 1;
         
         this->big.alignment = draw::Align::CENTER;
         this->mini.alignment = draw::Align::TOP_RIGHT;

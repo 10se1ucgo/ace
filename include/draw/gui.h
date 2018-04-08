@@ -28,9 +28,11 @@ namespace ace { namespace draw {
 
         void set_position(glm::vec2 position) { this->_pos = position; this->layout(); }
         void set_size(glm::vec2 size) { this->_size = size; this->layout(); }
+        void enable(bool enable) { this->_enabled = enable; this->layout(); }
 
-        glm::vec2 position() { return this->_pos; }
-        glm::vec2 size() { return this->_size; }
+        glm::vec2 position() const { return this->_pos; }
+        glm::vec2 size() const { return this->_size; }
+        bool enabled() const { return this->_enabled; }
 
         virtual void layout() {}
 
@@ -40,6 +42,7 @@ namespace ace { namespace draw {
         void on(const std::string &event, TFunc&& func, TArgs&&... args) {
             this->handlers.emplace(event, std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
         }
+
     protected:
         virtual void fire(const std::string &event) {
             const auto handler(this->handlers.find(event));
@@ -49,6 +52,7 @@ namespace ace { namespace draw {
         }
 
         glm::vec2 _pos, _size;
+        bool _enabled{true};
         std::unordered_map<std::string, std::function<void()>> handlers;
     };
 
@@ -127,8 +131,8 @@ namespace ace { namespace draw {
         } images;
 
         void fire(const std::string &event) override {
-            BaseButton::fire(event);
             this->update_images();
+            BaseButton::fire(event);
         }
 
         void update_images();
@@ -151,4 +155,61 @@ namespace ace { namespace draw {
         draw::SpriteGroup *bar;
         float scale;
     };
+
+
+    struct Frame {
+        Frame(scene::Scene &scene, const std::string &image, std::string title, glm::vec2 position, glm::vec2 title_offset, float size) :
+            _image(scene.client.sprites.get(image)),
+            _title(scene.client.fonts.get("AldotheApache.ttf", 48), std::move(title), glm::vec3(1), glm::vec2(1), draw::Align::CENTER) {
+
+            this->_image.group->order = Layer::FRAME;
+            this->_image.scale = glm::vec2(size / this->_image.group->h);
+            this->_image.position = position;
+            this->_image.alignment = draw::Align::CENTER;
+            
+            auto p = this->_image.get_position(draw::Align::TOP_LEFT);
+            this->_title.position = p + title_offset * this->_image.scale;
+        }
+
+        void draw() {
+            this->_image.draw();
+            this->_title.draw_shadowed();
+        }
+
+        void set_title(std::string title) {
+            this->_title.set_str(std::move(title));
+        }
+
+        const draw::Sprite &image() const {
+            return this->_image;
+        }
+
+        const draw::Text &text() const {
+            return this->_title;
+        }
+
+    private:
+        draw::Sprite _image;
+        draw::Text _title;
+    };
+
+    struct BigFrame : Frame {
+        BigFrame(scene::Scene &scene, std::string title, glm::vec2 position, float size) :
+            Frame(scene, "ui/common_elements/frames/ui_frame_large.png", std::move(title), position, { 580, 60 }, size) {
+        }
+    };
+
+    struct MediumFrame : Frame {
+        MediumFrame(scene::Scene &scene, std::string title, glm::vec2 position, float size) :
+            Frame(scene, "ui/common_elements/frames/ui_frame_medium.png", std::move(title), position, { 570, 60 }, size) {
+        }
+    };
+
+    struct SmallFrame : Frame {
+        SmallFrame(scene::Scene &scene, std::string title, glm::vec2 position, float size) :
+            Frame(scene, "ui/common_elements/frames/ui_frame_small.png", std::move(title), position, { 430, 60 }, size) {
+        }
+    };
+//
+//    using s = Frame;
 }}

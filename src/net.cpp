@@ -145,17 +145,17 @@ namespace net {
             THROW_ERROR("Ace of Spades {} unsupported!\n", server.version);
         
         BaseNetClient::connect(server.ip.c_str(), server.port, VERSION);
-        state = NetState::CONNECTING;
+        this->set_state(NetState::CONNECTING);
     }
 
     void NetworkClient::on_connect(const ENetEvent &event) {
-        state = NetState::CONNECTED;
+        this->set_state(NetState::CONNECTED);
     }
 
     void NetworkClient::on_disconnect(const ENetEvent &event) {
-        state = NetState::DISCONNECTED;
-        disconnect_reason = DISCONNECT(event.data);
-        fmt::print("DISCONNECTED: {}\n", get_disconnect_reason(disconnect_reason));
+        this->disconnect_reason = DISCONNECT(event.data);
+        this->set_state(NetState::DISCONNECTED);
+        fmt::print("DISCONNECTED: {}\n", get_disconnect_reason(this->disconnect_reason));
 //        client.set_scene<ace::scene::LoadingScene>();
     }
 
@@ -165,19 +165,19 @@ namespace net {
         
         switch (packet_id) {
         case PACKET::MapStart: {
-            client.set_scene<ace::scene::LoadingScene>("aos://0:0");
-            map_writer.clear();
+            this->client.set_scene<ace::scene::LoadingScene>("aos://0:0");
+            this->map_writer.clear();
             uint32_t siz = br.read<uint32_t>();
-            map_writer.vec.reserve(siz);
+            this->map_writer.vec.reserve(siz);
             fmt::print("MAP START {}\n", siz);
-            state = NetState::MAP_TRANSFER;
+            this->set_state(NetState::MAP_TRANSFER);
         } break;
         case PACKET::MapChunk: {
-            if (state != NetState::MAP_TRANSFER)
+            if (this->state != NetState::MAP_TRANSFER)
                 fmt::print(stderr, "Receiving map chunks before map start???");
             size_t len;
             uint8_t *data = br.get(&len);
-            map_writer.write(data, len);
+            this->map_writer.write(data, len);
         } break;
 //        case PACKET::StateData:
 //            state = NetState::CONNECTED;
@@ -188,7 +188,7 @@ namespace net {
                 break;
             };
             packet->read(br);
-            client.scene->on_packet(packet_id, std::move(packet));
+            this->client.scene->on_packet(packet_id, std::move(packet));
         } break;
         }
     }
@@ -200,5 +200,10 @@ namespace net {
 //        if(id != PACKET::PositionData && id != PACKET::OrientationData && id != PACKET::InputData && id != PACKET::WeaponInput)
 //            fmt::print("SENDING PACKET WITH ID {}\n", id);
         this->send(writer.vec.data(), writer.vec.size(), flags);
+    }
+
+    void NetworkClient::set_state(NetState state) {
+        this->state = state;
+        this->client.scene->on_net_event(state);
     }
 };

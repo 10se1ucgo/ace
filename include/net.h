@@ -100,6 +100,9 @@ namespace net {
 //        bool connected;
         DISCONNECT disconnect_reason;
         NetState state;
+
+    private:
+        void set_state(NetState state);
     };
 
     inline const char *get_disconnect_reason(DISCONNECT reason) {

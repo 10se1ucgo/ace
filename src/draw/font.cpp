@@ -106,6 +106,8 @@ namespace ace { namespace draw {
         }
         glPixelStorei(GL_UNPACK_ALIGNMENT, 4);
 
+        this->_line_height = face->size->metrics.height >> 6;
+
         FT_Done_Face(face);
     }
 
@@ -149,17 +151,40 @@ namespace ace { namespace draw {
     }
 
     glm::vec2 Font::measure(const std::string& str, glm::vec2 scale) const {
-        glm::vec2 p;
-        p.y = -std::numeric_limits<float>::infinity();
-        for (unsigned char c : str) {
-            p.x += chars[c].advance.x;
-            p.y = std::max(p.y, float(chars[c].bearing.y));
+        // this is bad
+
+        glm::vec2 size;
+        float max_char_height = -std::numeric_limits<float>::infinity();
+        int pen = 0, lines = 1;
+        for(unsigned char c : str) {
+            if(c == '\n') {
+                size.x = std::max(float(pen), size.x);
+                pen = 0;
+                lines++;
+            }
+            pen += chars[c].advance.x;
+            max_char_height = std::max(max_char_height, float(chars[c].bearing.y));
         }
-        return p * scale;
+        size.x = std::max(float(pen), size.x);
+        if(lines > 1) {
+            size.y = lines * this->_line_height;
+        } else {
+            size.y = max_char_height;
+        }
+        return size * scale;
     }
 
     void Font::render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const {
+        glm::vec2 opos(pos);
         for (unsigned char c : str) {
+            if(c == '\n') {
+                // this doesnt work at all for aligned text lol
+                // i really should ditch this and use a third party library, its more of a headache than its worth
+                opos.y += this->_line_height;
+                pos = opos;
+                continue;
+            }
+
             float x = pos.x + chars[c].bearing.x * scale.x;
             float y = -pos.y + chars[c].bearing.y * scale.y;
             float w = chars[c].dim.x * scale.x;

@@ -10,4 +10,13 @@ namespace ace { namespace draw {
         TOP_CENTER,
         BOTTOM_CENTER,
     };
+
+    namespace Layer {
+        enum Layer : int {
+            BACKGROUND = -100,
+            FRAME,
+            FRAME_CONTENT,
+            FOREGROUND = 0
+        };
+    }
 }}

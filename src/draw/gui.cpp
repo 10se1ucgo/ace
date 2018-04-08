@@ -8,6 +8,11 @@ namespace ace { namespace draw {
     }
 
     void BaseButton::on_mouse_motion(int x, int y, int dx, int dy) {
+        if(!this->enabled()) {
+            this->hovering = this->pressed = false;
+            return;
+        }
+
         bool was_hovering = this->hovering;
         this->hovering = point_in_rect(this->_pos, this->_size, { x, y });
         if(!was_hovering && this->hovering) {
@@ -18,6 +23,11 @@ namespace ace { namespace draw {
     }
 
     void BaseButton::on_mouse_button(int button, bool pressed) {
+        if (!this->enabled()) {
+            this->hovering = this->pressed = false;
+            return;
+        }
+
         bool was_pressed = this->pressed;
         this->pressed = pressed && button == SDL_BUTTON_LEFT && this->hovering;
         if(was_pressed && !this->pressed) {
@@ -80,17 +90,16 @@ namespace ace { namespace draw {
     }
 
     void BitmapButton::update_position() {
+        this->button.tint = this->enabled() ? glm::vec4(1.0f) : glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
         this->button.scale = this->_size / glm::vec2{ this->button.group->w, this->button.group->h };
-        if (this->image.group) {
-//            this->image.scale = glm::vec2((float(this->_size.x) / this->image.group->w));
-            this->image.position = this->_pos + this->_size / 2.f;
-        }
         this->button.position = this->_pos;
         this->button.group->order = -1;
 
-
-        if (this->pressed) {
-            this->image.position.y += 5 * button.scale.y;
+        if (this->image.group) {
+            this->image.position = this->_pos + this->_size / 2.f;
+            if (this->pressed) {
+                this->image.position.y += 5 * button.scale.y;
+            }
         }
     }
 
@@ -142,8 +151,10 @@ namespace ace { namespace draw {
         if (!this->pressed) {
             this->label.position.y -= 5 * mid.scale.y;
         }
+        fmt::print("BUTTON: {}\n", this->label.size());
 
-        
+        auto color = this->enabled() ? glm::vec4(1.0f) : glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+        this->left.tint = this->right.tint = this->mid.tint = color;
     }
 
     ProgressBar::ProgressBar(scene::Scene &scene, glm::vec2 position, glm::vec2 size, const std::string &image) :

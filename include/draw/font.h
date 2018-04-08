@@ -40,7 +40,11 @@ namespace ace { namespace draw {
         Align alignment() const { return this->_alignment; }
         glm::vec2 size() const { return _size; }
         
-        void set_str(std::string str) { this->_str = std::move(str); this->update(); }
+        void set_str(const std::string &str) {
+            if (str == this->_str) return;
+            this->_str = str;
+            this->update();
+        }
         void set_color(glm::vec3 color) { this->_color = color; this->update(); }
         void set_scale(glm::vec2 scale) { this->_scale = scale; this->update(); }
         void set_alignment(Align align) { this->_alignment = align; this->update(); }
@@ -85,6 +89,7 @@ namespace ace { namespace draw {
 
         unsigned int width, height;
         int size_;
+        int _line_height;
        
         struct FontChar {
             glm::ivec2 advance, dim, bearing;
@@ -102,7 +107,7 @@ namespace ace { namespace draw {
         Font *get(const std::string &name, int size, bool antialias=true);
         void draw(const glm::mat4 &pv, gl::ShaderProgram &s);
     private:
-        FT_Library ftl;
+        FT_Library ftl{nullptr};
         std::unordered_map<std::string, Font> fonts;
     };
 }}

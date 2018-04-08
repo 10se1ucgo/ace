@@ -24,7 +24,7 @@ namespace ace { namespace scene {
             button3(this->add<draw::BitmapButton>(glm::vec2{300, 300}, glm::vec2(128), "ui/common_elements/scroll_bar/scroll_bar_arrow_right.png")),
             pb(this->add<draw::ProgressBar>(glm::vec2{200, 200}, glm::vec2{414, 43})) {
 
-            this->background->order = -100;
+            this->background->order = draw::Layer::BACKGROUND;
 
             this->splash.position = this->scene.client.size() / 2.f;
             this->splash.alignment = draw::Align::BOTTOM_CENTER;
