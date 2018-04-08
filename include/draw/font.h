@@ -15,7 +15,7 @@ namespace ace { namespace draw {
     namespace detail {
 #pragma pack(push, 1)
         struct GlyphVertex {
-            glm::vec4 pos_tex;
+            glm::vec2 pos, tex;
             glm::vec3 color;
         };
 #pragma pack(pop)
@@ -80,8 +80,8 @@ namespace ace { namespace draw {
         int size() const { return size_; }
     private:
         void render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const;
-        void draw(Text &r);
-        void draw_shadowed(Text &r);
+        void draw(const Text &r);
+        void draw_shadowed(const Text &r);
 
         gl::experimental::vao vao;
         gl::experimental::streaming_vbo<detail::GlyphVertex> vbo;
@@ -93,6 +93,7 @@ namespace ace { namespace draw {
        
         struct FontChar {
             glm::ivec2 advance, dim, bearing;
+            glm::vec2 tl, tr, bl, br;
             float tx;
         } chars[256];
 

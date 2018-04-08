@@ -70,7 +70,7 @@ namespace ace { namespace draw {
             height = std::max(height, g->bitmap.rows);
         }
 
-        this->vao.attrib_pointer("4f,3f", this->vbo.handle);
+        this->vao.attrib_pointer("2f,2f,3f", this->vbo.handle);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, tex);
@@ -100,7 +100,13 @@ namespace ace { namespace draw {
             chars[c].advance = { g->advance.x >> 6, g->advance.y >> 6 };
             chars[c].dim = { g->bitmap.width, g->bitmap.rows };
             chars[c].bearing = { g->bitmap_left, g->bitmap_top };
-            chars[c].tx = float(x) / width;
+            auto tx = float(x) / width;
+            chars[c].tx = tx;
+
+            chars[c].tl = { tx, 0 };
+            chars[c].tr = { tx + chars[c].dim.x / float(this->width), 0 };
+            chars[c].bl = { tx, chars[c].dim.y / float(this->height) };
+            chars[c].br = { tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height) };
 
             x += g->bitmap.width + 1;
         }
@@ -185,21 +191,23 @@ namespace ace { namespace draw {
                 continue;
             }
 
-            float x = pos.x + chars[c].bearing.x * scale.x;
-            float y = -pos.y + chars[c].bearing.y * scale.y;
-            float w = chars[c].dim.x * scale.x;
-            float h = chars[c].dim.y * scale.y;
+            auto &glyph = chars[c];
+
+            float x = pos.x + glyph.bearing.x * scale.x;
+            float y = pos.y - glyph.bearing.y * scale.y;
+            float w = glyph.dim.x * scale.x;
+            float h = glyph.dim.y * scale.y;
 
             pos += glm::vec2(chars[c].advance) * scale;
 
             if (!w || !h) continue;
 
-            v.push_back({ { x,     -y    , chars[c].tx, 0 }, color });
-            v.push_back({ { x + w, -y    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
-            v.push_back({ { x,     -y + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
-            v.push_back({ { x + w, -y    , chars[c].tx + chars[c].dim.x / float(this->width), 0 }, color });
-            v.push_back({ { x,     -y + h, chars[c].tx, chars[c].dim.y / float(this->height) }, color });
-            v.push_back({ { x + w, -y + h, chars[c].tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height) }, color });
+            v.push_back({ { x,     y     }, glyph.tl, color }); // tl
+            v.push_back({ { x + w, y     }, glyph.tr, color }); // tr
+            v.push_back({ { x,     y + h }, glyph.bl, color }); // bl
+            v.push_back({ { x + w, y     }, glyph.tr, color });
+            v.push_back({ { x,     y + h }, glyph.bl, color });
+            v.push_back({ { x + w, y + h }, glyph.br, color }); // br
         }
     }
 
@@ -208,18 +216,14 @@ namespace ace { namespace draw {
         this->render(str, pos, color, scale, this->vbo.data);
     }
 
-    void Font::draw(Text &r) {
+    void Font::draw(const Text &r) {
         this->vbo->reserve(this->vbo->size() + r.vertices.size());
         for(auto &x : r.vertices) {
-            auto p(x.pos_tex);
-            p.x += r.position.x;
-            p.y += r.position.y;
-            this->vbo->push_back({ p, x.color });
+            this->vbo->push_back({ x.pos + r.position, x.tex, x.color });
         }
-        // this->vbo->insert(this->vbo->end(), std::make_move_iterator(r.vertices.begin()), std::make_move_iterator(r.vertices.end()));
     }
 
-    void Font::draw_shadowed(Text &r) {
+    void Font::draw_shadowed(const Text &r) {
         // TODO dont do this inefficient recalculation of every vertex
         this->draw(r.str(), r.position + glm::vec2(2), glm::vec3(0.5), r.scale(), r.alignment());
         this->draw(r);
