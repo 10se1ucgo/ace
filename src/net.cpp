@@ -2,8 +2,10 @@
 
 #include "zlib.h"
 
+#include "game_client.h"
 #include "scene/game.h"
 #include "scene/loading.h"
+#include "scene/menu.h"
 
 
 namespace net {
@@ -156,7 +158,7 @@ namespace net {
         this->disconnect_reason = DISCONNECT(event.data);
         this->set_state(NetState::DISCONNECTED);
         fmt::print("DISCONNECTED: {}\n", get_disconnect_reason(this->disconnect_reason));
-//        client.set_scene<ace::scene::LoadingScene>();
+        client.set_scene<ace::scene::MainMenuScene>();
     }
 
     void NetworkClient::on_receive(const ENetEvent &event) {
@@ -165,7 +167,6 @@ namespace net {
         
         switch (packet_id) {
         case PACKET::MapStart: {
-            this->client.set_scene<ace::scene::LoadingScene>("aos://0:0");
             this->map_writer.clear();
             uint32_t siz = br.read<uint32_t>();
             this->map_writer.vec.reserve(siz);

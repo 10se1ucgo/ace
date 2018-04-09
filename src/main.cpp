@@ -2,6 +2,7 @@
 
 #include <iostream>
 
+#include "game_client.h"
 #include "scene/loading.h"
 #include "scene/menu.h"
 
@@ -9,7 +10,7 @@ int main(int argc, char **argv) {
     try {
         ace::GameClient client("ACE: \"Ace of Spades\" CliEnt", 800, 600);
         std::string ip(argc > 1 ? argv[1] : "aos://180274501:32887:0.75");
-        client.set_scene<ace::scene::LoadingScene>(ip);
+        client.set_scene<ace::scene::MainMenuScene>();
         client.run();
         return 0;
     } catch (const std::exception &ex) {

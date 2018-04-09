@@ -1,6 +1,10 @@
 #pragma once
+#include <functional>
+
 #include "draw/sprite.h"
 #include "scene/scene.h"
+#include "draw/font.h"
+
 
 namespace ace { namespace draw {
     // im considering putting this in its own namespace (ace::gui) but we'll see
@@ -158,26 +162,16 @@ namespace ace { namespace draw {
 
 
     struct Frame {
-        Frame(scene::Scene &scene, const std::string &image, std::string title, glm::vec2 position, glm::vec2 title_offset, float size) :
-            _image(scene.client.sprites.get(image)),
-            _title(scene.client.fonts.get("AldotheApache.ttf", 48), std::move(title), glm::vec3(1), glm::vec2(1), draw::Align::CENTER) {
-
-            this->_image.group->order = Layer::FRAME;
-            this->_image.scale = glm::vec2(size / this->_image.group->h);
-            this->_image.position = position;
-            this->_image.alignment = draw::Align::CENTER;
-            
-            auto p = this->_image.get_position(draw::Align::TOP_LEFT);
-            this->_title.position = p + title_offset * this->_image.scale;
-        }
+        Frame(scene::Scene &scene, const std::string &image, std::string title, glm::vec2 position,
+              glm::vec2 title_offset, float size);
 
         void draw() {
             this->_image.draw();
             this->_title.draw_shadowed();
         }
 
-        void set_title(std::string title) {
-            this->_title.set_str(std::move(title));
+        void set_title(const std::string &title) {
+            this->_title.set_str(title);
         }
 
         const draw::Sprite &image() const {

@@ -1,5 +1,6 @@
 #include "glm/glm.hpp"
 
+#include "game_client.h"
 #include "scene/hud.h"
 #include "scene/game.h"
 

@@ -2,10 +2,12 @@
 
 #include "SDL.h"
 
+#include "game_client.h"
 #include "world/debris.h"
 #include "world/grenade.h"
 #include "world/falling_blocks.h"
 #include "util/except.h"
+#include "scene/loading.h"
 
 using namespace ace::gl::literals;
 
@@ -24,7 +26,7 @@ namespace ace { namespace scene {
     GameScene::GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name, uint8_t *buf) :
         Scene(client),
         shaders(*client.shaders),
-        cam(*this, { 256, -50.f + 1, 256 }, { 0, 0, 1 }),
+        cam(*this, { 256, 0, 256 }, { 0, -1, 0 }),
         map(*this, buf),
         hud(*this),
         state_data(state_data),
@@ -40,25 +42,9 @@ namespace ace { namespace scene {
 
         this->set_fog_color(glm::vec3(state_data.fog_color) / 255.f);
 
-//        this->ply = this->get_ply(state_data.pid, true, true);
-//        auto p = this->map.get_random_point();
-//        this->ply->set_position(p.x, p.y, p.z - 32);
-
         this->respawn_entities();
 
         this->cam.set_projection(75.0f, client.width(), client.height(), 0.1f, 128.f);
-        
-        this->client.set_exclusive_mouse(true);
-        this->client.sound.play("intro.wav", {}, 100, true);
-
-#ifdef NDEBUG
-        this->client.tasks.call_later(0.0, [this] { this->send_this_player(random::choice_range(net::TEAM::TEAM1, net::TEAM::TEAM2), random::choice_range(net::WEAPON::SEMI, net::WEAPON::SHOTGUN)); });
-#endif
-
-        glEnable(GL_MULTISAMPLE);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
-
-        glFrontFace(GL_CW);
     }
 
     GameScene::~GameScene() {
@@ -66,14 +52,25 @@ namespace ace { namespace scene {
         fmt::print("~GameScene()\n");
     }
 
+    void GameScene::start() {
+        this->client.sound.play("intro.wav", {}, 100, true);
+        this->client.set_exclusive_mouse(true);
+#ifdef NDEBUG
+        this->client.tasks.call_later(0.0, [this] { this->send_this_player(random::choice_range(net::TEAM::TEAM1, net::TEAM::TEAM2), random::choice_range(net::WEAPON::SEMI, net::WEAPON::SHOTGUN)); });
+#endif
+    }
+
     void GameScene::draw() {
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         // 3d
         glDisable(GL_BLEND);
         glEnable(GL_DEPTH_TEST);
+        glEnable(GL_MULTISAMPLE);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
+        glFrontFace(GL_CW);
 
         shaders.map.bind();
         shaders.map.uniform("mvp"_u = cam.matrix(), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
@@ -192,6 +189,12 @@ namespace ace { namespace scene {
         hud.on_window_resize(ow, oh);
         glViewport(0, 0, this->client.width(), this->client.height());
         this->set_zoom(false);
+    }
+
+    void GameScene::on_net_event(net::NetState event) {
+        if(event == net::NetState::MAP_TRANSFER) {
+            this->client.set_scene<LoadingScene>("aos://0:0");
+        }
     }
 
     void GameScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> ploader) {

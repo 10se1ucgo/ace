@@ -2,6 +2,7 @@
 
 #include <functional>
 
+#include "game_client.h"
 #include "scene/game.h"
 #include <SDL_image.h>
 #include "draw/sprite.h"
@@ -21,7 +22,7 @@ namespace ace { namespace scene {
             background(scene.client.sprites.get("main.png")), splash(scene.client.sprites.get("splash.png")),
             weeb_button(this->add<draw::Button>("weebs", glm::vec2{ 400, 400 }, glm::vec2{ 256, 128 }, "stencil.ttf", 55)),
             button2(this->add<draw::Button>("test2", glm::vec2{ 100, 400 }, glm::vec2{ 300, 55 })),
-            button3(this->add<draw::BitmapButton>(glm::vec2{300, 300}, glm::vec2(128), "ui/common_elements/scroll_bar/scroll_bar_arrow_right.png")),
+            button3(this->add<draw::BitmapButton>(glm::vec2{300, 300}, glm::vec2(128))),
             pb(this->add<draw::ProgressBar>(glm::vec2{200, 200}, glm::vec2{414, 43})) {
 
             this->background->order = draw::Layer::BACKGROUND;

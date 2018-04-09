@@ -7,15 +7,18 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtc/matrix_access.hpp"
 
+#include "game_client.h"
 #include "common.h"
 #include "scene/game.h"
 
 
 Camera::Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, glm::vec3 world_up):
-    pitch(0), yaw(0), position(position),
+    position(position),
     forward(forward), right(normalize(cross(world_up, forward))), up(cross(forward, right)),
     world_up(world_up),
     scene(s) {
+    auto ang(ace::dir2ang(this->forward));
+    this->yaw = ang.x; this->pitch = ang.y;
 }
 
 void Camera::update(double dt) {
@@ -49,6 +52,7 @@ void Camera::update_view() {
 }
 
 void Camera::mouse(double dt) {
+    if (!this->scene.client.exclusive_mouse()) return;
     yaw += scene.client.mouse.dx * sensitivity;
     pitch = std::max(-89.9f, std::min(pitch - scene.client.mouse.dy * sensitivity, 89.9f));
 }

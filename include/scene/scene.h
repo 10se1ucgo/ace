@@ -1,9 +1,11 @@
 #pragma once
-#include "game_client.h"
+#include "SDL.h"
+#include "net.h"
 
-#include "net/packet.h"
-
-namespace ace { namespace scene {
+namespace ace { 
+    class GameClient;
+    
+    namespace scene {
     struct Scene {
         Scene(ace::GameClient &client) : time(0.0), ms_time(0), client(client) {
         }

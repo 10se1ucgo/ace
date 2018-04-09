@@ -3,6 +3,7 @@
 
 #include "scene/scene.h"
 #include "draw/sprite.h"
+#include "draw/font.h"
 #include "world/player.h"
 
 namespace ace { namespace scene {

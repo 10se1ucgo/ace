@@ -1,5 +1,7 @@
 #include "draw/gui.h"
 
+#include "game_client.h"
+
 namespace ace { namespace draw {
     inline bool point_in_rect(glm::vec2 position, glm::vec2 size, glm::vec2 pos) {
         // fmt::print("{} {} {} {}\n", position.x <= pos.x, pos.x <= position.x + size.x, position.y <= pos.y, pos.y <= position.y + size.y);
@@ -151,7 +153,6 @@ namespace ace { namespace draw {
         if (!this->pressed) {
             this->label.position.y -= 5 * mid.scale.y;
         }
-        fmt::print("BUTTON: {}\n", this->label.size());
 
         auto color = this->enabled() ? glm::vec4(1.0f) : glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
         this->left.tint = this->right.tint = this->mid.tint = color;
@@ -160,6 +161,8 @@ namespace ace { namespace draw {
     ProgressBar::ProgressBar(scene::Scene &scene, glm::vec2 position, glm::vec2 size, const std::string &image) :
         GUIWidget(scene, position, size),
         bar(scene.client.sprites.get(image)) {
+
+        this->scale = this->size().y / this->bar->h;
     }
 
     void ProgressBar::draw() {
@@ -175,5 +178,20 @@ namespace ace { namespace draw {
             this->bar->draw(glm::vec4{ 0.8f, 0.8f, 0.8f, 1.0f }, draw_pos, 0.0f, glm::vec2(this->scale));
             draw_pos.x += space_between_bullets;
         }
+    }
+
+    Frame::Frame(scene::Scene &scene, const std::string &image, std::string title, glm::vec2 position,
+                 glm::vec2 title_offset, float size):
+        _image(scene.client.sprites.get(image)),
+        _title(scene.client.fonts.get("AldotheApache.ttf", 48), std::move(title), glm::vec3(1), glm::vec2(1),
+               draw::Align::CENTER) {
+
+        this->_image.group->order = Layer::FRAME;
+        this->_image.scale = glm::vec2(size / this->_image.group->h);
+        this->_image.position = position;
+        this->_image.alignment = draw::Align::CENTER;
+
+        auto p = this->_image.get_position(draw::Align::TOP_LEFT);
+        this->_title.position = p + title_offset * this->_image.scale;
     }
 }}

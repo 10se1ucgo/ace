@@ -1,5 +1,6 @@
 #include "world/falling_blocks.h"
 
+#include "game_client.h"
 #include "scene/game.h"
 
 namespace ace { namespace world {

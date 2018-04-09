@@ -2,6 +2,7 @@
 #include "scene/scene.h"
 #include "net.h"
 #include "draw/gui.h"
+#include "draw/font.h"
 
 
 namespace ace { namespace scene {
@@ -46,9 +47,10 @@ namespace ace { namespace scene {
 
         net::Server server;
         std::vector<std::pair<net::PACKET, std::unique_ptr<net::Loader>>> saved_loaders;
-        std::unique_ptr<net::Loader> state_data;
+        std::unique_ptr<GameScene> game_scene;
         
         draw::SpriteGroup *background;
+        float background_alpha{1.0};
         LoadingFrame frame;
     };
 }}

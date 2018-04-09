@@ -105,6 +105,7 @@ namespace ace { namespace sound {
 
     void SoundManager::play_music(const std::string &name, float volume, bool loop) {
         this->fading_out = false;
+        this->music->stop();
         this->music->set_buf(this->get(name));
         this->music->volume = volume;
         this->music->local = false;

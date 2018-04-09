@@ -8,6 +8,7 @@
 #include "util/event.h"
 #include "net.h"
 #include "draw/sprite.h"
+#include "scene/scene.h"
 
 namespace net {
     struct NetworkClient;
@@ -37,7 +38,12 @@ namespace ace {
         int height() const { return h; }
 
         void set_exclusive_mouse(bool exclusive) {
+            this->relative_mode = exclusive;
             SDL_SetRelativeMouseMode(exclusive ? SDL_TRUE : SDL_FALSE);
+        }
+
+        bool exclusive_mouse() const {
+            return this->relative_mode;
         }
 
         void toggle_text_input() const {
@@ -55,6 +61,11 @@ namespace ace {
         void set_scene(TArgs&&... args) {
             this->scene.reset();
             this->scene = std::make_unique<TScene>(*this, std::forward<TArgs>(args)...);
+        }
+
+        void set_scene(std::unique_ptr<scene::Scene> scene) {
+            this->scene.reset();
+            this->scene = std::move(scene);
         }
         
         friend net::NetworkClient;
@@ -100,5 +111,7 @@ namespace ace {
         SDL_Window *window;
         SDL_GLContext context;
         std::string window_title;
+
+        bool relative_mode{ false };
     };
 }

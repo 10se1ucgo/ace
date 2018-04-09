@@ -2,6 +2,7 @@
 
 #include "glm/gtx/norm.hpp"
 
+#include "game_client.h"
 #include "scene/game.h"
 #include "world/player.h"
 #include "world/tracer.h"

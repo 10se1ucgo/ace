@@ -3,6 +3,7 @@
 #include <functional>
 
 #include "scene/game.h"
+#include "game_client.h"
 
 namespace ace { namespace scene {
     LoadingFrame::LoadingFrame(scene::Scene &scene): GUIPanel(scene),
@@ -53,6 +54,7 @@ namespace ace { namespace scene {
         this->frame.start_button->enable(false);
         this->frame.start_button->on("press_end", &LoadingScene::start_game, this);
 
+        this->client.sound.play_music("test.ogg");
 
         glEnable(GL_BLEND);
         glDisable(GL_CULL_FACE);
@@ -61,12 +63,20 @@ namespace ace { namespace scene {
     }
 
     LoadingScene::~LoadingScene() {
+        printf("bye\n");
     }
 
     void LoadingScene::draw() {
-        glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+        if (this->game_scene) {
+            this->game_scene->draw();
+        } else {
+            glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
+            
+        }
+        this->background->draw({ 1, 1, 1, this->background_alpha }, { 0, 0 }, 0,
+                               this->client.size() / glm::vec2(this->background->w, this->background->h));
 
-        this->background->draw({ 1, 1, 1, 1 }, { 0, 0 }, 0, this->client.size() / glm::vec2(this->background->w, this->background->h));
+        
         this->frame.draw();
         
         if(this->client.net.state == net::NetState::UNCONNECTED || this->client.net.state == net::NetState::DISCONNECTED) {
@@ -88,9 +98,14 @@ namespace ace { namespace scene {
 
     void LoadingScene::update(double dt) {
         Scene::update(dt);
+        if(this->game_scene) {
+            this->background_alpha = std::max(0.0, this->background_alpha - dt);
+            this->game_scene->update(dt);
+        }
+
         this->frame.progress_bar->value = client.net.map_writer.vec.size();
         this->frame.progress_bar->range = std::max(1u, client.net.map_writer.vec.capacity());
-        if(this->state_data) {
+        if(this->game_scene) {
             this->frame.progress_bar->value = this->frame.progress_bar->range;
         }
         this->frame.update(dt);
@@ -113,28 +128,33 @@ namespace ace { namespace scene {
 
     void LoadingScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) {
         if(type == net::PACKET::StateData) {
-            this->state_data = std::move(packet);
+            auto buf(net::inflate(client.net.map_writer.vec.data(), client.net.map_writer.vec.size()));
+            this->game_scene = std::make_unique<GameScene>(this->client, *reinterpret_cast<net::StateData *>(packet.get()), client.net.ply_name, buf.data());
             this->frame.start_button->enable(true);
             this->frame.frame.set_title("READY!");
             this->frame.status_text.set_str("Ready.");
+            this->client.sound.stop_music();
+//            this->client.tasks.call_later(1.0, [this]() {
+//                this->client.sound.stop_music();
+//
+//            });
         } else {
             this->saved_loaders.emplace_back(type, std::move(packet));
         }
     }
 
     void LoadingScene::start_game() {
-        auto &client = this->client;
-        auto buf(net::inflate(client.net.map_writer.vec.data(), client.net.map_writer.vec.size()));
-        auto saved_loaders(std::move(this->saved_loaders));
-        auto packet(std::move(this->state_data));
-
-        // hey so im pretty sure calling client.set_scene invalidates this object (this->scene.reset() destroys this)
+        // hey so im pretty sure calling client.set_scene invalidates this object (client.set_scene() destroys the current scene)
         // so im gonna quickly copy/move all of the important stuff out of the class before we destroy it
         // is this bad design? absolutely. i think.
-        client.set_scene<GameScene>(*reinterpret_cast<net::StateData *>(packet.get()), client.net.ply_name, buf.data());
+        auto saved_loaders(std::move(this->saved_loaders));
+        auto *scene = this->game_scene.get();
+        
+        this->client.set_scene(std::move(this->game_scene));
         for (auto &pkt : saved_loaders) {
-            client.scene->on_packet(pkt.first, std::move(pkt.second));
+            scene->on_packet(pkt.first, std::move(pkt.second));
         }
+        scene->start();
     }
 
     void LoadingScene::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {

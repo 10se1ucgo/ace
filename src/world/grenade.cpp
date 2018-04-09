@@ -1,5 +1,6 @@
 #include "world/grenade.h"
 
+#include "game_client.h"
 #include "world/debris.h"
 #include "scene/game.h"
 

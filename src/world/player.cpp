@@ -1,6 +1,7 @@
 #include "world/player.h"
 
 #include "common.h"
+#include "game_client.h"
 #include "scene/game.h"
 
 constexpr float FALL_SLOW_DOWN = 0.24f;

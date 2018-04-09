@@ -1,5 +1,7 @@
 #include "draw/map.h"
 
+#include "game_client.h"
+#include "draw/sprite.h"
 #include "scene/game.h"
 
 namespace ace { namespace draw {

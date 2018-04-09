@@ -17,7 +17,7 @@ enum {
 
 class Camera {
 public:
-    float pitch, yaw, speed = 5.f, sensitivity = 0.3f;
+    float yaw{ 0.f }, pitch{ 0.f }, speed{ 5.f }, sensitivity{ 0.3f };
     glm::vec3 position, forward, right, up, world_up;
     ace::scene::GameScene &scene;
 

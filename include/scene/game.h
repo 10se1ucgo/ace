@@ -17,6 +17,7 @@
 #include "camera.h"
 #include "kv6.h"
 #include "net.h"
+#include "util/event.h"
 
 
 namespace ace { namespace scene {
@@ -47,6 +48,7 @@ namespace ace { namespace scene {
         // GameScene(GameClient& client, const std::string& map_name);
         ~GameScene();
 
+        void start();
         void draw() override;
         void update(double dt) override;
 
@@ -55,6 +57,7 @@ namespace ace { namespace scene {
         void on_mouse_button(int button, bool pressed) override;
         void on_window_resize(int ow, int oh) override;
         
+        void on_net_event(net::NetState event) override;
         void on_packet(net::PACKET type, std::unique_ptr<net::Loader> ploader) override;
 
         bool on_text_typing(const std::string &text) override;
