@@ -9,6 +9,16 @@ namespace ace { namespace draw {
                position.y <= pos.y && pos.y <= position.y + size.y;
     }
 
+    void GUIWidget::fire(const std::string &event) {
+        const auto handler(this->handlers.find(event));
+        if (handler != this->handlers.end()) {
+            // if this isnt the pinnacle of terrible design then i dont know what is
+            // also im doing this so that if the event handler destroys the current panel/scene it doesnt segfault
+            this->scene.client.tasks.call_later(0, handler->second);
+//            handler->second();
+        }
+    }
+
     void BaseButton::on_mouse_motion(int x, int y, int dx, int dy) {
         if(!this->enabled()) {
             this->hovering = this->pressed = false;
@@ -16,7 +26,7 @@ namespace ace { namespace draw {
         }
 
         bool was_hovering = this->hovering;
-        this->hovering = point_in_rect(this->_pos, this->_size, { x, y });
+        this->hovering = this->hit_test({ x, y });
         if(!was_hovering && this->hovering) {
             this->fire("hover_start");
         } else if(was_hovering && !this->hovering) {
@@ -37,6 +47,10 @@ namespace ace { namespace draw {
         } else if(!was_pressed && this->pressed) {
             this->fire("press_start");
         }
+    }
+
+    bool BaseButton::hit_test(glm::vec2 mouse_position) {
+        return point_in_rect(this->_pos, this->_size, mouse_position);
     }
 
     inline draw::SpriteGroup *load_button_image(scene::Scene &scene, const std::string &button_name, const std::string &section, const std::string &type="", int order = 0) {
@@ -105,7 +119,66 @@ namespace ace { namespace draw {
         }
     }
 
-    Button::Button(scene::Scene &s, std::string label, glm::vec2 position, glm::vec2 size, const std::string &font, int font_size, const std::string &button_name) :
+    IconButton::IconButton(scene::Scene &s, glm::vec2 position, glm::vec2 size,
+                           std::string text, const std::string &icon, draw::Align alignment,
+                           int font_size, const std::string &font):
+        BaseButton(s, position, size),
+        icon(s.client.sprites.get(icon)),
+        text(s.client.fonts.get(font, font_size), std::move(text), glm::vec3(1), glm::vec2(1), Align::BOTTOM_LEFT),
+        alignment(alignment) {
+
+        this->icon.alignment = Align::BOTTOM_LEFT;
+        
+        IconButton::layout();
+    }
+
+    void IconButton::draw() {
+        this->icon.draw();
+        this->text.draw();
+    }
+
+    void IconButton::layout() {
+        BaseButton::layout();
+
+        this->icon.scale = this->_size / glm::vec2{ this->icon.group->w, this->icon.group->h };
+
+        auto text_size(this->text.size());
+        auto icon_size(this->icon.size());
+        this->hitbox_size.x = text_size.x + icon_size.x;
+        this->hitbox_size.y = std::max(text_size.y, icon_size.y);
+
+        this->hitbox_pos = this->_pos;
+        switch (this->alignment) {
+//        case Align::BOTTOM_LEFT:
+//            break;
+        case Align::BOTTOM_CENTER:
+            this->hitbox_pos.x -= this->hitbox_size.x / 2.f;
+            break;
+        case Align::BOTTOM_RIGHT:
+            this->hitbox_pos.x -= this->hitbox_size.x;
+            break;
+        default:
+            break;
+        }
+
+
+        this->text.position = this->icon.position = this->hitbox_pos;
+//        fmt::print("TXT: {} HIT: {}\n", this->text.position, this->hitbox_pos);
+
+        this->hitbox_pos.y -= this->hitbox_size.y / 2.f;
+
+        this->text.position += glm::vec2(icon_size.x, text_size.y / 2.f);
+        this->icon.position.y += icon_size.y / 2.f;
+
+        this->icon.tint = !this->hovering ? glm::vec4(1.0f) : glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+        this->text.set_color(glm::vec3(this->icon.tint) * (glm::vec3(232, 207, 78) / 255.f));
+    }
+
+    bool IconButton::hit_test(glm::vec2 mouse_position) {
+        return point_in_rect(this->hitbox_pos, this->hitbox_size, mouse_position);
+    }
+
+    Button::Button(scene::Scene &s, std::string label, glm::vec2 position, glm::vec2 size, int font_size, const std::string &font, const std::string &button_name) :
         BaseButton(s, position, size),
         label(this->scene.client.fonts.get(font, font_size), std::move(label), { 0, 0, 0 }, { 1, 1 }, Align::CENTER),
         images(s, button_name) {

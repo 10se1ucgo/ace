@@ -47,10 +47,20 @@ namespace ace { namespace draw {
         this->font->draw_shadowed(*this);
     }
 
+    glm::vec2 Text::get_position() const {
+        return this->font->get_aligned_position(this->position, this->_size, this->_alignment);
+    }
+
+    glm::vec2 Text::get_position(Align align) const {
+        auto p = this->get_position();
+        auto x = this->font->get_aligned_position(p, this->_size, align);
+        return p - x + p;
+    }
+
     void Text::update() {
         this->vertices.clear();
         this->_size = this->font->measure(this->_str, this->_scale);
-        this->font->render(this->_str, this->font->get_aligned_pos({ 0, 0 }, this->_size, this->_alignment), this->_color, this->_scale, this->vertices);
+        this->font->render(this->_str, this->font->get_aligned_position({ 0, 0 }, this->_size, this->_alignment), this->_color, this->_scale, this->vertices);
     }
 
     Font::Font(const std::string &name, int size, bool monochrome, FT_Library ft): width(0), height(0), size_(size) {
@@ -127,7 +137,7 @@ namespace ace { namespace draw {
         this->vao.draw(GL_TRIANGLES, this->vbo.draw_count, this->vbo.draw_offset);
     }
 
-    glm::vec2 Font::get_aligned_pos(glm::vec2 pos, glm::vec2 size, Align alignment) const {
+    glm::vec2 Font::get_aligned_position(glm::vec2 pos, glm::vec2 size, Align alignment) const {
         switch (alignment) {
         case Align::TOP_LEFT:
             pos.y += size.y;
@@ -212,7 +222,7 @@ namespace ace { namespace draw {
     }
 
     void Font::draw(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
-        pos = this->get_aligned_pos(pos, this->measure(str, scale), alignment);
+        pos = this->get_aligned_position(pos, this->measure(str, scale), alignment);
         this->render(str, pos, color, scale, this->vbo.data);
     }
 

@@ -30,9 +30,12 @@ namespace ace { namespace draw {
         
         void update(std::string str, glm::vec3 color = glm::vec3(1.0f),
                     glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
-
+        
         void draw();
         void draw_shadowed();
+
+        glm::vec2 get_position() const;
+        glm::vec2 get_position(Align align) const;
 
         const std::string &str() const { return this->_str; }
         glm::vec3 color() const { return this->_color; }
@@ -74,7 +77,7 @@ namespace ace { namespace draw {
 
         void draw(const glm::mat4 &pv, gl::ShaderProgram &s);
 
-        glm::vec2 get_aligned_pos(glm::vec2 pos, glm::vec2 size, Align alignment) const;
+        glm::vec2 get_aligned_position(glm::vec2 pos, glm::vec2 size, Align alignment) const;
         glm::vec2 measure(const std::string &str, glm::vec2 scale) const;
 
         int size() const { return size_; }

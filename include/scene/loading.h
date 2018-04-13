@@ -16,6 +16,7 @@ namespace ace { namespace scene {
         draw::ProgressBar *progress_bar;
         draw::Button *start_button;
         draw::Text status_text;
+        draw::NavBar *nav_bar;
     };
 
     class LoadingScene final : public Scene {

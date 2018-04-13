@@ -6,12 +6,13 @@
 #include "game_client.h"
 
 namespace ace { namespace scene {
-    LoadingFrame::LoadingFrame(scene::Scene &scene): GUIPanel(scene),
+    LoadingFrame::LoadingFrame(scene::Scene &scene) : GUIPanel(scene),
         frame(scene, "LOADING...", scene.client.size() / 2.f, scene.client.height() * 0.9),
         content(scene.client.sprites.get("ui/game_loading/game_loading_content_frames.png")),
         progress_bar(this->add<draw::ProgressBar>(glm::vec2{}, glm::vec2{})),
-        start_button(this->add<draw::Button>("START", glm::vec2{}, glm::vec2{}, "stencil.ttf", 40)),
-        status_text(scene.client.fonts.get("nevis.ttf", 16), "", glm::vec3(1), glm::vec2(1), draw::Align::CENTER) {
+        start_button(this->add<draw::Button>("START", glm::vec2{}, glm::vec2{}, 40)),
+        status_text(scene.client.fonts.get("nevis.ttf", 16), "", glm::vec3(1), glm::vec2(1), draw::Align::CENTER),
+        nav_bar(this->add<draw::NavBar>(glm::vec2{ 40 })) {
 
         this->content.alignment = draw::Align::CENTER;
         this->content.position = this->frame.image().position;
@@ -27,6 +28,8 @@ namespace ace { namespace scene {
 
 
         this->status_text.position = this->content.get_position(draw::Align::TOP_LEFT) + glm::vec2{ 825, 550 } * this->content.scale;
+
+        this->frame.position_navbar(*this->nav_bar, glm::vec2{40});
     }
 
     void LoadingFrame::draw() {
@@ -54,7 +57,7 @@ namespace ace { namespace scene {
         this->frame.start_button->enable(false);
         this->frame.start_button->on("press_end", &LoadingScene::start_game, this);
 
-        this->client.sound.play_music("test.ogg");
+        
 
         glEnable(GL_BLEND);
         glDisable(GL_CULL_FACE);
@@ -79,14 +82,14 @@ namespace ace { namespace scene {
         
         this->frame.draw();
         
-        if(this->client.net.state == net::NetState::UNCONNECTED || this->client.net.state == net::NetState::DISCONNECTED) {
-            std::string str;
-            if (this->client.text_input_active())
-                str = fmt::format("ENTER NAME: {}_", this->client.input_buffer);
-            else
-                str = "DISCONNECTED";
-            font->draw(str, { client.width() / 2.f, client.height() / 2.f }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
-        }
+//        if(this->client.net.state == net::NetState::UNCONNECTED || this->client.net.state == net::NetState::DISCONNECTED) {
+//            std::string str;
+//            if (this->client.text_input_active())
+//                str = fmt::format("ENTER NAME: {}_", this->client.input_buffer);
+//            else
+//                str = "DISCONNECTED";
+//            font->draw(str, { client.width() / 2.f, client.height() / 2.f }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+//        }
 
         this->client.shaders->sprite.bind();
         this->client.shaders->sprite.uniform("projection", this->projection);
@@ -109,6 +112,7 @@ namespace ace { namespace scene {
             this->frame.progress_bar->value = this->frame.progress_bar->range;
         }
         this->frame.update(dt);
+        
     }
 
     bool LoadingScene::on_text_typing(const std::string &text) {
@@ -171,21 +175,21 @@ namespace ace { namespace scene {
 
     void LoadingScene::on_net_event(net::NetState event) {
         switch(event) {
-            case net::NetState::UNCONNECTED:
-            case net::NetState::DISCONNECTED:
-                this->frame.status_text.set_str("Disconnected");
-                break;
-            case net::NetState::CONNECTING:
-                this->frame.status_text.set_str("Connecting to server...");
-                break;
-            case net::NetState::CONNECTED:
-                this->frame.status_text.set_str("Connected, waiting for map transfer...");
-                break;
-            case net::NetState::MAP_TRANSFER:
-                this->frame.status_text.set_str("Receiving map....");
-                break;
-            default:
-                break;
+        case net::NetState::UNCONNECTED:
+        case net::NetState::DISCONNECTED:
+            this->frame.status_text.set_str(fmt::format("Disconnected: {}", net::get_disconnect_reason(this->client.net.disconnect_reason)));
+            break;
+        case net::NetState::CONNECTING:
+            this->frame.status_text.set_str("Connecting to server...");
+            break;
+        case net::NetState::CONNECTED:
+            this->frame.status_text.set_str("Connected, waiting for map transfer...");
+            break;
+        case net::NetState::MAP_TRANSFER:
+            this->frame.status_text.set_str("Receiving map....");
+            break;
+        default:
+            break;
         }
     }
 }}
