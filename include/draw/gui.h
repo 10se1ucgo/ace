@@ -293,8 +293,6 @@ namespace ace { namespace draw {
 
         void set_thumb(int value, int range) { this->_thumb_position = value; this->_thumb_range = range; this->update_thumb(); }
     private:
-        void fire(const std::string &event) override;
-
         void layout() override;
         void update_thumb();
 
