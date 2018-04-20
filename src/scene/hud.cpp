@@ -284,7 +284,7 @@ namespace ace { namespace scene {
             break;
         case SDL_SCANCODE_Y:
             if(this->state == State::Exit) {
-                this->scene.client.quit = true;
+                this->scene.client.quit();
                 break;
             }
             this->cur_chat_type = net::CHAT::TEAM;

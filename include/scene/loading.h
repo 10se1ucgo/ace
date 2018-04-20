@@ -1,6 +1,6 @@
 #pragma once
 #include "scene/scene.h"
-#include "net.h"
+#include "net/net.h"
 #include "draw/gui.h"
 #include "draw/font.h"
 

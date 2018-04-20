@@ -200,30 +200,43 @@ namespace ace { namespace draw {
                 pos = opos;
                 continue;
             }
-
-            auto &glyph = chars[c];
-
-            float x = pos.x + glyph.bearing.x * scale.x;
-            float y = pos.y - glyph.bearing.y * scale.y;
-            float w = glyph.dim.x * scale.x;
-            float h = glyph.dim.y * scale.y;
-
-            pos += glm::vec2(chars[c].advance) * scale;
-
-            if (!w || !h) continue;
-
-            v.push_back({ { x,     y     }, glyph.tl, color }); // tl
-            v.push_back({ { x + w, y     }, glyph.tr, color }); // tr
-            v.push_back({ { x,     y + h }, glyph.bl, color }); // bl
-            v.push_back({ { x + w, y     }, glyph.tr, color });
-            v.push_back({ { x,     y + h }, glyph.bl, color });
-            v.push_back({ { x + w, y + h }, glyph.br, color }); // br
+            this->add_glyph(c, pos, color, scale, v);
         }
+    }
+
+    void Font::add_glyph(char c, glm::vec2 &pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const {
+        auto &glyph = chars[uint8_t(c)];
+
+        float x = pos.x + glyph.bearing.x * scale.x;
+        float y = pos.y - glyph.bearing.y * scale.y;
+        float w = glyph.dim.x * scale.x;
+        float h = glyph.dim.y * scale.y;
+
+        pos += glm::vec2(glyph.advance) * scale;
+
+        if (!w || !h) return;
+
+        v.push_back({ { x,     y }, glyph.tl, color }); // tl
+        v.push_back({ { x + w, y }, glyph.tr, color }); // tr
+        v.push_back({ { x,     y + h }, glyph.bl, color }); // bl
+        v.push_back({ { x + w, y }, glyph.tr, color });
+        v.push_back({ { x,     y + h }, glyph.bl, color });
+        v.push_back({ { x + w, y + h }, glyph.br, color }); // br
     }
 
     void Font::draw(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
         pos = this->get_aligned_position(pos, this->measure(str, scale), alignment);
         this->render(str, pos, color, scale, this->vbo.data);
+    }
+
+    void Font::draw_truncated(float max_length, const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale,  Align alignment) {
+        pos = this->get_aligned_position(pos, this->measure(str, scale), alignment);
+        float max_x_pos = pos.x + max_length;
+        for (unsigned char c : str) {
+            if (pos.x >= max_x_pos) return;
+            this->add_glyph(c, pos, color, scale, this->vbo.data);
+        }
+        // TODO make this not crap and also draw ellipsis
     }
 
     void Font::draw(const Text &r) {

@@ -97,7 +97,7 @@ namespace ace {
 
     void GameClient::run() {
         Uint64 last = SDL_GetPerformanceCounter();
-        while (!this->quit) {
+        while (!this->_quit) {
             Uint64 now = SDL_GetPerformanceCounter();
             double dt = (now - last) / double(SDL_GetPerformanceFrequency());
             this->time += dt;
@@ -113,6 +113,7 @@ namespace ace {
         this->update_fps();
         this->tasks.update(dt);
         this->net.update(dt);
+        this->url.update(dt);
         this->sound.update(dt);
         this->scene->update(dt);
         this->draw();
@@ -137,7 +138,7 @@ namespace ace {
         while (SDL_PollEvent(&event)) {
             switch (event.type) {
             case SDL_QUIT:
-                this->quit = true;
+                this->quit();
                 break;
             case SDL_KEYDOWN:
                 if(this->text_input_active()) {

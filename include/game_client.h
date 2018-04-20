@@ -6,7 +6,8 @@
 #include "sound/sound.h"
 #include "draw/font.h"
 #include "util/event.h"
-#include "net.h"
+#include "net/net.h"
+#include "net/url.h"
 #include "draw/sprite.h"
 #include "scene/scene.h"
 
@@ -32,6 +33,7 @@ namespace ace {
         ACE_NO_COPY_MOVE(GameClient)
 
         void run();
+        void quit() { this->_quit = true; }
 
         glm::vec2 size() const { return { w, h }; }
         int width() const { return w; }
@@ -70,6 +72,7 @@ namespace ace {
         
         friend net::NetworkClient;
         net::NetworkClient net;
+        net::URLClient url;
         std::unique_ptr<gl::ShaderManager> shaders; // uniqe_ptr because GL context needs to be created before the shaders can be compiled and loaded.
         draw::SpriteManager sprites;
         sound::SoundManager sound;
@@ -89,7 +92,7 @@ namespace ace {
 
         std::string input_buffer;
 
-        bool quit = false;
+        
         double time = 0.0;
 
         std::unique_ptr<scene::Scene> scene; // very bad idea??
@@ -113,5 +116,6 @@ namespace ace {
         std::string window_title;
 
         bool relative_mode{ false };
+        bool _quit{ false };
     };
 }

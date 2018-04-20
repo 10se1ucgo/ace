@@ -7,7 +7,7 @@
 
 namespace ace { class GameClient; }
 
-namespace net {
+namespace ace { namespace net {
     std::vector<uint8_t> inflate(uint8_t *data, size_t len, size_t initial_size = 2 << 16);
 
     enum class NetState {
@@ -62,6 +62,7 @@ namespace net {
 
         void update(double dt);
         void connect(const char *host, int port, uint32_t data=0);
+        void disconnect();
         void send(const void *data, size_t len, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
 
         virtual void on_connect(const ENetEvent &event) = 0;
@@ -114,4 +115,4 @@ namespace net {
         default: return "Unknown reason.";
         }
     }
-}
+}}

@@ -1,9 +1,10 @@
 #pragma once
+#include "fmt/format.h"
 #include "glm/glm.hpp"
 
 #include "util/except.h"
 
-namespace net {
+namespace ace { namespace net {
     struct ByteReader {
         ByteReader(uint8_t *data, size_t size) : start(data), pos(start), end(start + size) {
         }
@@ -843,7 +844,7 @@ namespace net {
     }
 
 //    auto x = sizeof(Packet);
-}
+}}
 
 namespace fmt {
 #define ENUM_FORMAT_ARG(T) \
@@ -852,15 +853,15 @@ namespace fmt {
         f.writer() << static_cast<std::underlying_type<T>::type>(e); \
     }
 
-    ENUM_FORMAT_ARG(net::ACTION)
-    ENUM_FORMAT_ARG(net::CHAT)
-    ENUM_FORMAT_ARG(net::DAMAGE)
-    ENUM_FORMAT_ARG(net::DISCONNECT)
-    ENUM_FORMAT_ARG(net::HIT)
-    ENUM_FORMAT_ARG(net::KILL)
-    ENUM_FORMAT_ARG(net::OBJECT)
-    ENUM_FORMAT_ARG(net::PACKET)
-    ENUM_FORMAT_ARG(net::TEAM)
-    ENUM_FORMAT_ARG(net::TOOL)
-    ENUM_FORMAT_ARG(net::WEAPON)
+    ENUM_FORMAT_ARG(ace::net::ACTION)
+    ENUM_FORMAT_ARG(ace::net::CHAT)
+    ENUM_FORMAT_ARG(ace::net::DAMAGE)
+    ENUM_FORMAT_ARG(ace::net::DISCONNECT)
+    ENUM_FORMAT_ARG(ace::net::HIT)
+    ENUM_FORMAT_ARG(ace::net::KILL)
+    ENUM_FORMAT_ARG(ace::net::OBJECT)
+    ENUM_FORMAT_ARG(ace::net::PACKET)
+    ENUM_FORMAT_ARG(ace::net::TEAM)
+    ENUM_FORMAT_ARG(ace::net::TOOL)
+    ENUM_FORMAT_ARG(ace::net::WEAPON)
 }

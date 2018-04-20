@@ -1,4 +1,4 @@
-#include "net.h"
+#include "net/net.h"
 
 #include "zlib.h"
 
@@ -7,22 +7,7 @@
 #include "scene/loading.h"
 #include "scene/menu.h"
 
-
-namespace net {
-    // inspired by Python std zlib.decompressobj()
-//    struct InflateObject {
-//        InflateObject() {
-//            stream.zalloc = Z_NULL;
-//            stream.zfree = Z_NULL;
-//            stream.opaque = Z_NULL;
-//            stream.avail_in = 0;
-//            stream.next_in = Z_NULL;
-//            inflateInit(&stream);
-//        }
-//    private:
-//        z_stream stream;
-//    };
-
+namespace ace { namespace net {
     std::vector<uint8_t> inflate(uint8_t *data, size_t len, size_t initial_size) {
         z_stream stream;
 
@@ -83,6 +68,7 @@ namespace net {
                 this->on_connect(event);
                 break;
             case ENET_EVENT_TYPE_DISCONNECT:
+                this->peer = nullptr;
                 this->on_disconnect(event);
                 break;
             case ENET_EVENT_TYPE_RECEIVE:
@@ -97,7 +83,8 @@ namespace net {
 
     void BaseNetClient::connect(const char *host, int port, uint32_t data) {
         if (this->peer != nullptr) {
-            enet_peer_disconnect(this->peer, 0);
+            enet_peer_reset(this->peer);
+            this->peer = nullptr;
         }
 
         fmt::print("CONNECTING TO {}:{}\n", host, port);
@@ -111,6 +98,12 @@ namespace net {
 
         if (this->peer == nullptr) {
             THROW_ERROR("FAILED TO ALLOCATE PEER\n");
+        }
+    }
+
+    void BaseNetClient::disconnect() {
+        if (this->peer != nullptr) {
+            enet_peer_disconnect(this->peer, 0);
         }
     }
 
@@ -207,4 +200,4 @@ namespace net {
         this->state = state;
         this->client.scene->on_net_event(state);
     }
-};
+}};

@@ -25,7 +25,7 @@ namespace util {
 
     // wow im bad at designing anything
     class TaskScheduler {
-        std::map<double, std::function<void()>> tasks;
+        std::multimap<double, std::function<void()>> tasks;
         std::vector<std::weak_ptr<detail::LoopingCall>> loops;
         GameClient &client;
 
@@ -39,7 +39,7 @@ namespace util {
 
         template<typename TFunc, typename... TArgs>
         task_type call_later(double seconds, TFunc&& func, TArgs&&... args) {
-            return tasks.emplace(this->get_time(seconds), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...)).first;
+            return tasks.emplace(this->get_time(seconds), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
         }
 
         template<typename TFunc, typename... TArgs>

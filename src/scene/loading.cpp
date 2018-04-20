@@ -4,6 +4,7 @@
 
 #include "scene/game.h"
 #include "game_client.h"
+#include "scene/menu.h"
 
 namespace ace { namespace scene {
     LoadingFrame::LoadingFrame(scene::Scene &scene) : GUIPanel(scene),
@@ -12,7 +13,7 @@ namespace ace { namespace scene {
         progress_bar(this->add<draw::ProgressBar>(glm::vec2{}, glm::vec2{})),
         start_button(this->add<draw::Button>("START", glm::vec2{}, glm::vec2{}, 40)),
         status_text(scene.client.fonts.get("nevis.ttf", 16), "", glm::vec3(1), glm::vec2(1), draw::Align::CENTER),
-        nav_bar(this->add<draw::NavBar>(glm::vec2{ 40 })) {
+        nav_bar(this->add<draw::NavBar>()) {
 
         this->content.alignment = draw::Align::CENTER;
         this->content.position = this->frame.image().position;
@@ -30,6 +31,18 @@ namespace ace { namespace scene {
         this->status_text.position = this->content.get_position(draw::Align::TOP_LEFT) + glm::vec2{ 825, 550 } * this->content.scale;
 
         this->frame.position_navbar(*this->nav_bar, glm::vec2{40});
+
+        this->nav_bar->on_quit(&GameClient::quit, &this->scene.client);
+        this->nav_bar->on_menu([&client = this->scene.client]() {
+            client.net.disconnect();
+            client.set_scene<MainMenuScene>();
+        });
+        this->nav_bar->on_back([&client = this->scene.client]() {
+            client.net.disconnect();
+            auto scene = std::make_unique<MainMenuScene>(client);
+            client.set_scene(std::move(scene));
+//            scene->set_menu<>()
+        });
     }
 
     void LoadingFrame::draw() {
@@ -162,7 +175,7 @@ namespace ace { namespace scene {
     }
 
     void LoadingScene::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
-        if (scancode == SDL_SCANCODE_ESCAPE && pressed) this->client.quit = true;
+        if (scancode == SDL_SCANCODE_ESCAPE && pressed) this->client.quit();
     }
 //
     void LoadingScene::on_mouse_motion(int x, int y, int dx, int dy) {

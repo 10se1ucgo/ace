@@ -1,6 +1,6 @@
 #pragma once
 #include "SDL.h"
-#include "net.h"
+#include "net/net.h"
 
 namespace ace { 
     class GameClient;

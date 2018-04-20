@@ -1,10 +1,32 @@
 #pragma once
 #include "scene/scene.h"
-#include "net.h"
+#include "net/net.h"
 #include "draw/gui.h"
 
 
 namespace ace { namespace scene {
+    class MainMenuScene;
+
+    struct Menu : draw::GUIPanel {
+        Menu(scene::MainMenuScene &scene);
+
+        scene::MainMenuScene &scene;
+    };
+
+    struct MainMenu : Menu {
+        explicit MainMenu(scene::MainMenuScene &scene);
+        void update(double dt) override;
+        void draw() override;
+
+    private:
+        draw::SpriteGroup *background;
+        draw::Sprite splash, menu_frame;
+        draw::Button *button1, *button2;
+        draw::IconButton *button3;
+        draw::ProgressBar *pb;
+        draw::TextButton *nav_quit;
+    };
+
     class MainMenuScene final : public Scene {
     public:
         MainMenuScene(GameClient &client);

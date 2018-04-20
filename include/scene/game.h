@@ -16,7 +16,7 @@
 
 #include "camera.h"
 #include "kv6.h"
-#include "net.h"
+#include "net/net.h"
 #include "util/event.h"
 
 

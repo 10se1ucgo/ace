@@ -56,7 +56,7 @@ namespace ace { namespace scene {
         this->client.sound.play("intro.wav", {}, 100, true);
         this->client.set_exclusive_mouse(true);
 #ifdef NDEBUG
-        this->client.tasks.call_later(0.0, [this] { this->send_this_player(random::choice_range(net::TEAM::TEAM1, net::TEAM::TEAM2), random::choice_range(net::WEAPON::SEMI, net::WEAPON::SHOTGUN)); });
+        this->client.tasks.call_later(1.0, [this] { this->send_this_player(random::choice_range(net::TEAM::TEAM1, net::TEAM::TEAM2), random::choice_range(net::WEAPON::SEMI, net::WEAPON::SHOTGUN)); });
 #endif
     }
 

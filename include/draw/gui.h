@@ -41,12 +41,10 @@ namespace ace { namespace draw {
         virtual void layout() {}
 
         // i have no idea what im doing lol
-
         template<typename TFunc, typename... TArgs>
         void on(const std::string &event, TFunc&& func, TArgs&&... args) {
             this->handlers.emplace(event, std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
         }
-
     protected:
         virtual void fire(const std::string &event);
 
@@ -117,8 +115,8 @@ namespace ace { namespace draw {
         void update_position();
     };
 
-    struct BitmapButton : BaseButton {
-        BitmapButton(scene::Scene &s, glm::vec2 position, glm::vec2 size, const std::string &image = "", const std::string &button = "button_square");
+    struct IconButton : BaseButton {
+        IconButton(scene::Scene &s, glm::vec2 position, glm::vec2 size, const std::string &image = "", glm::vec2 image_scale = {}, const std::string &button = "button_square");
 
         void draw() override;
 
@@ -139,8 +137,8 @@ namespace ace { namespace draw {
         void update_position();
     };
     
-    struct IconButton : BaseButton {
-        IconButton(scene::Scene &s, glm::vec2 position, glm::vec2 size,
+    struct TextButton : BaseButton {
+        TextButton(scene::Scene &s, glm::vec2 position, glm::vec2 size,
                    std::string text = "", const std::string &icon = "", draw::Align alignment = Align::BOTTOM_CENTER,
                    int font_size = 30, const std::string &font = "AldotheApache.ttf");
 
@@ -179,7 +177,7 @@ namespace ace { namespace draw {
     };
 
     struct NavBar : InputHandler {
-        NavBar(scene::Scene &scene, glm::vec2 size = {}) :
+        NavBar(scene::Scene &scene, glm::vec2 size = {40, 40}) :
             InputHandler(scene),
             back(scene, {}, size, "BACK", "ui/common_elements/nav_bar/back_icon.png", Align::BOTTOM_LEFT),
             menu(scene, {}, size, "MENU", "ui/common_elements/nav_bar/main_menu_icon.png", Align::BOTTOM_CENTER),
@@ -216,7 +214,22 @@ namespace ace { namespace draw {
             this->back.set_size(scale); this->menu.set_size(scale); this->quit.set_size(scale);
         }
 
-        IconButton back, menu, quit;
+        template<typename TFunc, typename... TArgs>
+        void on_back(TFunc&& func, TArgs&&... args) {
+            this->back.on("press_start", std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        }
+
+        template<typename TFunc, typename... TArgs>
+        void on_menu(TFunc&& func, TArgs&&... args) {
+            this->menu.on("press_start", std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        }
+
+        template<typename TFunc, typename... TArgs>
+        void on_quit(TFunc&& func, TArgs&&... args) {
+            this->quit.on("press_start", std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        }
+
+        TextButton back, menu, quit;
     };
 
     struct Frame {
@@ -228,8 +241,17 @@ namespace ace { namespace draw {
             this->_title.draw_shadowed();
         }
 
+
         void set_title(const std::string &title) {
             this->_title.set_str(title);
+        }
+
+        glm::vec2 offset() const {
+            return this->_image.get_position();
+        }
+
+        glm::vec2 scale() const {
+            return this->_image.scale;
         }
 
         const draw::Sprite &image() const {
@@ -253,6 +275,93 @@ namespace ace { namespace draw {
         draw::Text _title;
     };
 
+    struct ScrollBar : GUIWidget {
+        ScrollBar(scene::Scene &scene, glm::vec2 position, glm::vec2 size);
+
+        void draw() override;
+        void update(double dt) override;
+
+        void on_key(SDL_Scancode scancode, int modifiers, bool pressed) override;
+        void on_mouse_button(int button, bool pressed) override;
+        void on_mouse_motion(int x, int y, int dx, int dy) override;
+
+        int value() const { return this->_thumb_position; }
+        int range() const { return this->_thumb_range; }
+
+        void set_value(int value) { this->_thumb_position = value; this->update_thumb(); }
+        void set_range(int range) { this->_thumb_range = range; this->update_thumb(); }
+
+        void set_thumb(int value, int range) { this->_thumb_position = value; this->_thumb_range = range; this->update_thumb(); }
+    private:
+        void fire(const std::string &event) override;
+
+        void layout() override;
+        void update_thumb();
+
+        IconButton up, down;
+        draw::Sprite bottom, mid, top;
+        int _thumb_position{ 0 }, _thumb_range{ 50 };
+    };
+
+    // I was considering writing a generic List widget but that's gonna be a huge pain in the ass in C++ (tuples and crap)
+    // Instead I'll just make this specific for the server browser, and expand later if *really* needed.
+
+    // what a mess of a class lol
+    struct ListCtrl : GUIWidget {
+        enum class SortOrder {
+            NAME, PLAYERS, MAP, MODE, PING
+        };
+
+        struct Column {
+            draw::Text header;
+            float x_pos;
+
+            Column(draw::Font *f, std::string header, float x_pos) : header(f, std::move(header), glm::vec3(232, 207, 78) / 255.f), x_pos(x_pos) {
+            }
+
+            void set_position(glm::vec2 pos) {
+                this->header.position = pos;
+                this->header.position.x += this->x_pos;
+            }
+
+            bool pressed(glm::vec2 mpos) const;
+        };
+
+        struct ServerEntry {
+            std::string name; int players, max_players; std::string map; std::string mode; int ping;
+        };
+
+        ListCtrl(scene::Scene &scene, glm::vec2 position, glm::vec2 size, glm::vec2 scale, ScrollBar *sb = nullptr);
+
+        void add(ServerEntry s) { this->entries.emplace_back(std::move(s)); this->update_sb(); }
+        void clear() { this->entries.clear(); this->_selected = -1; this->offset = 0; this->update_sb(); }
+        size_t count() const { return this->entries.size(); }
+
+        void draw() override;
+        void layout() override;
+        void on_mouse_button(int button, bool pressed) override;
+        void on_key(SDL_Scancode scancode, int modifiers, bool pressed) override;
+        
+        const ServerEntry &selected() const;
+    private:
+        void sort();
+        void set_offset(int offset);
+        void update_sb() const;
+        // oof so ugly
+
+        ScrollBar *sb;
+
+        Font *column_font, *entry_font;
+        glm::vec2 scale;
+        float col_height;
+        Column name, players, map, mode, ping;
+        
+        std::vector<ServerEntry> entries;
+
+        int offset = 0, _selected = -1;
+        SortOrder sort_order{ SortOrder::PLAYERS };
+        bool sort_ascending{ true };
+    };
 
     struct BigFrame : Frame {
         BigFrame(scene::Scene &scene, std::string title, glm::vec2 position, float size) :
@@ -279,6 +388,5 @@ namespace ace { namespace draw {
             Frame(scene, "ui/common_elements/frames/ui_frame_small.png", std::move(title), position, { 430, 60 }, size) {
         }
     };
-//
-//    using s = Frame;
+
 }}

@@ -21,6 +21,7 @@ The folder `ext` should be where all the libs go, refer to the CMakeLists.txt fo
 My ext tree looks something like this:
 ```
 ├───alure
+│   ├───dlls
 │   ├───include
 │   └───lib
 ├───enet
@@ -31,19 +32,26 @@ My ext tree looks something like this:
 │   ├───include
 │   └───lib
 ├───glm (same here)
-├───openal
-|   ├───bin
+├───libcurl
+│   ├───bin
 │   ├───include
-│   └───libs
+│   └───lib
+├───nlohmann
+│   └───nlohmann
+│      └───json.hpp
+├───openal
+│   ├───bin
+│   ├───include
+│   ├───libs
 ├───sdl2
 │   ├───bin
 │   ├───include
 │   └───lib
 └───zlib
-    ├───bin
     ├───include
     └───lib
 ```
+
 Then run generate.bat and open the solution in `build/`
 
 # RUNNING
