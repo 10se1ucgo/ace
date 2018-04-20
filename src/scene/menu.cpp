@@ -18,7 +18,7 @@ namespace ace { namespace scene {
         draw::ScrollBar *list_sb;
         draw::ListCtrl *list;
         draw::NavBar *nav_bar;
-        draw::Button *refresh_button, *fav_button;
+        draw::Button *refresh_button, *fav_button, *connect_button;
         draw::Text server_count_label;
 
         explicit ServerListMenu(scene::MainMenuScene &scene) : Menu(scene),
@@ -30,6 +30,7 @@ namespace ace { namespace scene {
             nav_bar(this->add<draw::NavBar>()),
             refresh_button(this->add<draw::Button>("REFRESH", this->frame.offset() + glm::vec2{ 415, 725 } * this->frame.scale(), glm::vec2{ 150, 50 } * this->frame.scale(), 18)),
             fav_button(this->add<draw::Button>("FAVORITE", this->frame.offset() + glm::vec2{ 570, 725 } * this->frame.scale(), glm::vec2{ 180, 50 } * this->frame.scale(), 18)),
+            connect_button(this->add<draw::Button>("CONNECT", this->frame.offset() + glm::vec2{ 780, 680 } * this->frame.scale(), glm::vec2{ 300, 100 } * this->frame.scale(), 36)),
             server_count_label(scene.client.fonts.get("Vera.ttf", 18 * this->frame.scale().y), "Received XXX Servers") {
 
             this->background->order = draw::Layer::BACKGROUND;
@@ -52,6 +53,14 @@ namespace ace { namespace scene {
                 scene.set_menu<MainMenu>();
             });
 
+            this->connect_button->on("press_end", [this]() {
+                auto selected(this->list->selected());
+                if(selected) {
+                    auto identifier(selected->identifier);
+                    this->scene.client.set_scene<ace::scene::LoadingScene>(identifier);
+                }
+            });
+                
             this->refresh_button->on("press_end", &ServerListMenu::refresh, this);
 
             this->refresh();
@@ -77,7 +86,8 @@ namespace ace { namespace scene {
                         x["players_max"],
                         x["map"],
                         x["game_mode"],
-                        x["latency"]
+                        x["latency"],
+                        x["identifier"]
                     });
                 }
                 this->server_count_label.set_str(fmt::format("Received {} Servers", this->list->count()));

@@ -486,7 +486,8 @@ namespace ace { namespace draw {
             this->set_offset(this->offset + 1);
     }
 
-    const ListCtrl::ServerEntry &ListCtrl::selected() const {
-        return this->entries.at(this->_selected);
+    const ListCtrl::ServerEntry *ListCtrl::selected() const {
+        if (size_t(this->_selected) >= this->entries.size()) return nullptr;
+        return &this->entries.at(this->_selected);
     }
 }}

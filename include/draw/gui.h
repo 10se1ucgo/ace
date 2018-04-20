@@ -326,7 +326,7 @@ namespace ace { namespace draw {
         };
 
         struct ServerEntry {
-            std::string name; int players, max_players; std::string map; std::string mode; int ping;
+            std::string name; int players, max_players; std::string map; std::string mode; int ping; std::string identifier;
         };
 
         ListCtrl(scene::Scene &scene, glm::vec2 position, glm::vec2 size, glm::vec2 scale, ScrollBar *sb = nullptr);
@@ -340,7 +340,7 @@ namespace ace { namespace draw {
         void on_mouse_button(int button, bool pressed) override;
         void on_key(SDL_Scancode scancode, int modifiers, bool pressed) override;
         
-        const ServerEntry &selected() const;
+        const ServerEntry *selected() const;
     private:
         void sort();
         void set_offset(int offset);
