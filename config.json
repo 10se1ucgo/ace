@@ -1,0 +1,33 @@
+{
+    "name": "Deuce",
+    "controls": {
+        "forward": "W",
+        "back": "S",
+        "left": "A",
+        "right": "D",
+        "jump": "Space",
+        "crouch": "Left Ctrl",
+        "sprint": "Left Shift",
+        "sneak": "V",
+        "reload": "R",
+
+        "map": "M",
+        "all_chat": "T",
+        "team_chat": "Y",
+        "scoreboard": "Tab",
+
+        "change_team": ",",
+        "change_weapon": ".",
+        
+        "mouse_sensitivity": 0.1,
+        "ads_sensitivity": 0.05
+    },
+    "graphics": {
+        "window_mode": "windowed",
+        "window_width": 800,
+        "window_height": 600,
+        "vsync": false,
+        "antialias": 4,
+        "debug": true
+    }
+}
