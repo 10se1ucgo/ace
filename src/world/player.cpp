@@ -280,8 +280,18 @@ namespace ace { namespace world {
             if (!this->scene.client.text_input_active()) {
                 auto keys = this->scene.client.keyboard.keys;
                 auto mouse = this->scene.client.mouse.state;
-                bool changed = this->set_walk(keys[SDL_SCANCODE_W], keys[SDL_SCANCODE_S], keys[SDL_SCANCODE_A], keys[SDL_SCANCODE_D]);
-                changed |= this->set_animation(keys[SDL_SCANCODE_SPACE], keys[SDL_SCANCODE_LCTRL], keys[SDL_SCANCODE_V], keys[SDL_SCANCODE_LSHIFT]);
+                bool changed = this->set_walk(
+                    keys[this->scene.client.config.get_key("forward")],
+                    keys[this->scene.client.config.get_key("back")],
+                    keys[this->scene.client.config.get_key("left")],
+                    keys[this->scene.client.config.get_key("right")]
+                );
+                changed |= this->set_animation(
+                    keys[this->scene.client.config.get_key("jump")],
+                    keys[this->scene.client.config.get_key("crouch")],
+                    keys[this->scene.client.config.get_key("sneak")],
+                    keys[this->scene.client.config.get_key("sprint")]
+                );
                 changed |= this->set_fire(mouse & SDL_BUTTON(SDL_BUTTON_LEFT), mouse & SDL_BUTTON(SDL_BUTTON_RIGHT));
                 if (changed) this->scene.send_input_update();
             }

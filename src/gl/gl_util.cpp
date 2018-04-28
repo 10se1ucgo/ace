@@ -76,13 +76,15 @@ namespace ace { namespace gl {
                 }
 
                 int components = fmt.at(0 + offset) - '0';
-                std::pair<GLenum, size_t> type(get_attrib_type(fmt.at(1 + offset)));
+                std::pair<GLenum, size_t> attrib(get_attrib_type(fmt.at(1 + offset)));
+                GLenum type = attrib.first;
+                size_t size = attrib.second;
                 bool normalized = false;
-                if(fmt.length() > 2u + offset && fmt.at(2 + offset) != 'n' && type.first != GL_FLOAT) {
+                if(fmt.length() > 2u + offset && fmt.at(2 + offset) != 'n' && type != GL_FLOAT) {
                     normalized = true;
                 }
 
-                if (type.second == 0) {
+                if (size == 0) {
                     THROW_ERROR("INVALID VAO FORMAT STRING {}: UNRECOGNIZED TYPE IN '{}'\n", format, fmt);
                 }
                 if (components < 1 || components > 4 || num < 1 || num > 4) {
@@ -90,8 +92,8 @@ namespace ace { namespace gl {
                 }
 
                 for (int i = 0; i < num; i++) {
-                    stride += type.second * components;
-                    attribs.push_back({ this->num_attributes++, components, type.first, type.second, normalized });
+                    stride += size * components;
+                    attribs.push_back({ this->num_attributes++, components, type, size, normalized });
                     // need to calculate total stride before we can call glVertexAttribPointer
                 }
             }

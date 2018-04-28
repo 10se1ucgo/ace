@@ -172,7 +172,7 @@ namespace ace { namespace draw {
         this->icon.position.y += icon_size.y / 2.f;
 
         this->icon.tint = !this->hovering ? glm::vec4(1.0f) : glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
-        this->text.set_color(glm::vec3(this->icon.tint) * (glm::vec3(232, 207, 78) / 255.f));
+        this->text.set_color(glm::vec3(this->icon.tint) * (glm::vec3(189, 169, 74) / 255.f));
     }
 
     bool TextButton::hit_test(glm::vec2 mouse_position) {
@@ -378,7 +378,7 @@ namespace ace { namespace draw {
         glm::vec2 pen(this->_pos + glm::vec2{ 0, this->col_height * 2 });
         for(int i = offset; i < std::min(int(entries.size()), num_entries + offset); i++) {
             auto &e = entries.at(i);
-            auto color =  i == this->_selected ? (glm::vec3(232, 207, 78) / 255.f) : glm::vec3(1);
+            auto color =  i == this->_selected ? (glm::vec3(189, 169, 74) / 255.f) : glm::vec3(1);
             this->entry_font->draw_truncated(this->players.x_pos - this->name.x_pos - 25, e.name, pen + glm::vec2{ name.x_pos, 0 }, color);
             this->entry_font->draw(std::to_string(e.players) + "/" + std::to_string(e.max_players), pen + glm::vec2{ players.x_pos, 0 }, color);
             this->entry_font->draw(e.map, pen + glm::vec2{ map.x_pos, 0 }, color);
@@ -480,9 +480,9 @@ namespace ace { namespace draw {
     void ListCtrl::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
 //        if()
         if (!pressed) return;
-        if(scancode == SDL_SCANCODE_LEFT)
+        if(scancode == SDL_SCANCODE_LEFT || scancode == SDL_SCANCODE_UP)
             this->set_offset(this->offset - 1);
-        else
+        else if(scancode == SDL_SCANCODE_RIGHT || scancode == SDL_SCANCODE_DOWN)
             this->set_offset(this->offset + 1);
     }
 

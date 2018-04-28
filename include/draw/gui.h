@@ -32,7 +32,10 @@ namespace ace { namespace draw {
 
         void set_position(glm::vec2 position) { this->_pos = position; this->layout(); }
         void set_size(glm::vec2 size) { this->_size = size; this->layout(); }
-        void enable(bool enable) { this->_enabled = enable; this->layout(); }
+        void enable(bool enable) {
+            if (this->_enabled == enable) return;
+            this->_enabled = enable; this->layout();
+        }
 
         glm::vec2 position() const { return this->_pos; }
         glm::vec2 size() const { return this->_size; }

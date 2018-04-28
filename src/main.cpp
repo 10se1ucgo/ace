@@ -10,7 +10,7 @@ int main(int argc, char **argv) {
 #ifdef NDEBUG
     try {
 #endif
-        ace::GameClient client("ACE: \"Ace of Spades\" CliEnt", 800, 600);
+        ace::GameClient client("ACE: \"Ace of Spades\" CliEnt");
         std::string ip(argc > 1 ? argv[1] : "aos://180274501:32887:0.75");
         client.set_scene<ace::scene::MainMenuScene>();
         client.run();

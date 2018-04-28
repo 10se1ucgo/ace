@@ -30,16 +30,15 @@ namespace ace { namespace scene {
             nav_bar(this->add<draw::NavBar>()),
             refresh_button(this->add<draw::Button>("REFRESH", this->frame.offset() + glm::vec2{ 415, 725 } * this->frame.scale(), glm::vec2{ 150, 50 } * this->frame.scale(), 18)),
             fav_button(this->add<draw::Button>("FAVORITE", this->frame.offset() + glm::vec2{ 570, 725 } * this->frame.scale(), glm::vec2{ 180, 50 } * this->frame.scale(), 18)),
-            connect_button(this->add<draw::Button>("CONNECT", this->frame.offset() + glm::vec2{ 780, 680 } * this->frame.scale(), glm::vec2{ 300, 100 } * this->frame.scale(), 36)),
-            server_count_label(scene.client.fonts.get("Vera.ttf", 18 * this->frame.scale().y), "Received XXX Servers") {
+            connect_button(this->add<draw::Button>("CONNECT", this->frame.offset() + glm::vec2{ 780, 680 } * this->frame.scale(), glm::vec2{ 305, 100 } * this->frame.scale(), 36)),
+            server_count_label(scene.client.fonts.get("Vera.ttf", 20 * this->frame.scale().y), "Received XXX Servers") {
 
             this->background->order = draw::Layer::BACKGROUND;
 
+            this->content.group->order = draw::Layer::FRAME_CONTENT;
             this->content.alignment = draw::Align::CENTER;
             this->content.position = this->frame.image().position;
             this->content.scale = this->frame.image().scale;
-
-            this->content.group->order = draw::Layer::FRAME_CONTENT;
 
             this->server_count_label.position = this->frame.offset() + glm::vec2(75, 750) * this->frame.scale();
 
@@ -66,13 +65,17 @@ namespace ace { namespace scene {
             this->refresh();
         }
 
+        void update(double dt) override {
+            Menu::draw();
+            this->connect_button->enable(this->list->selected() != nullptr);
+        }
 
         void draw() override {
             this->background->draw({ 1, 1, 1, 1 }, { 0, 0 }, 0, this->scene.client.size() / glm::vec2(background->w, background->h));
             this->frame.draw();
             this->content.draw();
             this->server_count_label.draw();
-            GUIPanel::draw();
+            Menu::draw();
         }
 
         void refresh() {

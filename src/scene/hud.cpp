@@ -258,7 +258,7 @@ namespace ace { namespace scene {
 
         this->draw_chat();
 
-        if (this->scene.client.keyboard.keys[SDL_SCANCODE_TAB]) {
+        if (this->scene.client.keyboard.keys[this->scene.client.config.get_key("map")]) {
             this->draw_scoreboard();
         }
         
@@ -277,40 +277,29 @@ namespace ace { namespace scene {
         if (!pressed) return;
         this->update_color(scancode);
 
-        switch(scancode) {
-        case SDL_SCANCODE_T:
+        if(scancode == this->scene.client.config.get_key("all_chat")) {
             this->cur_chat_type = net::CHAT::ALL;
             this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
-            break;
-        case SDL_SCANCODE_Y:
-            if(this->state == State::Exit) {
-                this->scene.client.quit();
-                break;
-            }
+        } else if(scancode == this->scene.client.config.get_key("team_chat")) {
             this->cur_chat_type = net::CHAT::TEAM;
             this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
-            break;
-        case SDL_SCANCODE_M:
+        } else if(scancode == this->scene.client.config.get_key("map")) {
             this->map_display.big_open = !this->map_display.big_open;
-            break;
-
-        case SDL_SCANCODE_ESCAPE:
-            this->state = this->state == State::None ? State::Exit : State::None;
-            break;
-        case SDL_SCANCODE_N:
-            if (this->state == State::Exit) {
-                this->state = State::None;
-            }
-            break;
-        case SDL_SCANCODE_COMMA:
+        } else if (scancode == this->scene.client.config.get_key("change_team")) {
             this->state = State::ChangeTeam;
-            break;
-        case SDL_SCANCODE_PERIOD:
+        } else if (scancode == this->scene.client.config.get_key("change_weapon")) {
             this->state = State::ChangeWeapon;
-            break;
-        default:
-            break;
         }
+
+        if(this->state == State::Exit) {
+            if(scancode == SDL_SCANCODE_Y)
+                this->scene.client.quit();
+            else if(scancode == SDL_SCANCODE_N)
+                this->state = State::None;
+        }
+
+        if(scancode == SDL_SCANCODE_ESCAPE)
+            this->state = this->state == State::None ? State::Exit : State::None;
 
         if (scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_3) {
             if(this->state == State::ChangeWeapon) {

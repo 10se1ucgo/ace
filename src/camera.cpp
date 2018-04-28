@@ -17,6 +17,12 @@ Camera::Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, 
     forward(forward), right(normalize(cross(world_up, forward))), up(cross(forward, right)),
     world_up(world_up),
     scene(s) {
+
+    this->normal_sensitivity = this->scene.client.config.json["controls"].value("mouse_sensitivity", 0.3f);
+    this->zoom_sensitivity = this->scene.client.config.json["controls"].value("ads_sensitivity", this->normal_sensitivity);
+
+    this->sensitivity = this->normal_sensitivity;
+
     auto ang(ace::dir2ang(this->forward));
     this->yaw = ang.x; this->pitch = ang.y;
 }
@@ -53,8 +59,8 @@ void Camera::update_view() {
 
 void Camera::mouse(double dt) {
     if (!this->scene.client.exclusive_mouse()) return;
-    yaw += scene.client.mouse.dx * sensitivity;
-    pitch = std::max(-89.9f, std::min(pitch - scene.client.mouse.dy * sensitivity, 89.9f));
+    this->yaw += this->scene.client.mouse.dx * this->sensitivity;
+    this->pitch = std::max(-89.9f, std::min(this->pitch - this->scene.client.mouse.dy * this->sensitivity, 89.9f));
 }
 
 void Camera::keyboard(double dt) {
@@ -62,19 +68,19 @@ void Camera::keyboard(double dt) {
 
     const Uint8 *keyboard = scene.client.keyboard.keys;
     float speed = this->speed * dt;
-    if (keyboard[SDL_SCANCODE_LSHIFT])
+    if (keyboard[this->scene.client.config.get_key("sprint")])
         speed *= 3.0f;
-    if (keyboard[SDL_SCANCODE_W])
+    if (keyboard[this->scene.client.config.get_key("forward")])
         this->position += speed * this->forward;
-    if (keyboard[SDL_SCANCODE_S])
+    if (keyboard[this->scene.client.config.get_key("back")])
         this->position -= speed * this->forward;
-    if (keyboard[SDL_SCANCODE_D])
+    if (keyboard[this->scene.client.config.get_key("right")])
         this->position += normalize(cross(this->forward, this->up)) * speed;
-    if (keyboard[SDL_SCANCODE_A])
+    if (keyboard[this->scene.client.config.get_key("left")])
         this->position -= normalize(cross(this->forward, this->up)) * speed;
-    if (keyboard[SDL_SCANCODE_SPACE] && !scene.thirdperson)
+    if (keyboard[this->scene.client.config.get_key("jump")] && !scene.thirdperson)
         this->position += speed * this->up;
-    if (keyboard[SDL_SCANCODE_LCTRL] && !scene.thirdperson)
+    if (keyboard[this->scene.client.config.get_key("crouch")] && !scene.thirdperson)
         this->position -= speed * this->up;
 }
 

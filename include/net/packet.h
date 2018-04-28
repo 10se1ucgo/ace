@@ -135,8 +135,8 @@ namespace ace { namespace net {
         WorldUpdate,
         InputData,
         WeaponInput,
-        HitPacket,
-        SetHP = HitPacket,
+        HitPacket, // C->S
+        SetHP = HitPacket, // S->C
         GrenadePacket,
         SetTool,
         SetColor,

@@ -2,6 +2,7 @@
 #include <string>
 
 #include "SDL.h"
+#include "nlohmann/json.hpp"
 
 #include "sound/sound.h"
 #include "draw/font.h"
@@ -10,10 +11,6 @@
 #include "net/url.h"
 #include "draw/sprite.h"
 #include "scene/scene.h"
-
-namespace net {
-    struct NetworkClient;
-}
 
 namespace ace {
     namespace scene {
@@ -26,9 +23,20 @@ namespace ace {
         FULLSCREEN_BORDERLESS
     };
 
+    struct GameConfig {
+        GameConfig(std::string file_name);
+
+        SDL_Scancode get_key(const std::string &key);
+
+        nlohmann::json json;
+    private:
+        // SDL_GetScancodeFromName is quite slow (strcmp over every key name)
+        std::unordered_map<std::string, SDL_Scancode> name_to_scancode; 
+    };
+
     class GameClient {
     public:
-        GameClient(std::string caption, int w = 800, int h = 600, WINDOW_STYLE style = WINDOW_STYLE::WINDOWED);
+        GameClient(std::string caption /*, int w = 800, int h = 600, WINDOW_STYLE style = WINDOW_STYLE::WINDOWED */);
         ~GameClient();
         ACE_NO_COPY_MOVE(GameClient)
 
@@ -40,12 +48,11 @@ namespace ace {
         int height() const { return h; }
 
         void set_exclusive_mouse(bool exclusive) {
-            this->relative_mode = exclusive;
             SDL_SetRelativeMouseMode(exclusive ? SDL_TRUE : SDL_FALSE);
         }
 
         bool exclusive_mouse() const {
-            return this->relative_mode;
+            return SDL_GetRelativeMouseMode();
         }
 
         void toggle_text_input() const {
@@ -73,11 +80,13 @@ namespace ace {
         friend net::NetworkClient;
         net::NetworkClient net;
         net::URLClient url;
-        std::unique_ptr<gl::ShaderManager> shaders; // uniqe_ptr because GL context needs to be created before the shaders can be compiled and loaded.
+        std::unique_ptr<gl::ShaderManager> shaders; 
+        // unique_ptr because GL context needs to be created before the shaders can be compiled and loaded.
         draw::SpriteManager sprites;
         sound::SoundManager sound;
         util::TaskScheduler tasks;
         draw::FontManager fonts;
+        GameConfig config;
 
         // Input state
         struct {
@@ -115,7 +124,6 @@ namespace ace {
         SDL_GLContext context;
         std::string window_title;
 
-        bool relative_mode{ false };
         bool _quit{ false };
     };
 }

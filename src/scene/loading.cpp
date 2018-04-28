@@ -35,7 +35,6 @@ namespace ace { namespace scene {
         this->nav_bar->on_quit(&GameClient::quit, &this->scene.client);
         this->nav_bar->on_menu([&client = this->scene.client]() {
             client.net.disconnect();
-            client.set_scene<MainMenuScene>();
         });
         this->nav_bar->on_back([&client = this->scene.client]() {
             client.net.disconnect();
@@ -70,8 +69,6 @@ namespace ace { namespace scene {
         this->frame.start_button->enable(false);
         this->frame.start_button->on("press_end", &LoadingScene::start_game, this);
 
-        
-
         glEnable(GL_BLEND);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
@@ -87,11 +84,10 @@ namespace ace { namespace scene {
             this->game_scene->draw();
         } else {
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
-            
         }
+
         this->background->draw({ 1, 1, 1, this->background_alpha }, { 0, 0 }, 0,
                                this->client.size() / glm::vec2(this->background->w, this->background->h));
-
         
         this->frame.draw();
         
@@ -115,7 +111,7 @@ namespace ace { namespace scene {
     void LoadingScene::update(double dt) {
         Scene::update(dt);
         if(this->game_scene) {
-            this->background_alpha = std::max(0.0, this->background_alpha - dt);
+            this->background_alpha = std::max(0.0, this->background_alpha - dt * 0.5);
             this->game_scene->update(dt);
         }
 

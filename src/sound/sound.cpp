@@ -34,12 +34,12 @@ namespace ace { namespace sound {
     }
 
     void Sound::set_buf(SoundBuffer *buf) {
+        this->stop();
         if (buf != nullptr) {
             alSourcei(this->snd, AL_BUFFER, buf->abo);
             CHECK_AL_ERROR();
         }
     }
-
 
     void Sound::play(bool loop) {
         this->update();

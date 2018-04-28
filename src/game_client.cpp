@@ -1,9 +1,11 @@
 #include "game_client.h"
 
-#include <SDL_image.h>
+#include "SDL_image.h"
+#include "nlohmann/json.hpp"
+
+#include <fstream>
 
 #include "scene/scene.h"
-
 
 namespace ace {
     void APIENTRY gl_error(GLenum source, GLenum type, GLuint id, GLenum severity, GLsizei length, const GLchar *message, const void *userParam) {
@@ -21,8 +23,36 @@ namespace ace {
 
 #define SDL_ERROR(msg) THROW_ERROR("{}: {}\n", msg, SDL_GetError())
 
-    GameClient::GameClient(std::string caption, int w, int h, WINDOW_STYLE style):
-        net(*this), tasks(*this), window_title(std::move(caption)) {
+    GameConfig::GameConfig(std::string file_name) {
+        std::ifstream{ file_name } >> this->json;
+        
+        // i >> j;
+    }
+
+    SDL_Scancode GameConfig::get_key(const std::string &key) {
+        ; // k.get<std::underlying_type_t<SDL_Scancode>>();
+        auto &entry(this->json["controls"].at(key));
+        if (entry.is_number()) {
+            return SDL_Scancode(entry.get<std::underlying_type_t<SDL_Scancode>>());
+        }
+
+        const auto &key_name = entry.get_ref<const std::string &>();
+        auto it = this->name_to_scancode.find(key_name);
+        if(it == this->name_to_scancode.end()) {
+            return this->name_to_scancode[key_name] = SDL_GetScancodeFromName(key_name.c_str());
+        }
+
+        return it->second;
+    }
+
+    // void GameConfig::read() {
+    // }
+    //
+    // void GameConfig::write() {
+    // }
+
+    GameClient::GameClient(std::string caption /*, int w, int h, WINDOW_STYLE style */):
+        net(*this), tasks(*this), config("config.json"), window_title(std::move(caption)) {
 
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
             SDL_ERROR("SDL_Init");
@@ -44,12 +74,17 @@ namespace ace {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, 1);
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, 4);
         SDL_GL_SetAttribute(SDL_GL_DOUBLEBUFFER, 1);
-        
-        this->window = SDL_CreateWindow(window_title.c_str(),
-            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, w, h,
-            SDL_WINDOW_OPENGL | (style == WINDOW_STYLE::WINDOWED ? 0 : SDL_WINDOW_FULLSCREEN)
+
+        auto &window_mode = config.json["graphics"].at("window_mode").get_ref<const std::string &>();
+        this->w = config.json["graphics"].at("window_width");
+        this->h = config.json["graphics"].at("window_height");
+
+        this->window = SDL_CreateWindow(
+            this->window_title.c_str(),
+            SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, this->w, this->h,
+            SDL_WINDOW_OPENGL | (window_mode == "windowed" ? 0 : SDL_WINDOW_FULLSCREEN)
         );
-        if(style == WINDOW_STYLE::FULLSCREEN_BORDERLESS) {
+        if(window_mode == "borderless") {
             SDL_SetWindowBordered(this->window, SDL_FALSE);
         }
         if (this->window == nullptr)
@@ -64,24 +99,20 @@ namespace ace {
         }
 
         SDL_GL_MakeCurrent(this->window, this->context);
-        SDL_GL_SetSwapInterval(0);
+        SDL_GL_SetSwapInterval(this->config.json["graphics"].value("vsync", false));
 
-#ifndef NDEBUG
-        if(GLAD_GL_VERSION_4_3) {
+        if(GLAD_GL_VERSION_4_3 && this->config.json["graphics"].value("debug", false)) {
             glEnable(GL_DEBUG_OUTPUT);
             glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
             glDebugMessageCallback(gl_error, nullptr);
         }
-#endif
 
         fmt::print("OpenGL: {}\n", glGetString(GL_VERSION));
         fmt::print("GLSL: {}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
         fmt::print("Renderer: {}\n", glGetString(GL_RENDERER));
         fmt::print("Vendor: {}\n", glGetString(GL_VENDOR));
 
-        keyboard.keys = SDL_GetKeyboardState(&keyboard.numkeys);
-        this->w = w;
-        this->h = h;
+        this->keyboard.keys = SDL_GetKeyboardState(&this->keyboard.numkeys);
 
         this->shaders = std::make_unique<gl::ShaderManager>();
 

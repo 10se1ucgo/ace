@@ -155,9 +155,11 @@ namespace ace { namespace scene {
                 case SDL_SCANCODE_2: this->ply->set_tool(net::TOOL::BLOCK); break;
                 case SDL_SCANCODE_3: this->ply->set_tool(net::TOOL::WEAPON); break;
                 case SDL_SCANCODE_4: this->ply->set_tool(net::TOOL::GRENADE); break;
-                case SDL_SCANCODE_R: this->ply->get_tool()->reload(); break;
                 default: break;
                 }
+
+                if (scancode == this->client.config.get_key("reload"))
+                    this->ply->get_tool()->reload();
             }
 
 #ifndef NDEBUG
@@ -480,8 +482,8 @@ namespace ace { namespace scene {
     }
 
     void GameScene::set_zoom(bool zoom) {
-        cam.sensitivity = zoom ? 0.05f : 0.1f;
-        cam.set_projection(zoom ? 37.5f : 75.0f, client.width(), client.height(), 0.1f, 128.f);
+        this->cam.sensitivity = zoom ? this->cam.zoom_sensitivity : this->cam.normal_sensitivity;
+        this->cam.set_projection(zoom ? 37.5f : 75.0f, client.width(), client.height(), 0.1f, 128.f);
     }
 
     void GameScene::send_block_action(int x, int y, int z, net::ACTION type) const {

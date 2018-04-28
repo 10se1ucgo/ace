@@ -11,12 +11,12 @@ namespace ace { namespace draw {
         BOTTOM_CENTER,
     };
 
-    namespace Layer {
-        enum Layer : int {
+    struct Layer {
+        enum : int {
             BACKGROUND = -100,
             FRAME,
             FRAME_CONTENT,
             FOREGROUND = 0
         };
-    }
+    };
 }}
