@@ -7,21 +7,28 @@
 #include "util/except.h"
 
 namespace ace { namespace draw {
-    SpriteGroup::SpriteGroup(const std::string& file_name, int order) : SpriteGroup(load_image(file_name), order) {
+    SpriteGroup::SpriteGroup(const std::string &file_name, int order) : SpriteGroup(file_name, load_image(file_name), order) {
     }
 
-    SpriteGroup::SpriteGroup(SDL_Surface* data, bool color_key, int order) :
+    SpriteGroup::SpriteGroup(const std::string &file_name, SDL_Surface* data, bool color_key, int order) :
         w(data->w), h(data->h), order(order) {
 
+        SDL_Surface *converted;
         if (color_key) {
             // AoS has some BMPs that use a color key for transparency
             // So we use a color key on the existing surface, and then blit it to a new surface with the proper format.
             SDL_SetColorKey(data, SDL_TRUE, SDL_MapRGB(data->format, 0, 0, 0));
-            SDL_Surface *rgba = SDL_CreateRGBSurface(0, w, h, 32, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24);
-            SDL_BlitSurface(data, nullptr, rgba, nullptr);
-            SDL_FreeSurface(data);
-            data = rgba;
+            converted = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA32);
+            SDL_BlitSurface(data, nullptr, converted, nullptr);
+        } else {
+            converted = SDL_ConvertSurfaceFormat(data, SDL_PIXELFORMAT_RGBA32, 0);
         }
+
+        if(converted == nullptr) {
+            THROW_ERROR("Couldn't convert texture {0}! {1}", file_name, SDL_GetError());
+        }
+
+        SDL_FreeSurface(data);
 
         glBindTexture(GL_TEXTURE_2D, this->tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
@@ -29,9 +36,9 @@ namespace ace { namespace draw {
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
 
-        auto format = data->format->BytesPerPixel == 3 ? GL_RGB : GL_RGBA;
-        glTexImage2D(GL_TEXTURE_2D, 0, format, this->w, this->h, 0, format, GL_UNSIGNED_BYTE, data->pixels);
-        SDL_FreeSurface(data);
+        auto format = converted->format->BytesPerPixel == 3 ? GL_RGB : GL_RGBA;
+        glTexImage2D(GL_TEXTURE_2D, 0, format, this->w, this->h, 0, format, GL_UNSIGNED_BYTE, converted->pixels);
+        SDL_FreeSurface(converted);
 
         this->vbo->emplace_back(0.0f, 0.0f);
         this->vbo->emplace_back(0.0f, h);
@@ -86,7 +93,7 @@ namespace ace { namespace draw {
             return &sprites.at(name);
         } catch (std::out_of_range &) {
             if(data) {
-                return &sprites.emplace(name, data).first->second;
+                return &sprites.emplace(name, SpriteGroup{ name, data }).first->second;
             }
             return &sprites.emplace(name, "png/" + name).first->second;
         }

@@ -23,8 +23,8 @@ namespace ace { namespace draw {
     struct SpriteGroup {
         SpriteGroup(const std::string &file_name, int order=0);
         // i REALLY hate intializer lists lol
-        SpriteGroup(const std::pair<SDL_Surface *, bool> params, int order = 0) : SpriteGroup(params.first, params.second, order) {}
-        SpriteGroup(SDL_Surface *data, bool color_key = false, int order = 0);
+        SpriteGroup(const std::string &file_name, const std::pair<SDL_Surface *, bool> params, int order = 0) : SpriteGroup(file_name, params.first, params.second, order) {}
+        SpriteGroup(const std::string &file_name, SDL_Surface *data, bool color_key = false, int order = 0);
 
         void draw(glm::vec4 tint, glm::mat3 model, glm::vec4 region = { 0, 0, 1, 1 });
         void draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale = { 1.0, 1.0 }, Align align = Align::TOP_LEFT, glm::vec4 region = { 0, 0, 1, 1 });

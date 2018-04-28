@@ -407,10 +407,8 @@ namespace ace { namespace scene {
             this->set_fog_color(glm::vec3(static_cast<net::FogColor *>(loader)->color) / 255.f);
         } break;
         case net::PACKET::WeaponReload: {
-            
             net::WeaponReload *pkt = static_cast<net::WeaponReload *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
-            fmt::print("PLY {} RELOADING\n", pkt->pid);
             if (!ply || !ply->weapon_obj) break;
             ply->weapon_obj->on_reload(pkt);
         } break;
