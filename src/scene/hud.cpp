@@ -258,7 +258,7 @@ namespace ace { namespace scene {
 
         this->draw_chat();
 
-        if (this->scene.client.keyboard.keys[this->scene.client.config.get_key("map")]) {
+        if (this->scene.client.keyboard.keys[this->scene.client.config.get_key("scoreboard")]) {
             this->draw_scoreboard();
         }
         

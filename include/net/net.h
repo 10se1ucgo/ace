@@ -94,7 +94,6 @@ namespace ace { namespace net {
         
         ByteWriter map_writer;
         std::vector<net::ExistingPlayer> players;
-        std::string ply_name;
 
         ace::GameClient &client;
 

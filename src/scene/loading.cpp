@@ -63,8 +63,12 @@ namespace ace { namespace scene {
 
         this->on_window_resize(0, 0);
 
-        if (this->client.net.state == net::NetState::DISCONNECTED || this->client.net.state == net::NetState::UNCONNECTED)
-            this->client.toggle_text_input();
+        if (this->client.net.state == net::NetState::DISCONNECTED || this->client.net.state == net::NetState::UNCONNECTED) {
+            // im starting to think the constructor/destructor should *not* signal when the scene starts/stops
+            // if net.connect() was called directly, the net client would try to send a net state change to the current scene
+            // (this scene) while it's still being constructed and cause very bad errors (and annoying to diagnose)
+            this->client.tasks.call_later(0.0, [this] { this->client.net.connect(this->server); });
+        }
 
         this->frame.start_button->enable(false);
         this->frame.start_button->on("press_end", &LoadingScene::start_game, this);
@@ -124,16 +128,9 @@ namespace ace { namespace scene {
         
     }
 
-    bool LoadingScene::on_text_typing(const std::string &text) {
-        return client.input_buffer.length() < 15;
-    }
-
-    void LoadingScene::on_text_finished() {
-        if (client.net.state != net::NetState::DISCONNECTED && client.net.state != net::NetState::UNCONNECTED) return;
-
-        client.net.connect(server);
-        client.net.ply_name = this->client.input_buffer;
-    }
+    // bool LoadingScene::on_text_typing(const std::string &text) {
+    //     return client.input_buffer.length() < 15;
+    // }
 
     void LoadingScene::on_window_resize(int ow, int oh) {
         projection = glm::ortho(0.f, float(client.width()), float(client.height()), 0.0f);
@@ -142,15 +139,11 @@ namespace ace { namespace scene {
     void LoadingScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) {
         if(type == net::PACKET::StateData) {
             auto buf(net::inflate(client.net.map_writer.vec.data(), client.net.map_writer.vec.size()));
-            this->game_scene = std::make_unique<GameScene>(this->client, *reinterpret_cast<net::StateData *>(packet.get()), client.net.ply_name, buf.data());
+            this->game_scene = std::make_unique<GameScene>(this->client, *reinterpret_cast<net::StateData *>(packet.get()), this->client.config.json.value("name", "Deuce").substr(0, 15), buf.data());
             this->frame.start_button->enable(true);
             this->frame.frame.set_title("READY!");
             this->frame.status_text.set_str("Ready.");
             this->client.sound.stop_music();
-//            this->client.tasks.call_later(1.0, [this]() {
-//                this->client.sound.stop_music();
-//
-//            });
         } else {
             this->saved_loaders.emplace_back(type, std::move(packet));
         }
@@ -160,6 +153,8 @@ namespace ace { namespace scene {
         // hey so im pretty sure calling client.set_scene invalidates this object (client.set_scene() destroys the current scene)
         // so im gonna quickly copy/move all of the important stuff out of the class before we destroy it
         // is this bad design? absolutely. i think.
+        if (this->game_scene == nullptr) return;
+
         auto saved_loaders(std::move(this->saved_loaders));
         auto *scene = this->game_scene.get();
         

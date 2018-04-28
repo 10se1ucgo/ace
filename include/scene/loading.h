@@ -29,8 +29,8 @@ namespace ace { namespace scene {
         void draw() override;
         void update(double dt) override;
 
-        bool on_text_typing(const std::string &text) override;
-        void on_text_finished() override;
+        // bool on_text_typing(const std::string &text) override;
+        // void on_text_finished() override;
 
         void on_window_resize(int ow, int oh) override;
 
