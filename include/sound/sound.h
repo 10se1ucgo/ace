@@ -49,7 +49,7 @@ namespace ace { namespace sound {
         // IDK WHY IM RETURNING IT JUST DONT BE DUMB KTNX
         Sound *play(const std::string &name, glm::vec3 position, float volume = 100.f, bool local = false);
         Sound *play_local(const std::string &name, float volume = 100.f) {
-            return this->play(name, {}, volume, true);
+            return this->play(name, {0, 0, 0}, volume, true);
         }
 
         void play_music(const std::string &name, float volume = 100.f, bool loop = true);

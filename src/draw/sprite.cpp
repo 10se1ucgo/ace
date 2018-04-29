@@ -23,12 +23,13 @@ namespace ace { namespace draw {
         } else {
             converted = SDL_ConvertSurfaceFormat(data, SDL_PIXELFORMAT_RGBA32, 0);
         }
+        SDL_FreeSurface(data);
 
         if(converted == nullptr) {
             THROW_ERROR("Couldn't convert texture {0}! {1}", file_name, SDL_GetError());
         }
 
-        SDL_FreeSurface(data);
+        
 
         glBindTexture(GL_TEXTURE_2D, this->tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);

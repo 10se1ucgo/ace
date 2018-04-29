@@ -280,6 +280,10 @@ namespace ace { namespace scene {
             if(this->ply && ply->pid == this->ply->pid) {
                 this->hud.respawn_time = pkt->respawn_time;
             }
+
+            if(ply != killer) {
+                killer->kills++;
+            }
         } break;
         case net::PACKET::PositionData: {
             if (this->ply) {
@@ -361,6 +365,7 @@ namespace ace { namespace scene {
         case net::PACKET::IntelCapture: {
             net::IntelCapture *pkt = static_cast<net::IntelCapture *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
+
             if (!pkt->winning) {
                 if (ply != nullptr) {
                     auto msg = fmt::format("{} captured the {} team Intel!", ply->name, this->get_team(ply->team, true).name);
@@ -370,7 +375,10 @@ namespace ace { namespace scene {
                 this->hud.set_big_message(fmt::format("{} Team Wins!", this->get_team(ply->team).name));
             }
 
-            this->client.sound.play(pkt->winning ? "horn.wav" : "pickup.wav", { 0,0,0 }, 100, true);
+            ply->kills += 10;
+            this->get_team(ply->team).score++;
+
+            this->client.sound.play_local(pkt->winning ? "horn.wav" : "pickup.wav");
         } break;
         case net::PACKET::IntelPickup: {
             net::IntelPickup *pkt = static_cast<net::IntelPickup *>(loader);
@@ -380,7 +388,7 @@ namespace ace { namespace scene {
                 auto msg = fmt::format("{} has the {} Intel", ply->name, this->get_team(ply->team, true).name);
                 this->hud.add_chat_message(msg, { 1, 0, 0 });
             }
-            this->client.sound.play("pickup.wav", { 0, 0, 0 }, 100, true);
+            this->client.sound.play_local("pickup.wav");
             auto *ent = this->get_ent(uint8_t(ply->team == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG));
             ent->set_carrier(ply->pid);
         } break;

@@ -19,6 +19,7 @@ namespace ace { namespace gl {
         std::pair<GLenum, size_t> get_attrib_type(char c) {
             switch (c) {
             case 'f': return { GL_FLOAT, sizeof(GLfloat) };
+            case 'd': return { GL_DOUBLE, sizeof(GLdouble) };
             case 'b': return { GL_BYTE, sizeof(GLbyte) };
             case 'B': return { GL_UNSIGNED_BYTE, sizeof(GLubyte) };
             case 's': return { GL_SHORT, sizeof(GLshort) }; // prob should be h/H but theres no string attrib type so its ok B)
@@ -47,7 +48,8 @@ namespace ace { namespace gl {
         Components can also be <n>x<m> denoting a matrix with n colums and m rows.
         (Matrices use n vertex attribute indexes)
 
-        Valid types: f = GLfloat, b = GLbyte, s = GLshort, i = GLint. Capital denotes unsigned (except for f)
+        Valid types: f = GLfloat, d = GLdouble, b = GLbyte, s = GLshort, i = GLint.
+        Capital denotes unsigned (only for integer types)
         'n' after the type denotes a normalized integer, mapped to a float in the range [0.0, 1.0] (unsigned) or [-1.0, 1.0] (signed)
         Ignored for float type.
 
@@ -55,6 +57,8 @@ namespace ace { namespace gl {
         "2f" == one vec2
         "3i,4f,3x4f" == one ivec3, two vec4, one mat3x4
         "1Bn" == one unsigned byte normalized to glsl float between [0.0, 1.0]
+
+        LIMITATION: VERTEX BUFFER *MUST* BE TIGHTLY PACKED (TODO: fix)
         */
         vao &vao::attrib_pointer(const std::string &format, gl::vbo &buffer, int divisor) {
             size_t stride = 0;
