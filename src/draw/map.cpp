@@ -86,7 +86,7 @@ namespace ace { namespace draw {
 
         for (const VXLBlock &block : blocks) {
             uint8_t r, g, b, a;
-            unpack_color(block.color, &a, &r, &g, &b);
+            unpack_bytes(block.color, &a, &r, &g, &b);
 
             gen_faces(
                 block.position.x - this->centroid.x,
@@ -130,7 +130,7 @@ namespace ace { namespace draw {
 
                     const uint32_t col = map.get_color(ax, ay, az);
                     uint8_t r, g, b, a;
-                    unpack_color(col, &a, &r, &g, &b);
+                    unpack_bytes(col, &a, &r, &g, &b);
 
                     gen_faces(ax, ay, az, vis, (glm::vec3{ r, g, b } * (map.sunblock(ax, ay, az) / 127.f) * (a / 127.f)) / 255.f, this->vbo.data);
                 }
@@ -225,10 +225,8 @@ namespace ace { namespace draw {
         // todo this sucks massive donkey balls why am i updating the texture 1 by 1 lol
         // ok i made it suck more wow i dont know how to do engine design hahaaaaaaaa
         // i should batch updates and update by region the next frame, not per block
-        uint8_t argb[4];
-        unpack_color(this->get_color(x, y, this->get_z(x, y)), argb + 0, argb + 1, argb + 2, argb + 3);
-        glBindTexture(GL_TEXTURE_2D, this->scene.hud.map_display.map->tex);
-        glTexSubImage2D(GL_TEXTURE_2D, 0, x, y, 1, 1, GL_RGB, GL_UNSIGNED_BYTE, argb + 1);
+        glm::u8vec4 pixel = unpack_argb(this->get_color(x, y, this->get_z(x, y)));
+        this->scene.hud.map_display.map->tex.set_pixel(x, y, pixel);
 
         return ok;
     }
@@ -242,7 +240,7 @@ namespace ace { namespace draw {
             if (neighbors.empty()) return false;
         }
 
-        return this->set_point(x, y, z, true, pack_color(0x7F, color.r, color.g, color.b));
+        return this->set_point(x, y, z, true, pack_bytes(0x7F, color.r, color.g, color.b));
     }
 
     bool DrawMap::destroy_point(const int x, const int y, const int z, std::vector<VXLBlock> &destroyed) {
@@ -288,7 +286,7 @@ namespace ace { namespace draw {
                     r = g = b = 255;
                 } else {
                     uint8_t a;
-                    unpack_color(this->get_color(x, y, this->get_z(x, y)), &a, &r, &g, &b);
+                    unpack_bytes(this->get_color(x, y, this->get_z(x, y)), &a, &r, &g, &b);
                 }
                 
                 pixels[p++] = r; pixels[p++] = g; pixels[p++] = b;

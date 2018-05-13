@@ -8,7 +8,8 @@ namespace ace { namespace gl {
             ret.emplace_back("");
             for(const char c : str) {
                 if(c == delim) {
-                    ret.emplace_back("");
+                    if(!ret.back().empty())
+                        ret.emplace_back("");
                 } else {
                     ret.back().push_back(c);
                 }
@@ -73,7 +74,6 @@ namespace ace { namespace gl {
                 if (fmt.at(1) == 'x') {
                     num = fmt.at(0) - '0';
                     offset = 2;
-
                 } else {
                     num = 1;
                     offset = 0;
@@ -115,6 +115,51 @@ namespace ace { namespace gl {
                 pointer += attr.size * attr.components;
             }
             return *this;
+        }
+
+        texture2d::texture2d(int width, int height, std::unique_ptr<pixel_type[]> pixels):
+            width(width),
+            height(height),
+            _pixels(std::move(pixels)) {
+
+            if (this->_pixels == nullptr) {
+                this->_pixels = std::make_unique<pixel_type[]>(this->width * this->height);
+            } else {
+                this->full_upload();
+            }
+
+            this->set_filter_mode(GL_LINEAR);
+            this->set_wrap_mode(GL_CLAMP_TO_EDGE);
+        }
+
+        void texture2d::copy_from_surface(SDL_Surface *surface) {
+            if (this->width != surface->w && this->height != surface->h) {
+                this->resize(surface->w, surface->h, false);
+            }
+
+            bool needs_convert = surface->format->format != texture2d::sdl_format;
+
+            if (needs_convert) {
+                surface = SDL_ConvertSurfaceFormat(surface, texture2d::sdl_format, 0);
+            }
+
+            assert(surface->pitch * surface->h == this->width * this->height * int(sizeof(decltype(this->_pixels)::
+                element_type)));
+            std::memcpy(this->_pixels.get(), surface->pixels, surface->pitch * surface->h);
+
+            if (needs_convert) {
+                SDL_FreeSurface(surface);
+            }
+
+            this->full_upload();
+        }
+
+        void texture2d::resize(int width, int height, bool upload) {
+            this->width = width;
+            this->height = height;
+            this->_pixels = std::make_unique<pixel_type[]>(this->width * this->height);
+
+            if (upload) this->full_upload();
         }
     }
 }}

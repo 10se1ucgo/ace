@@ -73,7 +73,7 @@ namespace ace { namespace scene {
         }
     }
 
-    MapDisplay::MapDisplay(HUD& hud): hud(hud), marker(hud.sprites.get("player.bmp")), map(hud.scene.map.get_overview()), big(map), mini(map) {
+    MapDisplay::MapDisplay(HUD &hud): hud(hud), marker(hud.sprites.get("player.bmp")), map(hud.scene.map.get_overview()), big(map), mini(map) {
         this->map->order = draw::Layer::FOREGROUND + 4;
         this->marker->order = this->map->order + 1;
         
@@ -135,7 +135,7 @@ namespace ace { namespace scene {
         }
     }
 
-    void MapDisplay::draw_map_grid(glm::vec2 offset) {
+    void MapDisplay::draw_map_grid(glm::vec2 offset) const {
         for (char c = 'A'; c <= 'H'; c++) {
             float x = (offset.x + (32 + 64 * (c - 'A'))) * this->big.scale.x;
             this->hud.sys15->draw(std::string(1, c), { x, offset.y }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
@@ -324,8 +324,8 @@ namespace ace { namespace scene {
         return this->scene.client.input_buffer.length() < 90;
     }
 
-    void HUD::on_text_finished() {
-        if (this->cur_chat_type == net::CHAT::INVALID || this->scene.client.input_buffer.empty()) return;
+    void HUD::on_text_finished(bool cancelled) {
+        if (cancelled || this->cur_chat_type == net::CHAT::INVALID || this->scene.client.input_buffer.empty()) return;
 
         net::ChatMessage cm;
         cm.type = this->cur_chat_type;
@@ -342,8 +342,8 @@ namespace ace { namespace scene {
         this->weapon_sight.position = this->hit_indicator.position = this->reticle.position = size / 2.f;
         this->pal.position = size;
 
-        this->weapon_sight.scale = { size.y / this->weapon_sight.group->h, size.y / this->weapon_sight.group->h };
-        this->hit_indicator.scale = { size.y / this->hit_indicator.group->h, size.y / this->hit_indicator.group->h };
+        this->weapon_sight.scale = { size.y / this->weapon_sight.group->h(), size.y / this->weapon_sight.group->h() };
+        this->hit_indicator.scale = { size.y / this->hit_indicator.group->h(), size.y / this->hit_indicator.group->h() };
     }
 
     void HUD::add_chat_message(std::string message, glm::vec3 color) {

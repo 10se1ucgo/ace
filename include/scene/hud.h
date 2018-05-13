@@ -25,14 +25,12 @@ namespace ace { namespace scene {
         draw::Sprite big, mini;
         bool big_open{false};
     private:
-        void draw_map_grid(glm::vec2 offset);
+        void draw_map_grid(glm::vec2 offset) const;
     };
 
     struct HUD {
         HUD(GameScene &s);
 
-        // TODO: instead of basically copying the ace::scene::Scene class
-        // HUD and Scene should inherit from a base that declares these.
         void update(double dt);
         void draw();
 
@@ -41,7 +39,7 @@ namespace ace { namespace scene {
         void on_mouse_motion(int x, int y, int dx, int dy);
 
         bool on_text_typing(const std::string &text);
-        void on_text_finished();
+        void on_text_finished(bool cancelled);
 
         void on_window_resize(int ow, int oh);
 

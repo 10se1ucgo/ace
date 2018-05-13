@@ -21,7 +21,7 @@ namespace ace { namespace scene {
     private:
         draw::SpriteGroup *background;
         draw::Sprite splash, menu_frame;
-        draw::Button *button1, *button2;
+        draw::Button *play_button, *settings_button;
         draw::IconButton *button3;
         draw::ProgressBar *pb;
         draw::TextButton *nav_quit;

@@ -32,8 +32,10 @@ namespace ace { namespace draw {
 
         void set_antialias(bool antialias);
 
-        int w{}, h{}, order{};
-        gl::texture tex;
+        int order{};
+        int w() const { return this->tex.w(); }
+        int h() const { return this->tex.h(); }
+        gl::experimental::texture2d tex;
     private:
 #pragma pack(push, 1)
         struct SpriteVert {
@@ -89,25 +91,21 @@ namespace ace { namespace draw {
         }
 
         glm::vec2 get_position() const {
-            return get_aligned_position(this->position, this->scale, { group->w, group->h }, this->alignment);
+            return get_aligned_position(this->position, this->scale, { this->group->w(), this->group->h() }, this->alignment);
         }
-
-//        glm::vec2 get_position(Align align) const {
-//            return get_aligned_position(this->position, this->scale, { group->w, group->h }, align);
-//        }
 
         glm::vec2 get_position(Align align) const {
             auto p = this->get_position();
-            auto x = get_aligned_position(p, this->scale, { group->w, group->h }, align);
+            auto x = get_aligned_position(p, this->scale, { this->group->w(), this->group->h() }, align);
             return p - x + p;
         }
 
         void set_region(glm::vec2 bl, glm::vec2 tr) {
-            this->region = { bl.x / this->group->w, bl.y / this->group->h, tr.x / this->group->w, tr.y / this->group->h };
+            this->region = { bl.x / this->group->w(), bl.y / this->group->h(), tr.x / this->group->w(), tr.y / this->group->h() };
         }
 
-        float w() const { return group->w * scale.x; }
-        float h() const { return group->h * scale.y; }
+        float w() const { return group->w() * scale.x; }
+        float h() const { return group->h() * scale.y; }
         glm::vec2 size() const { return { this->w(), this->h() }; }
 
         SpriteGroup *group;

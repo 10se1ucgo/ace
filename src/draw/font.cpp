@@ -76,8 +76,8 @@ namespace ace { namespace draw {
                 fmt::print(stderr, "Couldn't load char@{}!\n", c);
                 continue;
             }
-            width += g->bitmap.width + 1;
-            height = std::max(height, g->bitmap.rows);
+            this->width += g->bitmap.width + 1;
+            this->height = std::max(this->height, g->bitmap.rows);
         }
 
         this->vao.attrib_pointer("2f,2f,3f", this->vbo.handle);
@@ -91,7 +91,7 @@ namespace ace { namespace draw {
 
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, width, height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, this->width, this->height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
 
         std::vector<uint8_t> bmpbuffer; // if using FT_LOAD_MONOCHROME;
         unsigned int x = 0;

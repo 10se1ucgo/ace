@@ -428,8 +428,8 @@ namespace ace { namespace scene {
         return this->hud.on_text_typing(text);
     }
 
-    void GameScene::on_text_finished() {
-        this->hud.on_text_finished();
+    void GameScene::on_text_finished(bool cancelled) {
+        this->hud.on_text_finished(cancelled);
     }
 
     bool GameScene::build_point(int x, int y, int z, const glm::ivec3& color, bool s2c) {
@@ -476,7 +476,7 @@ namespace ace { namespace scene {
     bool GameScene::damage_point(int x, int y, int z, uint8_t damage, Face f, bool destroy) {
         if(f != Face::INVALID) {
             uint8_t a, r, g, b;
-            unpack_color(this->map.get_color(x, y, z), &a, &r, &g, &b);
+            unpack_bytes(this->map.get_color(x, y, z), &a, &r, &g, &b);
             this->create_object<world::DebrisGroup>(this->map.get_face(x, y, z, f), glm::vec3{ r, g, b }, 0.25f, 4);
         }
 

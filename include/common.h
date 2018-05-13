@@ -90,6 +90,29 @@ namespace ace {
     inline float wave(float x, float a, float b) {
         return (cos(x * glm::pi<float>()) * (a - b) + (a + b)) / 2.f;
     }
+
+    constexpr uint32_t pack_bytes(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
+        return uint32_t(a) << 24 | uint32_t(r) << 16 | uint32_t(g) << 8 | uint32_t(b) << 0;
+    }
+
+    constexpr void unpack_bytes(uint32_t color, uint8_t *a, uint8_t *r, uint8_t *g, uint8_t *b) {
+        *a = color >> 24 & 0xFF;
+        *r = color >> 16 & 0xFF;
+        *g = color >> 8 & 0xFF;
+        *b = color >> 0 & 0xFF;
+    }
+
+    inline glm::u8vec4 unpack_argb(uint32_t color) {
+        glm::u8vec4 ret;
+        unpack_bytes(color, &ret.a, &ret.r, &ret.g, &ret.b);
+        return ret;
+    }
+
+    inline glm::u8vec4 unpack_rgba(uint32_t color) {
+        glm::u8vec4 ret;
+        unpack_bytes(color, &ret.r, &ret.g, &ret.b, &ret.a);
+        return ret;
+    }
 }
 
 namespace fmt {

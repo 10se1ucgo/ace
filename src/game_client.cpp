@@ -157,11 +157,11 @@ namespace ace {
     }
 
     void GameClient::update_fps() {
-        fps_counter.frames++;
-        if (this->time - fps_counter.last_update >= 1) {
-            SDL_SetWindowTitle(this->window, fmt::format("{} (FPS: {})", this->window_title, fps_counter.frames).c_str());
-            fps_counter.frames = 0;
-            fps_counter.last_update = this->time;
+        this->fps_counter.frames++;
+        if (this->time - this->fps_counter.last_update >= 1) {
+            SDL_SetWindowTitle(this->window, fmt::format("{} (FPS: {})", this->window_title, this->fps_counter.frames).c_str());
+            this->fps_counter.frames = 0;
+            this->fps_counter.last_update = this->time;
         }
     }
 
@@ -180,9 +180,10 @@ namespace ace {
                             this->input_buffer.pop_back();
                         break;
                     case SDL_SCANCODE_RETURN:
-                        this->scene->on_text_finished();
+                        this->scene->on_text_finished(false);
                     case SDL_SCANCODE_ESCAPE:
                         SDL_StopTextInput();
+                        this->scene->on_text_finished(true);
                         this->input_buffer.clear();
                         break;
                     default:

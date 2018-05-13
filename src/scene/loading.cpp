@@ -91,7 +91,7 @@ namespace ace { namespace scene {
         }
 
         this->background->draw({ 1, 1, 1, this->background_alpha }, { 0, 0 }, 0,
-                               this->client.size() / glm::vec2(this->background->w, this->background->h));
+                               this->client.size() / glm::vec2(this->background->w(), this->background->h()));
         
         this->frame.draw();
         

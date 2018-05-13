@@ -11,14 +11,15 @@ namespace ace { namespace draw {
     }
 
     SpriteGroup::SpriteGroup(const std::string &file_name, SDL_Surface* data, bool color_key, int order) :
-        w(data->w), h(data->h), order(order) {
+        order(order),
+        tex(data->w, data->h) {
 
         SDL_Surface *converted;
         if (color_key) {
             // AoS has some BMPs that use a color key for transparency
             // So we use a color key on the existing surface, and then blit it to a new surface with the proper format.
             SDL_SetColorKey(data, SDL_TRUE, SDL_MapRGB(data->format, 0, 0, 0));
-            converted = SDL_CreateRGBSurfaceWithFormat(0, w, h, 32, SDL_PIXELFORMAT_RGBA32);
+            converted = SDL_CreateRGBSurfaceWithFormat(0, data->w, data->h, 32, SDL_PIXELFORMAT_RGBA32);
             SDL_BlitSurface(data, nullptr, converted, nullptr);
         } else {
             converted = SDL_ConvertSurfaceFormat(data, SDL_PIXELFORMAT_RGBA32, 0);
@@ -29,22 +30,13 @@ namespace ace { namespace draw {
             THROW_ERROR("Couldn't convert texture {0}! {1}", file_name, SDL_GetError());
         }
 
-        
-
-        glBindTexture(GL_TEXTURE_2D, this->tex);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
-
-        auto format = converted->format->BytesPerPixel == 3 ? GL_RGB : GL_RGBA;
-        glTexImage2D(GL_TEXTURE_2D, 0, format, this->w, this->h, 0, format, GL_UNSIGNED_BYTE, converted->pixels);
+        this->tex.copy_from_surface(converted);
         SDL_FreeSurface(converted);
 
         this->vbo->emplace_back(0.0f, 0.0f);
-        this->vbo->emplace_back(0.0f, h);
-        this->vbo->emplace_back(w, 0.0f);
-        this->vbo->emplace_back(w, h);
+        this->vbo->emplace_back(0.0f, this->h());
+        this->vbo->emplace_back(this->w(), 0.0f);
+        this->vbo->emplace_back(this->w(), this->h());
         this->vbo.upload();
 
         this->vao.attrib_pointer("2f", this->vbo.handle)
@@ -58,7 +50,7 @@ namespace ace { namespace draw {
     void SpriteGroup::draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale, Align align, glm::vec4 region) {
         if (tint.a <= 0.f) return;
 
-        const glm::vec2 aligned_position(get_aligned_position(position, scale, {w, h}, align));
+        const glm::vec2 aligned_position(get_aligned_position(position, scale, { this->w(), this->h() }, align));
         const glm::vec2 anchor(position - aligned_position);
 
         glm::mat3 model(1.0f);
@@ -74,7 +66,7 @@ namespace ace { namespace draw {
         if (this->models->empty()) return;
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, tex);
+        this->tex.bind();
         s.uniform("sprite_tex", 0);
 
         this->models.upload();
@@ -83,10 +75,7 @@ namespace ace { namespace draw {
     }
 
     void SpriteGroup::set_antialias(bool antialias) {
-        glBindTexture(GL_TEXTURE_2D, this->tex);
-        auto filter = antialias ? GL_LINEAR : GL_NEAREST;
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, filter);
-        glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MAG_FILTER, filter);
+        this->tex.set_filter_mode(antialias ? GL_LINEAR : GL_NEAREST);
     }
 
     SpriteGroup *SpriteManager::get(const std::string &name, SDL_Surface *data) {

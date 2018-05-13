@@ -32,17 +32,6 @@ namespace ace {
         return pos <= get_pos(MAP_X - 1, MAP_Y - 1, MAP_Z - 1);
     }
 
-    constexpr uint32_t pack_color(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
-        return uint32_t(a) << 24 | uint32_t(r) << 16 | uint32_t(g) << 8 | uint32_t(b) << 0;
-    }
-
-    constexpr void unpack_color(uint32_t color, uint8_t *a, uint8_t *r, uint8_t *g, uint8_t *b) {
-        *a = color >> 24 & 0xFF; // lighting byte; I USE IT FOR BLOCK DAMAGE
-        *r = color >> 16 & 0xFF;
-        *g = color >>  8 & 0xFF;
-        *b = color >>  0 & 0xFF;
-    }
-
     glm::u8vec3 jit_color(glm::u8vec3 color);
 
     struct VXLBlock {

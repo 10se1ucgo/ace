@@ -109,7 +109,7 @@ namespace ace { namespace draw {
 
     void IconButton::update_position() {
         this->button.tint = this->enabled() ? glm::vec4(1.0f) : glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
-        this->button.scale = this->_size / glm::vec2{ this->button.group->w, this->button.group->h };
+        this->button.scale = this->_size / glm::vec2{ this->button.group->w(), this->button.group->h() };
         this->button.position = this->_pos;
         this->button.group->order = -1;
 
@@ -142,7 +142,7 @@ namespace ace { namespace draw {
     void TextButton::layout() {
         BaseButton::layout();
 
-        this->icon.scale = this->_size / glm::vec2{ this->icon.group->w, this->icon.group->h };
+        this->icon.scale = this->_size / glm::vec2{ this->icon.group->w(), this->icon.group->h() };
 
         auto text_size(this->text.size());
         auto icon_size(this->icon.size());
@@ -212,9 +212,9 @@ namespace ace { namespace draw {
     }
 
     void Button::update_position() {
-        this->left.scale = glm::vec2(this->_size.y / left.group->h);
-        this->right.scale = glm::vec2(this->_size.y / right.group->h);
-        this->mid.scale.x = (this->_size.x - (left.w() + right.w())) / mid.group->w;
+        this->left.scale = glm::vec2(this->_size.y / left.group->h());
+        this->right.scale = glm::vec2(this->_size.y / right.group->h());
+        this->mid.scale.x = (this->_size.x - (left.w() + right.w())) / mid.group->w();
         this->mid.scale.y = left.scale.y;
 
         this->left.position = this->_pos;
@@ -234,11 +234,11 @@ namespace ace { namespace draw {
         GUIWidget(scene, position, size),
         bar(scene.client.sprites.get(image)) {
 
-        this->scale = this->size().y / this->bar->h;
+        this->scale = this->size().y / this->bar->h();
     }
 
     void ProgressBar::draw() {
-        float space_between_bullets = (this->scale * this->bar->w + this->padding);
+        float space_between_bullets = (this->scale * this->bar->w() + this->padding);
         int total_bullets = this->size().x / space_between_bullets;
         int filled_bullets = total_bullets * (this->value / float(this->range));
         glm::vec2 draw_pos(this->position());
@@ -259,7 +259,7 @@ namespace ace { namespace draw {
                draw::Align::CENTER) {
 
         this->_image.group->order = Layer::FRAME;
-        this->_image.scale = glm::vec2(size / this->_image.group->h);
+        this->_image.scale = glm::vec2(size / this->_image.group->h());
         this->_image.position = position;
         this->_image.alignment = draw::Align::CENTER;
 
@@ -321,9 +321,9 @@ namespace ace { namespace draw {
         bar_size.y = (this->_size.y - (this->up.size().y + this->down.size().y)) / this->_thumb_range;
         auto bar_pos = this->_pos;
         bar_pos.y += this->up.size().y + (float(this->_thumb_position) / this->_thumb_range * (bar_size.y * this->_thumb_range));
-        this->top.scale = glm::vec2(bar_size.x / this->top.group->w);
-        this->bottom.scale = glm::vec2(bar_size.x / this->bottom.group->w);
-        this->mid.scale.y = std::max(0.f, (bar_size.y - (this->top.h() + this->bottom.h())) / mid.group->h);
+        this->top.scale = glm::vec2(bar_size.x / this->top.group->w());
+        this->bottom.scale = glm::vec2(bar_size.x / this->bottom.group->w());
+        this->mid.scale.y = std::max(0.f, (bar_size.y - (this->top.h() + this->bottom.h())) / mid.group->h());
         this->mid.scale.x = this->top.scale.x;
 
         this->top.position = bar_pos;

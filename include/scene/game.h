@@ -61,7 +61,7 @@ namespace ace { namespace scene {
         void on_packet(net::PACKET type, std::unique_ptr<net::Loader> ploader) override;
 
         bool on_text_typing(const std::string &text) override;
-        void on_text_finished() override;
+        void on_text_finished(bool cancelled) override;
 
         bool build_point(int x, int y, int z, const glm::ivec3& color, bool s2c=false);
         bool destroy_point(int x, int y, int z, net::ACTION type=net::ACTION::DESTROY, bool s2c = false);

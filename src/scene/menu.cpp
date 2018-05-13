@@ -71,7 +71,7 @@ namespace ace { namespace scene {
         }
 
         void draw() override {
-            this->background->draw({ 1, 1, 1, 1 }, { 0, 0 }, 0, this->scene.client.size() / glm::vec2(background->w, background->h));
+            this->background->draw({ 1, 1, 1, 1 }, { 0, 0 }, 0, this->scene.client.size() / glm::vec2(background->w(), background->h()));
             this->frame.draw();
             this->content.draw();
             this->server_count_label.draw();
@@ -101,8 +101,8 @@ namespace ace { namespace scene {
     MainMenu::MainMenu(scene::MainMenuScene &scene) : Menu(scene),
         background(scene.client.sprites.get("main.png")), splash(scene.client.sprites.get("splash.png")),
         menu_frame(scene.client.sprites.get("ui/main_menu/frame_main_menu.png")),
-        button1(this->add<draw::Button>("Play Online", glm::vec2{}, glm::vec2{}, 36)),
-        button2(this->add<draw::Button>("Settings", glm::vec2{}, glm::vec2{}, 36)),
+        play_button(this->add<draw::Button>("Play Online", glm::vec2{}, glm::vec2{}, 36)),
+        settings_button(this->add<draw::Button>("Settings", glm::vec2{}, glm::vec2{}, 36)),
         button3(this->add<draw::IconButton>(glm::vec2{0, 0}, glm::vec2(0))),
         pb(this->add<draw::ProgressBar>(glm::vec2{0, 0}, glm::vec2{0, 0})),
         nav_quit(this->add<draw::TextButton>(glm::vec2{}, glm::vec2{40}, "QUIT", "ui/common_elements/nav_bar/quit_icon.png")) {
@@ -114,18 +114,19 @@ namespace ace { namespace scene {
         this->splash.scale *= 0.5f;
 
         this->menu_frame.group->order = draw::Layer::FRAME;
-        this->menu_frame.scale = glm::vec2(0.4f * (float(this->scene.client.height()) / this->menu_frame.group->h));
+        this->menu_frame.scale = glm::vec2(0.4f * (float(this->scene.client.height()) / this->menu_frame.group->h()));
         this->menu_frame.position = { this->scene.client.width() / 2.f, this->scene.client.height() - 225 * this->menu_frame.scale.y };
         this->menu_frame.alignment = draw::Align::CENTER;
             
         auto p = this->menu_frame.get_position(draw::Align::TOP_LEFT);
-        this->button1->set_position(p + glm::vec2(60) * this->menu_frame.scale);
-        this->button1->set_size(glm::vec2{ 445, 100 } * this->menu_frame.scale);
+        this->play_button->set_position(p + glm::vec2(60) * this->menu_frame.scale);
+        this->play_button->set_size(glm::vec2{ 445, 100 } * this->menu_frame.scale);
 
-        this->button2->set_position(this->button1->position() + glm::vec2(0, this->button1->size().y + 5));
-        this->button2->set_size(this->button1->size());
+        this->settings_button->set_position(this->play_button->position() + glm::vec2(0, this->play_button->size().y + 5));
+        this->settings_button->set_size(this->play_button->size());
+        this->settings_button->enable(false);
 
-        this->button1->on("press_end", [this]() {
+        this->play_button->on("press_end", [this]() {
             this->scene.set_menu<ServerListMenu>();
         });
 
@@ -145,7 +146,7 @@ namespace ace { namespace scene {
     void MainMenu::draw() {
         Menu::draw();
 
-        this->background->draw({ 1, 1, 1, 1 }, { 0, 0 }, 0, this->scene.client.size() / glm::vec2(background->w, background->h));
+        this->background->draw({ 1, 1, 1, 1 }, { 0, 0 }, 0, this->scene.client.size() / glm::vec2(background->w(), background->h()));
         this->splash.draw();
         this->menu_frame.draw();
     }

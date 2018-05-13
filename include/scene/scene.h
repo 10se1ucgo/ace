@@ -20,7 +20,7 @@ namespace ace {
         virtual void on_window_resize(int ow, int oh) { }
 
         virtual bool on_text_typing(const std::string &text) { return true; }
-        virtual void on_text_finished() { }
+        virtual void on_text_finished(bool cancelled) { }
 
         virtual void on_net_event(net::NetState event) { }
         virtual void on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) { fmt::print("UNHANDLED PACKET {}\n", type); };

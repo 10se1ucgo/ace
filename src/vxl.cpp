@@ -45,10 +45,8 @@ namespace ace {
     }
 
     glm::u8vec3 jit_color(glm::u8vec3 color) {
-        uint32_t col = colorjit(pack_color(0xFF, color.r, color.g, color.b));
-        glm::u8vec4 ret;
-        unpack_color(col, &ret.a, &ret.r, &ret.g, &ret.b);
-        return glm::u8vec3(ret);
+        uint32_t col = colorjit(pack_bytes(0xFF, color.r, color.g, color.b));
+        return glm::u8vec3(unpack_argb(col));
     }
 
     AceMap::AceMap(uint8_t *buf) {
