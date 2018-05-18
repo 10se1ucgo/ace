@@ -143,8 +143,8 @@ namespace ace { namespace gl {
                 surface = SDL_ConvertSurfaceFormat(surface, texture2d::sdl_format, 0);
             }
 
-            assert(surface->pitch * surface->h == this->width * this->height * int(sizeof(decltype(this->_pixels)::
-                element_type)));
+            assert(surface->pitch * surface->h ==
+                   this->width * this->height * int(sizeof(decltype(this->_pixels)::element_type)));
             std::memcpy(this->_pixels.get(), surface->pixels, surface->pitch * surface->h);
 
             if (needs_convert) {

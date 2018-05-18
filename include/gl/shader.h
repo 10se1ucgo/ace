@@ -8,6 +8,7 @@
 #include "glad/glad.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/type_ptr.hpp"
+#include "gl_util.h"
 
 
 #define DECLARE_UNIFORM_FUNC(T_TYPE, T_FUNC) \
@@ -102,7 +103,6 @@ namespace ace { namespace gl {
                 this->uniform_cache[name] = loc;
                 return loc;
             }
-        
         }
 
         GLuint program;
@@ -114,9 +114,54 @@ namespace ace { namespace gl {
         void uniform() { }
     };
 
+    namespace experimental {
+        template<typename T>
+        struct ubo {
+            explicit ubo(GLenum usage = GL_DYNAMIC_DRAW) {
+                this->bind();
+                glBufferData(GL_UNIFORM_BUFFER, sizeof(this->data), nullptr, usage);
+            }
+
+            void bind() const {
+                glBindBuffer(GL_UNIFORM_BUFFER, this->handle);
+            }
+
+            void upload() {
+                this->bind();
+                auto buffer = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+                memcpy(buffer, &this->data, sizeof(this->data));
+                glUnmapBuffer(GL_UNIFORM_BUFFER);
+            }
+
+            T *operator->() { return &this->data; }
+
+            gl::vbo handle;
+            T data;
+        };
+    }
+
     struct ShaderManager {
         ShaderManager();
 
+        template<typename T>
+        experimental::ubo<T> create_ubo(const std::string &name, int index = 0) {
+            experimental::ubo<T> ubo;
+            glBindBufferBase(GL_UNIFORM_BUFFER, index, ubo.handle);
+
+            GLint num;
+            glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &num);
+            fmt::print("INDEX: {}, MAX: {}\n", index, num);
+
+            for (ShaderProgram *s : { &model, &map, &sprite, &billboard, &text }) {
+                auto bi = glGetUniformBlockIndex(s->program, name.c_str());
+                if (bi == GL_INVALID_INDEX) continue;
+                fmt::print("BI: {}\n", bi);
+                glUniformBlockBinding(s->program, bi, index);
+            }
+
+            return ubo;
+        }
+        
         ShaderProgram model, map, sprite, billboard, text;
     };
 

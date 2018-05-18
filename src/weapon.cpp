@@ -58,7 +58,7 @@ namespace ace {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
         } else {
-            this->mdl.draw_local(this->ply.scene.cam.projection, this->ply.scene.shaders.model);
+            this->mdl.draw_local(this->ply.scene.cam.projection(), this->ply.scene.shaders.model);
         }
     }
 
@@ -96,7 +96,7 @@ namespace ace {
             if (transform < 0)
                 this->ply.mdl_arms.rotation.x -= transform * 180;
 
-            this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f + ply.scene.cam.world_up * .125f;
+            this->mdl.position = this->ply.mdl_arms.position + ang2dir(90 - this->ply.mdl_arms.rotation.y, -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f + ply.scene.cam.world_up * .125f;
             this->mdl.rotation = this->ply.mdl_arms.rotation;
         } else {
             if (transform < 0)
@@ -147,11 +147,11 @@ namespace ace {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
         } else {
-            this->mdl.draw_local(this->ply.scene.cam.projection, this->ply.scene.shaders.model);
+            this->mdl.draw_local(this->ply.scene.cam.projection(), this->ply.scene.shaders.model);
         }
 
 
-        if (!this->ply.local_player || !this->can_primary()) return;
+        if (!this->ply.local_player || !this->can_primary() || this->ghost_block == nullptr) return;
 
         this->ply.scene.shaders.map.bind();
         this->ply.scene.shaders.map.uniform("alpha", 0.6f);
@@ -206,7 +206,7 @@ namespace ace {
             if (transform < 0)
                 this->ply.mdl_arms.rotation.x -= transform * 60;
 
-            this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
+            this->mdl.position = this->ply.mdl_arms.position + ang2dir(90 - this->ply.mdl_arms.rotation.y, -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
             this->mdl.rotation = this->ply.mdl_arms.rotation;
         } else {
             this->mdl.rotation.y = 1;
@@ -252,7 +252,7 @@ namespace ace {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
         } else {
-            this->mdl.draw_local(this->ply.scene.cam.projection, this->ply.scene.shaders.model);
+            this->mdl.draw_local(this->ply.scene.cam.projection(), this->ply.scene.shaders.model);
         }
     }
 
@@ -278,7 +278,7 @@ namespace ace {
             if (transform < 0)
                 this->ply.mdl_arms.rotation.x += transform * 30;
 
-            this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f;
+            this->mdl.position = this->ply.mdl_arms.position + ang2dir(90 - this->ply.mdl_arms.rotation.y, -this->ply.mdl_arms.rotation.x) * 0.875f + this->ply.draw_right * -0.4f;
             this->mdl.rotation = this->ply.mdl_arms.rotation;
         } else {
             if (transform < 0) {
@@ -303,7 +303,7 @@ namespace ace {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
         } else {
-            this->mdl.draw_local(this->ply.scene.cam.projection, this->ply.scene.shaders.model);
+            this->mdl.draw_local(this->ply.scene.cam.projection(), this->ply.scene.shaders.model);
         }
     }
 
@@ -314,7 +314,7 @@ namespace ace {
             return false;
 
                                                 // whatever data we send is ignored anyways
-        this->ply.scene.client.net.send_packet(net::PACKET::WeaponReload, net::WeaponReload{});
+        this->ply.scene.client.net.send_packet(net::WeaponReload{});
 
         if (!this->one_by_one() && !this->reloading)
             this->ply.play_sound(this->reload_sound());
@@ -376,7 +376,7 @@ namespace ace {
             Face f = this->ply.scene.map.hitscan(this->ply.e, dir, &hit);
             if (f != Face::INVALID) {
                 // damage 0 if != local_ply just to have particles
-                this->ply.scene.client.sound.play("impact.wav", vox2draw(hit) + .5f, 50);
+                this->ply.scene.client.sound.play("impact.wav", vox2draw(hit) + .5f);
                 block_destroyed |= this->ply.scene.damage_point(hit.x, hit.y, hit.z, this->ply.local_player ? this->block_damage() : 0, f, !block_destroyed);
             }
 
@@ -405,7 +405,7 @@ namespace ace {
                     net::HitPacket hp;
                     hp.pid = kv.second->pid;
                     hp.value = type;
-                    this->ply.scene.client.net.send_packet(net::PACKET::HitPacket, hp);
+                    this->ply.scene.client.net.send_packet(hp);
                     break;
                 }
             }
@@ -444,7 +444,7 @@ namespace ace {
             if (transform < 0)
                 this->ply.mdl_arms.rotation.x += transform * 45;
 
-            this->mdl.position = this->ply.mdl_arms.position + ang2dir(-(this->ply.mdl_arms.rotation.y - 90), -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
+            this->mdl.position = this->ply.mdl_arms.position + ang2dir(90 - this->ply.mdl_arms.rotation.y, -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
             this->mdl.rotation = this->ply.mdl_arms.rotation;
 
         } else {

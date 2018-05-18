@@ -78,15 +78,27 @@ namespace ace { namespace draw {
         this->tex.set_filter_mode(antialias ? GL_LINEAR : GL_NEAREST);
     }
 
-    SpriteGroup *SpriteManager::get(const std::string &name, SDL_Surface *data) {
+    // YIKES
+    // this is a C++17 feature so lemme reimplement it here real quick
+    template<typename TMap, typename TKey, typename TValue>
+    std::pair<typename TMap::iterator, bool> insert_or_assign(TMap &map, TKey &&key, TValue &&value) {
+        auto it = map.find(key);
+        if (it == map.end())
+            return (map.emplace(std::forward<TKey>(key), std::forward<TValue>(value)));
+        it->second = std::forward<TValue>(value);
+        return (std::pair<typename TMap::iterator, bool>(it, false));
+    }
+
+    SpriteGroup * SpriteManager::get(const std::string &name) {
         try {
             return &sprites.at(name);
         } catch (std::out_of_range &) {
-            if(data) {
-                return &sprites.emplace(name, SpriteGroup{ name, data }).first->second;
-            }
             return &sprites.emplace(name, "png/" + name).first->second;
         }
+    }
+
+    SpriteGroup *SpriteManager::get(const std::string &name, SDL_Surface *data) {
+        return &insert_or_assign(sprites, name, SpriteGroup{ name, data }).first->second;
     }
 
     void SpriteManager::draw(gl::ShaderProgram &s) {

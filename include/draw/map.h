@@ -47,7 +47,7 @@ namespace ace { namespace draw {
         glm::vec3 scale, rotation, position, centroid;
 
     private:
-        uint8_t get_vis(std::unordered_set<glm::ivec3> &map, glm::ivec3 pos);
+        static uint8_t get_vis(std::unordered_set<glm::ivec3> &map, glm::ivec3 pos);
     };
 
     struct Pillar {
@@ -71,7 +71,7 @@ namespace ace { namespace draw {
         void draw(const glm::vec3 &position, gl::ShaderProgram& shader);
 
         bool set_point(int x, int y, int z, bool solid, uint32_t color) override;
-        bool build_point(int x, int y, int z, const glm::ivec3 &color, bool force=false);
+        bool build_point(int x, int y, int z, glm::u8vec3 color, bool force=false);
         bool destroy_point(int x, int y, int z, std::vector<VXLBlock> &destroyed);
         bool damage_point(int x, int y, int z, uint8_t damage);
 

@@ -272,9 +272,9 @@ namespace ace { namespace world {
             double old_switch = this->switch_time;
             this->switch_time = std::max(old_switch - dt, 0.0);
             if(old_switch > 0 && this->switch_time <= 0.0) {
-                net::SetTool pkt;
-                pkt.tool = this->tool;
-                this->scene.client.net.send_packet(net::PACKET::SetTool, pkt);
+                net::SetTool st;
+                st.tool = this->tool;
+                this->scene.client.net.send_packet(st);
             }
 
             if (!this->scene.client.text_input_active()) {
@@ -421,10 +421,10 @@ namespace ace { namespace world {
 
     void DrawPlayer::set_color(glm::u8vec3 color) {
         this->color = color;
-        if(local_player) {
-            net::SetColor pkt;
-            pkt.color = color;
-            this->scene.client.net.send_packet(net::PACKET::SetColor, pkt);
+        if(this->local_player) {
+            net::SetColor sc;
+            sc.color = color;
+            this->scene.client.net.send_packet(sc);
         }
     }
 
@@ -461,7 +461,7 @@ namespace ace { namespace world {
             this->mdl_arms.draw(scene.cam.matrix(), scene.shaders.model);
             tool->draw();
         } else if(!this->sprint && this->switch_time < 0.5f && this->get_tool()->drawable() && !(this->secondary_fire && this->weapon_equipped)) {
-            this->mdl_arms.draw_local(scene.cam.projection, scene.shaders.model);
+            this->mdl_arms.draw_local(scene.cam.projection(), scene.shaders.model);
             tool->draw();
         }
     }

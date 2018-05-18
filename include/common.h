@@ -61,9 +61,11 @@ namespace ace {
 
     // euler to direction
     inline glm::vec3 ang2dir(float yaw, float pitch) {
-        return { glm::cos(glm::radians(pitch)) * glm::cos(glm::radians(yaw)),
-                 glm::sin(glm::radians(pitch)),
-                 glm::cos(glm::radians(pitch)) * glm::sin(glm::radians(yaw)) };
+        yaw = glm::radians(yaw);
+        pitch = glm::radians(pitch);
+        return { glm::cos(pitch) * glm::cos(yaw),
+                 glm::sin(pitch),
+                 glm::cos(pitch) * glm::sin(yaw) };
     }
 
     inline glm::vec2 dir2ang(const glm::vec3 &dir) {
@@ -79,16 +81,16 @@ namespace ace {
     }
 
     inline glm::mat4 model_matrix(glm::vec3 m_position, glm::vec3 m_rotation, glm::vec3 m_scale, glm::mat4 model = glm::mat4(1.0f)) {
-        glm::vec3 rot(radians(m_rotation));
-        model = translate(model, m_position);
-        model = rotate(model, rot.z, { 0, 0, 1 });
-        model = rotate(model, rot.y, { 0, 1, 0 });
-        model = rotate(model, rot.x, { 1, 0, 0 });
-        return  scale(model, m_scale);
+        glm::vec3 rot(glm::radians(m_rotation));
+        model = glm::translate(model, m_position);
+        model = glm::rotate(model, rot.z, { 0, 0, 1 });
+        model = glm::rotate(model, rot.y, { 0, 1, 0 });
+        model = glm::rotate(model, rot.x, { 1, 0, 0 });
+        return  glm::scale(model, m_scale);
     }
 
     inline float wave(float x, float a, float b) {
-        return (cos(x * glm::pi<float>()) * (a - b) + (a + b)) / 2.f;
+        return (glm::cos(x * glm::pi<float>()) * (a - b) + (a + b)) / 2.f;
     }
 
     constexpr uint32_t pack_bytes(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {

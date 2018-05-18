@@ -92,27 +92,27 @@ namespace ace { namespace draw {
                 block.position.x - this->centroid.x,
                 block.position.y - this->centroid.y,
                 block.position.z - this->centroid.z,
-                gen_vis ? get_vis(bmap, block.position) : block.vis, glm::vec3{ r, g, b } / 255.f, this->vbo.data
+                gen_vis ? VXLBlocks::get_vis(bmap, block.position) : block.vis, glm::vec3{ r, g, b } / 255.f, this->vbo.data
             );
         }
         this->vbo.upload();
     }
 
     void VXLBlocks::draw(const glm::mat4& pv, gl::ShaderProgram& s) const {
-        s.uniform("mvp", pv * model_matrix(this->position, this->rotation, this->scale));
+        s.uniform("model", model_matrix(this->position, this->rotation, this->scale));
         this->vao.draw(GL_TRIANGLES, this->vbo.draw_count);
     }
 
-    uint8_t VXLBlocks::get_vis(std::unordered_set<glm::ivec3> &map, glm::ivec3 pos) {
-        if (!map.count(pos)) return 0;
+    uint8_t VXLBlocks::get_vis(std::unordered_set<glm::ivec3> &set, glm::ivec3 pos) {
+        if (!set.count(pos)) return 0;
 
         uint8_t vis = 0;
-        if (!map.count({pos.x - 1, pos.y, pos.z})) vis |= 1 << int(Face::LEFT);
-        if (!map.count({pos.x + 1, pos.y, pos.z})) vis |= 1 << int(Face::RIGHT);
-        if (!map.count({pos.x, pos.y - 1, pos.z})) vis |= 1 << int(Face::BACK);
-        if (!map.count({pos.x, pos.y + 1, pos.z})) vis |= 1 << int(Face::FRONT);
-        if (!map.count({pos.x, pos.y, pos.z - 1})) vis |= 1 << int(Face::TOP);
-        if (!map.count({pos.x, pos.y, pos.z + 1})) vis |= 1 << int(Face::BOTTOM);
+        if (!set.count({pos.x - 1, pos.y, pos.z})) vis |= 1 << int(Face::LEFT);
+        if (!set.count({pos.x + 1, pos.y, pos.z})) vis |= 1 << int(Face::RIGHT);
+        if (!set.count({pos.x, pos.y - 1, pos.z})) vis |= 1 << int(Face::BACK);
+        if (!set.count({pos.x, pos.y + 1, pos.z})) vis |= 1 << int(Face::FRONT);
+        if (!set.count({pos.x, pos.y, pos.z - 1})) vis |= 1 << int(Face::TOP);
+        if (!set.count({pos.x, pos.y, pos.z + 1})) vis |= 1 << int(Face::BOTTOM);
         return vis;
     }
 
@@ -222,16 +222,14 @@ namespace ace { namespace draw {
             return ok;
         }
 
-        // todo this sucks massive donkey balls why am i updating the texture 1 by 1 lol
-        // ok i made it suck more wow i dont know how to do engine design hahaaaaaaaa
-        // i should batch updates and update by region the next frame, not per block
         glm::u8vec4 pixel = unpack_argb(this->get_color(x, y, this->get_z(x, y)));
+        pixel.a = 255;
         this->scene.hud.map_display.map->tex.set_pixel(x, y, pixel);
 
         return ok;
     }
 
-    bool DrawMap::build_point(const int x, const int y, const int z, const glm::ivec3& color, bool force) {
+    bool DrawMap::build_point(const int x, const int y, const int z, glm::u8vec3 color, bool force) {
         if (!force) {
             if (!valid_build_pos(x, y, z)) return false;
 

@@ -26,6 +26,7 @@ namespace ace { namespace scene {
     GameScene::GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name, uint8_t *buf) :
         Scene(client),
         shaders(*client.shaders),
+        uniforms(this->shaders.create_ubo<SceneUniforms>("SceneUniforms")),
         cam(*this, { 256, 0, 256 }, { 0, -1, 0 }),
         map(*this, buf),
         hud(*this),
@@ -72,12 +73,14 @@ namespace ace { namespace scene {
         glCullFace(GL_BACK);
         glFrontFace(GL_CW);
 
-        shaders.map.bind();
-        shaders.map.uniform("mvp"_u = cam.matrix(), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
-        map.draw(draw2vox(this->cam.position), shaders.map);
+        this->uniforms.upload();
 
-        shaders.model.bind();
-        for (auto &kv : players) {
+        this->shaders.map.bind();
+        this->shaders.map.uniform("model"_u = glm::mat4(1.0), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
+        this->map.draw(draw2vox(this->cam.position), this->shaders.map);
+
+        this->shaders.model.bind();
+        for (auto &kv : this->players) {
             auto p1 = vox2draw(kv.second->p - 1.f);
             auto p2 = vox2draw(kv.second->p + 1.f);
             if(this->cam.box_in_frustum(p1.x, p1.y, p1.z, p2.x, p2.y, p2.z) && !kv.second->local_player)
@@ -93,7 +96,6 @@ namespace ace { namespace scene {
         }
 
         this->shaders.billboard.bind();
-        this->shaders.billboard.uniform("cam_left"_u = -this->cam.right, "cam_up"_u = this->cam.up);
         this->billboards.draw(this->cam.matrix(), this->shaders.billboard);
 
 
@@ -311,7 +313,7 @@ namespace ace { namespace scene {
         }  break;
         case net::PACKET::GrenadePacket: {
             net::GrenadePacket *pkt = static_cast<net::GrenadePacket *>(loader);
-            this->create_object<ace::world::Grenade>(pkt->position, pkt->velocity, pkt->fuse);
+            this->create_object<world::Grenade>(pkt->position, pkt->velocity, pkt->fuse);
         } break;
         case net::PACKET::SetTool: {
             net::SetTool *pkt = static_cast<net::SetTool *>(loader);
@@ -352,7 +354,8 @@ namespace ace { namespace scene {
         } break;
         case net::PACKET::MoveObject: {
             net::MoveObject *pkt = static_cast<net::MoveObject *>(loader);
-            auto ent = this->get_ent(uint8_t(pkt->type));
+            auto *ent = this->get_ent(uint8_t(pkt->type));
+            if (ent == nullptr) return; // ??? prob wrong gamemode
             ent->set_team(pkt->state);
             ent->set_position(pkt->position);
         } break;
@@ -390,7 +393,8 @@ namespace ace { namespace scene {
             }
             this->client.sound.play_local("pickup.wav");
             auto *ent = this->get_ent(uint8_t(ply->team == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG));
-            ent->set_carrier(ply->pid);
+            if(ent != nullptr)
+                ent->set_carrier(ply->pid);
         } break;
         case net::PACKET::IntelDrop: {
             net::IntelDrop *pkt = static_cast<net::IntelDrop *>(loader);
@@ -400,6 +404,7 @@ namespace ace { namespace scene {
                 this->hud.add_chat_message(msg, { 1, 0, 0 });
             }
             auto *ent = this->get_ent(uint8_t(ply->team == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG));
+            if (ent == nullptr) return;
             ent->set_carrier(-1);
             ent->set_position(pkt->pos);
         } break;
@@ -432,7 +437,7 @@ namespace ace { namespace scene {
         this->hud.on_text_finished(cancelled);
     }
 
-    bool GameScene::build_point(int x, int y, int z, const glm::ivec3& color, bool s2c) {
+    bool GameScene::build_point(int x, int y, int z, glm::u8vec3 color, bool s2c) {
         if (s2c) {
             this->client.sound.play("build.wav", vox2draw(glm::vec3{ x, y, z } + 0.5f), 50);
             return map.build_point(x, y, z, color, s2c);
@@ -475,9 +480,7 @@ namespace ace { namespace scene {
 
     bool GameScene::damage_point(int x, int y, int z, uint8_t damage, Face f, bool destroy) {
         if(f != Face::INVALID) {
-            uint8_t a, r, g, b;
-            unpack_bytes(this->map.get_color(x, y, z), &a, &r, &g, &b);
-            this->create_object<world::DebrisGroup>(this->map.get_face(x, y, z, f), glm::vec3{ r, g, b }, 0.25f, 4);
+            this->create_object<world::DebrisGroup>(draw::DrawMap::get_face(x, y, z, f), glm::vec3(unpack_argb(this->map.get_color(x, y, z))), 0.25f, 4);
         }
 
         if (damage && this->map.damage_point(x, y, z, damage) && destroy) {
@@ -498,14 +501,14 @@ namespace ace { namespace scene {
         net::BlockAction ba;
         ba.position = { x, y, z };
         ba.value = type;
-        this->client.net.send_packet(net::PACKET::BlockAction, ba);
+        this->client.net.send_packet(ba);
     }
 
     void GameScene::send_block_line(glm::ivec3 p1, glm::ivec3 p2) const {
         net::BlockLine bl;
         bl.start = p1;
         bl.end = p2;
-        this->client.net.send_packet(net::PACKET::BlockLine, bl);
+        this->client.net.send_packet(bl);
     }
 
     void GameScene::send_position_update() const {
@@ -513,7 +516,7 @@ namespace ace { namespace scene {
 
         net::PositionData pd;
         pd.position = this->ply->p;
-        this->client.net.send_packet(net::PACKET::PositionData, pd, ENET_PACKET_FLAG_UNSEQUENCED);
+        this->client.net.send_packet(pd, ENET_PACKET_FLAG_UNSEQUENCED);
     }
 
     void GameScene::send_orientation_update() const {
@@ -521,7 +524,7 @@ namespace ace { namespace scene {
 
         net::OrientationData od;
         od.orientation = this->ply->f;
-        this->client.net.send_packet(net::PACKET::OrientationData, od, ENET_PACKET_FLAG_UNSEQUENCED);
+        this->client.net.send_packet(od, ENET_PACKET_FLAG_UNSEQUENCED);
     }
 
     void GameScene::send_input_update() const {
@@ -537,12 +540,12 @@ namespace ace { namespace scene {
         id.jump = this->ply->jump;
         id.sneak = this->ply->sneak;
         id.sprint = this->ply->sprint;
-        this->client.net.send_packet(net::PACKET::InputData, id);
+        this->client.net.send_packet(id);
 
         net::WeaponInput wi;
         wi.primary = this->ply->primary_fire;
         wi.secondary = this->ply->secondary_fire;
-        this->client.net.send_packet(net::PACKET::WeaponInput, wi);
+        this->client.net.send_packet(wi);
     }
 
     void GameScene::send_grenade(float fuse) const {
@@ -552,27 +555,27 @@ namespace ace { namespace scene {
         gp.position = this->ply->p;
         gp.velocity = this->ply->f + this->ply->v;
         gp.fuse = fuse;
-        this->client.net.send_packet(net::PACKET::GrenadePacket, gp);
+        this->client.net.send_packet(gp);
     }
 
     void GameScene::send_team_change(net::TEAM new_team) const {
         net::ChangeTeam ct;
         ct.team = new_team;
-        this->client.net.send_packet(net::PACKET::ChangeTeam, ct);
+        this->client.net.send_packet(ct);
     }
 
     void GameScene::send_weapon_change(net::WEAPON new_weapon) const {
         net::ChangeWeapon cw;
         cw.weapon = new_weapon;
-        this->client.net.send_packet(net::PACKET::ChangeWeapon, cw);
+        this->client.net.send_packet(cw);
     }
 
     void GameScene::send_this_player(net::TEAM team, net::WEAPON weapon) const {
-        net::ExistingPlayer x;
-        x.name = this->ply_name;
-        x.team = team;
-        x.weapon = weapon;
-        this->client.net.send_packet(net::PACKET::ExistingPlayer, x);
+        net::ExistingPlayer ep;
+        ep.name = this->ply_name;
+        ep.team = team;
+        ep.weapon = weapon;
+        this->client.net.send_packet(ep);
     }
 
     void GameScene::respawn_entities() {
@@ -592,12 +595,16 @@ namespace ace { namespace scene {
         }
     }
 
-    void GameScene::set_fog_color(glm::vec3 color) const {
+    void GameScene::set_fog_color(glm::vec3 color) {
         glClearColor(color.r, color.g, color.b, 1.0f);
         // todo: uniform buffer?
-        this->shaders.map.bind();
-        this->shaders.map.uniform("fog_color", color);
-        this->shaders.model.bind();
-        this->shaders.model.uniform("fog_color"_u = color, "light_pos"_u = normalize(glm::vec3{ -0.16, 0.8, 0.56 }));
+        // this->shaders.map.bind();
+        // this->shaders.map.uniform("fog_color", color);
+        // this->shaders.model.bind();
+        // this->shaders.model.uniform("fog_color"_u = color, "light_pos"_u = normalize(glm::vec3{ -0.16, 0.8, 0.56 }));
+
+        this->uniforms->light_pos = normalize(glm::vec3{ -0.16, 0.8, 0.56 });
+        this->uniforms->fog_color = color;
+        // 
     }
 }}

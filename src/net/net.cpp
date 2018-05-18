@@ -51,7 +51,8 @@ namespace ace { namespace net {
     BaseNetClient::~BaseNetClient() {
         enet_host_flush(this->host);
         enet_host_destroy(this->host);
-        fmt::print("~BaseNetClient()\n");
+        if (this->peer != nullptr)
+            enet_peer_disconnect(this->peer, 0);
     };
 
     BaseNetClient::BaseNetClient() : host(enet_host_create(nullptr, 1, 1, 0, 0)), peer(nullptr) {
@@ -119,20 +120,14 @@ namespace ace { namespace net {
         if (packet == nullptr) THROW_ERROR("COULD NOT ALLOCATE ENET PACKET FOR DATA {}\n", hex_data.str());
         int err = enet_peer_send(this->peer, 0, packet);
         if(err < 0) {
-            THROW_ERROR("COULD NOT SEND PACKET WITH ERR {} FOR DATA {}\n", err, hex_data.str());
-        };
+            fmt::print(stderr, "COULD NOT SEND PACKET WITH ERR {} FOR DATA {}\n", err, hex_data.str());
+        }
 
 //        enet_packet_destroy(packet);
     }
 
     NetworkClient::NetworkClient(ace::GameClient &client) : BaseNetClient(), client(client), disconnect_reason(DISCONNECT::INVALID), state(NetState::UNCONNECTED) {
         enet_host_compress_with_range_coder(this->host);
-    }
-
-    NetworkClient::~NetworkClient() {
-        if(this->peer != nullptr)
-            enet_peer_disconnect(this->peer, 0);
-        fmt::print("~NetworkClient()\n");
     }
 
     void NetworkClient::connect(const Server &server) {
@@ -151,7 +146,7 @@ namespace ace { namespace net {
         this->disconnect_reason = DISCONNECT(event.data);
         this->set_state(NetState::DISCONNECTED);
         fmt::print("DISCONNECTED: {}\n", get_disconnect_reason(this->disconnect_reason));
-        client.set_scene<ace::scene::MainMenuScene>();
+        this->client.set_scene<ace::scene::MainMenuScene>();
     }
 
     void NetworkClient::on_receive(const ENetEvent &event) {

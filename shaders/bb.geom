@@ -10,30 +10,33 @@ in Billboard {
 
 out vec3 frag_color;
 
-uniform vec3 cam_left, cam_up;
-uniform mat4 pv;
+layout (std140) uniform SceneUniforms {
+    mat4 view;
+    mat4 proj;
+    mat4 pv;
+    vec3 cam_forward;
+    vec3 cam_right;
+    vec3 cam_up;
+    vec3 fog_color;
+    vec3 light_pos;
+};
 
 
 void main() {
-    vec3 color = bb[0].color;
-    float size = bb[0].size;
-    
-    mat4 m = mat4(1.0);
-    m[3].xyz = bb[0].pos;
+    gl_Position = pv * vec4(((cam_right - cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    frag_color = bb[0].color;
+    EmitVertex();
 
-    mat4 mvp = pv * m;
+    gl_Position = pv * vec4(((cam_right + cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    frag_color = bb[0].color;
+    EmitVertex();
 
-    gl_Position = mvp * vec4(-(cam_left + cam_up) * size, 1.0);
-    frag_color = color;
+    gl_Position = pv * vec4(((-cam_right - cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    frag_color = bb[0].color;
     EmitVertex();
-    gl_Position = mvp * vec4(-(cam_left - cam_up) * size, 1.0);
-    frag_color = color;
-    EmitVertex();
-    gl_Position = mvp * vec4((cam_left - cam_up) * size, 1.0);
-    frag_color = color;
-    EmitVertex();
-    gl_Position = mvp * vec4((cam_left + cam_up) * size, 1.0);
-    frag_color = color;
+
+    gl_Position = pv * vec4(((-cam_right + cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    frag_color = bb[0].color;
     EmitVertex();
 
     EndPrimitive();

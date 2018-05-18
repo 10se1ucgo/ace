@@ -118,7 +118,8 @@ namespace ace { namespace draw {
     };
 
     struct SpriteManager {
-        SpriteGroup *get(const std::string &name, SDL_Surface *data = nullptr);
+        SpriteGroup *get(const std::string &name);
+        SpriteGroup *get(const std::string &name, SDL_Surface *data);
 
         void draw(gl::ShaderProgram &s);
     private:

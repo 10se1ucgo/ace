@@ -36,8 +36,8 @@ void Camera::update(double dt) {
 void Camera::update_view() {
     glm::mat4 old_pv(pv);
 
-    view = lookAt(position, position + forward, up);
-    pv = projection * view;
+    _view = lookAt(position, position + forward, up);
+    pv = _projection * _view;
     forward = normalize(ace::ang2dir(yaw, pitch));
     right = normalize(cross(world_up, forward));
     up = cross(forward, right);
@@ -46,15 +46,23 @@ void Camera::update_view() {
         this->scene.ply->set_orientation(this->forward.x, this->forward.z, -this->forward.y);
     this->scene.client.sound.set_listener(this->position, this->forward, this->up);
 
+    this->scene.uniforms->view = this->view();
+    this->scene.uniforms->proj = this->projection();
+    this->scene.uniforms->pv = this->matrix();
+    this->scene.uniforms->cam_forward = this->forward;
+    this->scene.uniforms->cam_right = this->right;
+    this->scene.uniforms->cam_up = this->up;
+    
+
     if (old_pv == pv) return;
 
     const auto r3(row(pv, 3));
-    planes[FRUSTUM_LEFT] = normalize(r3 + row(pv, 0));
-    planes[FRUSTUM_RIGHT] = normalize(r3 - row(pv, 0));
-    planes[FRUSTUM_TOP] = normalize(r3 - row(pv, 1));
-    planes[FRUSTUM_BOTTOM] = normalize(r3 + row(pv, 1));
-    planes[FRUSTUM_NEAR] = normalize(r3 + row(pv, 2));
-    planes[FRUSTUM_FAR] = normalize(r3 - row(pv, 2));
+    this->planes[FRUSTUM_LEFT] = normalize(r3 + row(pv, 0));
+    this->planes[FRUSTUM_RIGHT] = normalize(r3 - row(pv, 0));
+    this->planes[FRUSTUM_TOP] = normalize(r3 - row(pv, 1));
+    this->planes[FRUSTUM_BOTTOM] = normalize(r3 + row(pv, 1));
+    this->planes[FRUSTUM_NEAR] = normalize(r3 + row(pv, 2));
+    this->planes[FRUSTUM_FAR] = normalize(r3 - row(pv, 2));
 }
 
 void Camera::mouse(double dt) {
@@ -84,24 +92,24 @@ void Camera::keyboard(double dt) {
         this->position -= speed * this->up;
 }
 
-bool Camera::box_in_frustum(int x0, int y0, int z0, int x1, int y1, int z1) {
-    glm::vec3 points[8] {
-        { x0, y0, z0 },
-        { x0, y0, z1 },
-        { x0, y1, z0 },
-        { x0, y1, z1 },
-        { x1, y0, z0 },
-        { x1, y0, z1 },
-        { x1, y1, z0 },
-        { x1, y1, z1 }
+bool Camera::box_in_frustum(float x0, float y0, float z0, float x1, float y1, float z1) {
+    frustrum_vec points[8] {
+        { x0, y0, z0, 0.f },
+        { x0, y0, z1, 0.f },
+        { x0, y1, z0, 0.f },
+        { x0, y1, z1, 0.f },
+        { x1, y0, z0, 0.f },
+        { x1, y0, z1, 0.f },
+        { x1, y1, z0, 0.f },
+        { x1, y1, z1, 0.f }
     };
 
-    for(const auto &plane : planes) {
+    for(const auto &plane : this->planes) {
         bool in = false;
-        auto p = glm::vec3(plane);
         for (int i = 0; i < 8 && !in; i++) {
-            in |= dot(p, points[i]) >= -plane.w;
+            in |= dot(plane, points[i]) >= -plane.w;
         }
+        // fmt::print("\n");
         if (!in) return false;
     }
     return true;

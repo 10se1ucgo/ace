@@ -53,21 +53,20 @@ struct KV6 {
 
     void draw(const glm::mat4 &pv, ace::gl::ShaderProgram &s) const {
         const glm::mat4 model(this->get_model());
-        s.uniform("mvp", pv * model);
+        s.uniform("model", model);
         s.uniform("normal_matrix", glm::mat3(transpose(inverse(model))));
-
+        s.uniform("local", false);
         this->mesh->draw();
     }
 
     void draw_local(const glm::mat4 &p, ace::gl::ShaderProgram &s) const {
-        s.uniform("mvp", p * this->get_local_model());
+        s.uniform("model", this->get_local_model());
         s.uniform("normal_matrix", glm::mat3(transpose(inverse(ace::model_matrix(position, lighting_rotation, scale))))); // for lighting and stuff. WHAT AM I DOING
+        s.uniform("local", true);
         this->mesh->draw();
     }
 
     glm::vec3 scale, rotation, position, lighting_rotation;
-
-//    glm::vec3 local_scale, local_rotation, local_position; // what the hELL am i doing
     KV6Mesh *mesh;
 };
 

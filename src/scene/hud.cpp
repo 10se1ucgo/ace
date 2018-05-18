@@ -237,7 +237,7 @@ namespace ace { namespace scene {
         std::string str;
         switch(state) {
         case State::Exit:
-            str = "EXIT GAME? Y/N";
+            str = "LEAVE GAME? Y/N";
             break;
         case State::ChangeTeam:
             str = fmt::format("TEAM: 1 - {}/2 - {}/3 - Spectator", this->scene.teams[net::TEAM::TEAM1].name, this->scene.teams[net::TEAM::TEAM2].name);
@@ -293,7 +293,7 @@ namespace ace { namespace scene {
 
         if(this->state == State::Exit) {
             if(scancode == SDL_SCANCODE_Y)
-                this->scene.client.quit();
+                this->scene.client.net.disconnect();
             else if(scancode == SDL_SCANCODE_N)
                 this->state = State::None;
         }
@@ -330,7 +330,7 @@ namespace ace { namespace scene {
         net::ChatMessage cm;
         cm.type = this->cur_chat_type;
         cm.message = this->scene.client.input_buffer;
-        this->scene.client.net.send_packet(net::PACKET::ChatMessage, cm);
+        this->scene.client.net.send_packet(cm);
 
         this->cur_chat_type = net::CHAT::INVALID;
     }

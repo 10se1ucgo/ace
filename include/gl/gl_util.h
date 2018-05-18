@@ -172,30 +172,31 @@ namespace ace { namespace gl {
                 this->lower = glm::min(this->lower, { x, y });
                 this->upper = glm::max(this->upper, { x + 1, y + 1 });
 
-                this->_pixels[x * this->width + y] = pixel;
+                this->_pixels[y * this->height + x] = pixel;
                 this->dirty = true;
             }
 
             void set_pixel(int x, int y, glm::u8vec4 pixel) {
-                this->set_rgba(x, y, pack_bytes(pixel.r, pixel.g, pixel.b, pixel.a));
+                this->set_rgba(x, y, pack_bytes(pixel.a, pixel.b, pixel.g, pixel.r));
             }
 
             pixel_type get_rgba(int x, int y) const {
                 if (x < 0 || y < 0 || x >= this->width || y >= this->height) {
                     throw std::out_of_range(fmt::format("x: {}/y: {} out of range ({}, {})", x, y, this->width, this->height));
                 }
-                return this->_pixels[x * this->width + y];
+                return this->_pixels[y * this->height + x];
             }
 
             glm::u8vec4 get_pixel(int x, int y) const {
-                return unpack_rgba(this->get_rgba(x, y));
+                glm::u8vec4 ret;
+                unpack_bytes(this->get_rgba(x, y), &ret.a, &ret.b, &ret.g, &ret.r);
+                return ret;
             }
 
             void set_wrap_mode(GLenum mode) {
                 this->bind(false);
                 glTexParameteri(texture2d::target, GL_TEXTURE_WRAP_S, mode);
                 glTexParameteri(texture2d::target, GL_TEXTURE_WRAP_T, mode);
-
             }
 
             void set_filter_mode(GLenum mode) {

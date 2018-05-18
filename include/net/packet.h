@@ -250,17 +250,26 @@ namespace ace { namespace net {
         virtual ~Loader() = default;
         virtual void read(ByteReader &reader) = 0;
         virtual void write(ByteWriter &writer) const = 0;
+        virtual PACKET packet_id() const = 0;
     };
 
-    struct PositionData : Loader {
+// BADMACROBADMACROBADMACRO
+#define _PACKET_ID(PacketName) \
+    PACKET packet_id() const final { return PACKET::PacketName; } \
+//    static constexpr PACKET packet_id2 = PACKET::PacketName;
+// BADMACROBADMACROBADMACRO
+
+    struct PositionData final : Loader  {
         glm::vec3 position;
 
-        void read(ByteReader &reader) override {
+        void read(ByteReader &reader) final {
             this->position = reader.read_vec3<float>();
         }
-        void write(ByteWriter &writer) const override {
+        void write(ByteWriter &writer) const final {
             writer.write(position);
         }
+
+        _PACKET_ID(PositionData)
     };
 
     struct OrientationData : Loader {
@@ -272,6 +281,8 @@ namespace ace { namespace net {
         void write(ByteWriter &writer) const override {
             writer.write(this->orientation);
         }
+
+        _PACKET_ID(OrientationData)
     };
 
     struct WorldUpdate : Loader {
@@ -288,6 +299,8 @@ namespace ace { namespace net {
         void write(ByteWriter &writer) const override {
             
         }
+
+        _PACKET_ID(WorldUpdate)
     };
 
     struct InputData : Loader {
@@ -306,6 +319,7 @@ namespace ace { namespace net {
             this->sneak = flags & (1 << 6);
             this->sprint = flags & (1 << 7);
         }
+
         void write(ByteWriter &writer) const override {
             writer.write(this->pid);
             uint8_t flags =
@@ -319,6 +333,8 @@ namespace ace { namespace net {
                 this->sprint << 7;
             writer.write(flags);
         }
+
+        _PACKET_ID(InputData)
     };
 
     struct WeaponInput : Loader {
@@ -336,6 +352,8 @@ namespace ace { namespace net {
             uint8_t flags = this->primary << 0 | this->secondary << 1;
             writer.write(flags);
         }
+
+        _PACKET_ID(WeaponInput)
     };
 
     struct HitPacket : Loader {
@@ -350,6 +368,8 @@ namespace ace { namespace net {
             writer.write(this->pid);
             writer.write(this->value);
         }
+
+        _PACKET_ID(HitPacket)
     };
 
     struct SetHP : Loader {
@@ -367,6 +387,8 @@ namespace ace { namespace net {
             writer.write(this->type);
             writer.write(this->source);
         }
+
+        _PACKET_ID(SetHP)
     };
 
     struct GrenadePacket : Loader {
@@ -386,6 +408,8 @@ namespace ace { namespace net {
             writer.write(this->position);
             writer.write(this->velocity);
         }
+
+        _PACKET_ID(GrenadePacket)
     };
 
     struct SetTool : Loader {
@@ -400,6 +424,8 @@ namespace ace { namespace net {
             writer.write(this->pid);
             writer.write(this->tool);
         }
+
+        _PACKET_ID(SetTool)
     };
 
     struct SetColor : Loader {
@@ -414,6 +440,8 @@ namespace ace { namespace net {
             writer.write(this->pid);
             writer.write_color(this->color);
         }
+
+        _PACKET_ID(SetColor)
     };
 
     struct ExistingPlayer : Loader {
@@ -443,6 +471,8 @@ namespace ace { namespace net {
             writer.write_color(this->color);
             writer.write(this->name);
         }
+
+        _PACKET_ID(ExistingPlayer)
     };
 
     struct ShortPlayerData : Loader {
@@ -459,6 +489,8 @@ namespace ace { namespace net {
             writer.write(this->team);
             writer.write(this->weapon);
         }
+
+        _PACKET_ID(ShortPlayerData)
     };
 
     struct MoveObject : Loader {
@@ -476,6 +508,8 @@ namespace ace { namespace net {
             writer.write(this->state);
             writer.write(this->position);
         }
+
+        _PACKET_ID(MoveObject)
     };
 
     struct CreatePlayer : Loader {
@@ -499,6 +533,8 @@ namespace ace { namespace net {
             writer.write(this->position);
             writer.write(this->name);
         }
+
+        _PACKET_ID(CreatePlayer)
     };
 
     struct BlockAction : Loader {
@@ -516,6 +552,8 @@ namespace ace { namespace net {
             writer.write(this->value);
             writer.write(this->position);
         }
+
+        _PACKET_ID(BlockAction)
     };
 
     struct BlockLine : Loader {
@@ -532,6 +570,8 @@ namespace ace { namespace net {
             writer.write(this->start);
             writer.write(this->end);
         }
+
+        _PACKET_ID(BlockLine)
     };
 
     struct CTFState {
@@ -574,14 +614,18 @@ namespace ace { namespace net {
     };
 
     struct TCState {
-        
+        uint8_t territory_count;
+        struct Territory {
+            glm::vec3 position;
+            uint8_t team;
+        } territories[16]; // 16 MAX
     };
 
     struct StateData : Loader {
-        uint8_t pid;
+        uint8_t pid{0};
         glm::u8vec3 fog_color, team1_color, team2_color;
         std::string team1_name, team2_name;
-        uint8_t mode;
+        uint8_t mode{0};
         union ModeState {
             CTFState ctf; TCState tc;
             ModeState() : ctf() { }
@@ -603,6 +647,7 @@ namespace ace { namespace net {
             if(mode == 0) {
                 this->state.ctf.read(reader);
             } else {
+                this->state = ModeState();
                 // TODO: territory control state
             }
         }
@@ -616,6 +661,8 @@ namespace ace { namespace net {
             writer.write(this->mode);
             // TODO: game mode state
         }
+
+        _PACKET_ID(StateData)
     };
 
     struct KillAction : Loader {
@@ -635,6 +682,8 @@ namespace ace { namespace net {
             writer.write(this->type);
             writer.write(this->respawn_time);
         }
+
+        _PACKET_ID(KillAction)
     };
 
     struct ChatMessage : Loader {
@@ -652,6 +701,8 @@ namespace ace { namespace net {
             writer.write(this->type);
             writer.write(this->message);
         }
+
+        _PACKET_ID(ChatMessage)
     };
 
     struct PlayerLeft : Loader {
@@ -663,6 +714,8 @@ namespace ace { namespace net {
         void write(ByteWriter &writer) const override {
             writer.write(this->pid);
         }
+
+        _PACKET_ID(PlayerLeft)
     };
 
     struct TerritoryCapture : Loader {
@@ -680,6 +733,8 @@ namespace ace { namespace net {
             writer.write(this->winning);
             writer.write(this->state);
         }
+
+        _PACKET_ID(TerritoryCapture)
     };
 
     struct ProgressBar : Loader {
@@ -700,6 +755,8 @@ namespace ace { namespace net {
             writer.write(this->rate);
             writer.write(this->progress);
         }
+
+        _PACKET_ID(ProgressBar)
     };
 
     struct IntelCapture : Loader {
@@ -713,6 +770,8 @@ namespace ace { namespace net {
             writer.write(this->pid);
             writer.write(this->winning);
         }
+
+        _PACKET_ID(IntelCapture)
     };
 
     struct IntelPickup : Loader {
@@ -724,6 +783,8 @@ namespace ace { namespace net {
         void write(ByteWriter &writer) const override {
             writer.write(this->pid);
         }
+
+        _PACKET_ID(IntelPickup)
     };
 
     struct IntelDrop : Loader {
@@ -738,6 +799,8 @@ namespace ace { namespace net {
             writer.write(this->pid);
             writer.write(this->pos);
         }
+
+        _PACKET_ID(IntelDrop)
     };
 
     struct Restock : Loader {
@@ -749,6 +812,8 @@ namespace ace { namespace net {
         void write(ByteWriter &writer) const override {
             writer.write(this->pid);
         }
+
+        _PACKET_ID(Restock)
     };
 
     struct FogColor : Loader {
@@ -761,6 +826,8 @@ namespace ace { namespace net {
             writer.write(glm::u8vec3(this->color)); // write RGB as BGR, then write A to form BGRA.
             writer.write(this->color.a);
         }
+
+        _PACKET_ID(FogColor)
     };
 
     struct WeaponReload : Loader {
@@ -776,6 +843,8 @@ namespace ace { namespace net {
             writer.write(this->primary);
             writer.write(this->secondary);
         }
+
+        _PACKET_ID(WeaponReload)
     };
 
     struct ChangeTeam : Loader {
@@ -790,6 +859,8 @@ namespace ace { namespace net {
             writer.write(this->pid);
             writer.write(this->team);
         }
+
+        _PACKET_ID(ChangeTeam)
     };
 
     struct ChangeWeapon : Loader {
@@ -804,7 +875,11 @@ namespace ace { namespace net {
             writer.write(this->pid);
             writer.write(this->weapon);
         }
+
+        _PACKET_ID(ChangeWeapon)
     };
+
+#undef _PACKET_ID
 
     inline std::unique_ptr<Loader> get_loader(PACKET id) {
         switch(id) {
@@ -864,4 +939,5 @@ namespace fmt {
     ENUM_FORMAT_ARG(ace::net::TEAM)
     ENUM_FORMAT_ARG(ace::net::TOOL)
     ENUM_FORMAT_ARG(ace::net::WEAPON)
+#undef ENUM_FORMAT_ARG
 }

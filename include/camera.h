@@ -3,6 +3,7 @@
 #include "glm/gtc/matrix_transform.hpp"
 
 #include "scene/scene.h"
+#include <array>
 
 enum {
     FRUSTUM_LEFT,
@@ -23,11 +24,17 @@ public:
 
     Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, glm::vec3 world_up={ 0, 1, 0 });
 
+    const glm::mat4x4 &projection() const {
+        return this->_projection;
+    }
+
+    const glm::mat4x4 &view() const {
+        return this->_view;
+    }
+
     const glm::mat4x4 &matrix() const {
         return this->pv;
     }
-
-    
 
     void update(double dt);
     void update_view();
@@ -35,16 +42,21 @@ public:
     void set_projection(float fov, float w, float h, float nearc=0.1f, float farc=256.f) {
         this->nearc = nearc;
         this->farc = farc;
-        this->projection = glm::perspective(glm::radians(fov), w / h, nearc, farc);
+        this->_projection = glm::perspective(glm::radians(fov), w / h, nearc, farc);
+
+        auto x = sizeof(Camera);
     }
-// private:
-    glm::mat4 projection, view, pv;
+
+    bool box_in_frustum(float x0, float y0, float z0, float x1, float y1, float z1);
+private:
+    glm::mat4 _projection, _view, pv;
     float nearc{ 0.1f }, farc{ 256.f };
-    glm::vec4 planes[FRUSTUM_NUM_PLANES];
+
+    using frustrum_vec = glm::vec4;
+
+    frustrum_vec planes[FRUSTUM_NUM_PLANES];
 
     void mouse(double dt);
     void keyboard(double dt);
-
-    bool box_in_frustum(int x0, int y0, int z0, int x1, int y1, int z1);
 };
 

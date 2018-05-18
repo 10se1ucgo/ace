@@ -104,8 +104,7 @@ namespace ace { namespace gl {
         { "shaders/text.frag", GL_FRAGMENT_SHADER }
     }) {
     }
-}
-}
+}}
 
 //void ShaderProgram::uniform(const std::string &name, glm::mat4 &mat, bool transpose) {
 //    const GLint location = this->uniform_loc(name);

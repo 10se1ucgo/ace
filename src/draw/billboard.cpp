@@ -11,8 +11,6 @@ namespace ace { namespace draw {
     }
 
     void BillboardManager::draw(const glm::mat4 &pv, gl::ShaderProgram &s) {
-        s.uniform("pv", pv);
-
         this->vbo.upload();
         this->vao.draw(GL_POINTS, this->vbo.draw_count, this->vbo.draw_offset);
     }

@@ -42,6 +42,18 @@ namespace ace { namespace scene {
         std::vector<world::DrawPlayer *> players;
     };
 
+    // i dont think this needs padding to be std140 compliant (we'll see :^))
+#pragma pack(push, 1)
+    struct SceneUniforms {
+        glm::mat4 view, proj, pv;
+        glm::vec3 cam_forward; float ___pad1;
+        glm::vec3 cam_right; float ___pad2;
+        glm::vec3 cam_up; float ___pad3;
+        glm::vec3 fog_color; float ___pad4;
+        glm::vec3 light_pos; float ___pad5;
+    };
+#pragma pack(pop)
+
     class GameScene final : public Scene {
     public:
         GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name="Deuce", uint8_t *buf=nullptr);
@@ -63,12 +75,12 @@ namespace ace { namespace scene {
         bool on_text_typing(const std::string &text) override;
         void on_text_finished(bool cancelled) override;
 
-        bool build_point(int x, int y, int z, const glm::ivec3& color, bool s2c=false);
+        bool build_point(int x, int y, int z, glm::u8vec3 color, bool s2c = false);
         bool destroy_point(int x, int y, int z, net::ACTION type=net::ACTION::DESTROY, bool s2c = false);
         bool damage_point(int x, int y, int z, uint8_t damage, Face f=Face::INVALID, bool destroy = true);
 
         void set_zoom(bool zoom);
-        void set_fog_color(glm::vec3 color) const;
+        void set_fog_color(glm::vec3 color);
 
         void send_block_action(int x, int y, int z, net::ACTION type = net::ACTION::BUILD) const;
         void send_block_line(glm::ivec3 p1, glm::ivec3 p2) const;
@@ -89,6 +101,7 @@ namespace ace { namespace scene {
         }
 
         gl::ShaderManager &shaders;
+        gl::experimental::ubo<SceneUniforms> uniforms;
         draw::BillboardManager billboards;
         KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
         Camera cam;
@@ -138,4 +151,5 @@ namespace ace { namespace scene {
         util::TaskScheduler::loop_type pd_upd, od_upd;
         std::string ply_name;
     };
+
 }}
