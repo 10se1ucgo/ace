@@ -65,6 +65,17 @@ void Camera::update_view() {
     this->planes[FRUSTUM_FAR] = normalize(r3 - row(pv, 2));
 }
 
+void Camera::set_projection(float fov, float w, float h, float nearc, float farc) {
+    this->nearc = nearc;
+    this->farc = farc;
+    if(this->scene.client.keyboard.keys[SDL_SCANCODE_F11]) {
+        this->_projection = glm::ortho<float>(-20, 20, -20, 20, nearc, farc);
+    } else {
+        this->_projection = glm::perspective(glm::radians(fov), w / h, nearc, farc);
+    }
+    
+}
+
 void Camera::mouse(double dt) {
     if (!this->scene.client.exclusive_mouse()) return;
     this->yaw += this->scene.client.mouse.dx * this->sensitivity;

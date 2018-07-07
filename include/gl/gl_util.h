@@ -66,9 +66,10 @@ namespace ace { namespace gl {
 
     namespace experimental {
         struct vao {
-            vao &attrib_pointer(const std::string &format, gl::vbo &buffer, int divisor = 0);
+            vao &attrib_pointer(const std::string &format, const gl::vbo &buffer, int divisor = 0);
 
             void draw(GLenum mode, GLsizei count, GLint first = 0) const {
+                if (count == 0) return;
                 this->bind();
                 glDrawArrays(mode, first, count);
             }
@@ -209,7 +210,7 @@ namespace ace { namespace gl {
                 if(!this->dirty) {
                     return;
                 }
-                // TODO mipmap support, region updating
+                // tTODO mipmap support, region updating
                 this->bind(false);
                 glTexSubImage2D(texture2d::target, 0, 0, 0, this->width, this->height, texture2d::gl_format, GL_UNSIGNED_BYTE, this->_pixels.get());
                 this->dirty = false;
@@ -229,7 +230,7 @@ namespace ace { namespace gl {
             int w() const { return this->width; }
             int h() const { return this->height; }
 
-            // use .get() if you're gonna read often but not write because this marks the texture to be updated
+            // use .get() or use a const reference if you're gonna read often but not write because this marks the texture to be updated
             pixel_type &operator[](const size_t index) {
                 this->dirty = true;
                 return this->_pixels[index];

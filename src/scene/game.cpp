@@ -45,7 +45,7 @@ namespace ace { namespace scene {
 
         this->respawn_entities();
 
-        this->cam.set_projection(75.0f, client.width(), client.height(), 0.1f, 128.f);
+        this->set_zoom(false);
     }
 
     GameScene::~GameScene() {
@@ -54,7 +54,7 @@ namespace ace { namespace scene {
     }
 
     void GameScene::start() {
-        this->client.sound.play("intro.wav", {}, 100, true);
+        this->client.sound.play_local("intro.wav");
         this->client.set_exclusive_mouse(true);
 #ifdef NDEBUG
         this->client.tasks.call_later(1.0, [this] { this->send_this_player(random::choice_range(net::TEAM::TEAM1, net::TEAM::TEAM2), random::choice_range(net::WEAPON::SEMI, net::WEAPON::SHOTGUN)); });
@@ -77,7 +77,7 @@ namespace ace { namespace scene {
 
         this->shaders.map.bind();
         this->shaders.map.uniform("model"_u = glm::mat4(1.0), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
-        this->map.draw(draw2vox(this->cam.position), this->shaders.map);
+        this->map.draw(this->shaders.map);
 
         this->shaders.model.bind();
         for (auto &kv : this->players) {
@@ -95,9 +95,14 @@ namespace ace { namespace scene {
             obj->draw();
         }
 
-        this->shaders.billboard.bind();
-        this->billboards.draw(this->cam.matrix(), this->shaders.billboard);
+        if(this->ply) 
+            this->debug.draw_ray(vox2draw(this->ply->e), this->ply->draw_forward * 25.f, this->get_team(this->ply->team).float_color);
 
+        this->shaders.billboard.bind();
+        this->billboards.draw(this->shaders.billboard);
+
+        this->shaders.line.bind();
+        this->debug.flush(this->cam.matrix(), this->shaders.line);
 
         if(this->ply) {
             if (!this->thirdperson)
@@ -597,14 +602,9 @@ namespace ace { namespace scene {
 
     void GameScene::set_fog_color(glm::vec3 color) {
         glClearColor(color.r, color.g, color.b, 1.0f);
-        // todo: uniform buffer?
-        // this->shaders.map.bind();
-        // this->shaders.map.uniform("fog_color", color);
-        // this->shaders.model.bind();
-        // this->shaders.model.uniform("fog_color"_u = color, "light_pos"_u = normalize(glm::vec3{ -0.16, 0.8, 0.56 }));
-
         this->uniforms->light_pos = normalize(glm::vec3{ -0.16, 0.8, 0.56 });
         this->uniforms->fog_color = color;
-        // 
+        const auto &y = this->uniforms;
+        auto x = y->fog_color;
     }
 }}

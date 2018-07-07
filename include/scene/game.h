@@ -18,6 +18,7 @@
 #include "kv6.h"
 #include "net/net.h"
 #include "util/event.h"
+#include "draw/debug.h"
 
 
 namespace ace { namespace scene {
@@ -27,8 +28,7 @@ namespace ace { namespace scene {
             name(std::move(name)),
             color(color),
             float_color(glm::vec3(color) / 255.f),
-            id(id),
-            score(0), max_score(0) {
+            id(id) {
             
         }
         void update_players(GameScene &scene);
@@ -103,6 +103,7 @@ namespace ace { namespace scene {
         gl::ShaderManager &shaders;
         gl::experimental::ubo<SceneUniforms> uniforms;
         draw::BillboardManager billboards;
+        draw::DebugDraw debug;
         KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
         Camera cam;
         draw::DrawMap map;

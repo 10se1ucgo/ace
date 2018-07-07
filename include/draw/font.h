@@ -31,8 +31,8 @@ namespace ace { namespace draw {
         void update(std::string str, glm::vec3 color = glm::vec3(1.0f),
                     glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
         
-        void draw();
-        void draw_shadowed();
+        void draw() const;
+        void draw_shadowed() const;
 
         glm::vec2 get_position() const;
         glm::vec2 get_position(Align align) const;

@@ -43,7 +43,7 @@ namespace {
         return table;
     }
 
-    const auto TABLE = equimemset<TABLE_SIZE>();
+    const auto NORMAL_TABLE = equimemset<TABLE_SIZE>();
 
     struct KV6Vox {
         uint8_t r, g, b, vis, normal;
@@ -125,15 +125,17 @@ KV6Mesh::KV6Mesh(const std::string &name) {
     magic[4] = '\0';
     if (strcmp(magic, "Kvxl") != 0) THROW_ERROR("INVALID KV6Mesh FILE MAGIC {}", name);
 
-    fread(&xsiz, sizeof(xsiz), 1, f); fread(&ysiz, sizeof(ysiz), 1, f); fread(&zsiz, sizeof(zsiz), 1, f);
-    fread(&xpiv, sizeof(xpiv), 1, f); fread(&ypiv, sizeof(ypiv), 1, f); fread(&zpiv, sizeof(zpiv), 1, f);
-    fread(&num_voxels, sizeof(num_voxels), 1, f);
+    fread(&this->xsiz, sizeof(this->xsiz), 1, f); fread(&this->ysiz, sizeof(this->ysiz), 1, f); fread(&this->zsiz, sizeof(this->zsiz), 1, f);
+    fread(&this->xpiv, sizeof(this->xpiv), 1, f); fread(&this->ypiv, sizeof(this->ypiv), 1, f); fread(&this->zpiv, sizeof(this->zpiv), 1, f);
+    fread(&this->num_voxels, sizeof(this->num_voxels), 1, f);
 
     
 
 //    KV6Vox *blocks = new KV6Vox[num_voxels];
-    std::unique_ptr<KV6Vox[]> blocks(std::make_unique<KV6Vox[]>(num_voxels));
-    for (long i = 0; i < num_voxels; i++) {
+    std::unique_ptr<KV6Vox[]> blocks(std::make_unique<KV6Vox[]>(this->num_voxels));
+
+
+    for (long i = 0; i < this->num_voxels; i++) {
         uint8_t b = fgetc(f);
         uint8_t g = fgetc(f);
         uint8_t r = fgetc(f);
@@ -154,15 +156,15 @@ KV6Mesh::KV6Mesh(const std::string &name) {
     }
     fclose(f);
     
-    this->vbo->reserve(24 * num_voxels);
+    this->vbo->reserve(24 * this->num_voxels);
 
     int p = 0;
-    for(long x = 0; x < xsiz; x++) {
-        for(long y = 0; y < ysiz; y++) {
-            uint16_t siz = xyoffset[x * ysiz + y];
+    for(long x = 0; x < this->xsiz; x++) {
+        for(long y = 0; y < this->ysiz; y++) {
+            uint16_t siz = xyoffset[x * this->ysiz + y];
             for (uint16_t i = 0; i < siz; i++) {
                 KV6Vox &b = blocks[p];
-                gen_faces(x - xpiv, -b.height + zpiv, y - ypiv, glm::vec3{ b.r, b.g, b.b } / 255.f, TABLE[b.normal], b.vis, this->vbo.data);
+                gen_faces(x - this->xpiv, -b.height + this->zpiv, y - this->ypiv, glm::vec3{ b.r, b.g, b.b } / 255.f, NORMAL_TABLE[b.normal], b.vis, this->vbo.data);
                 p++;
             }
         }
@@ -175,41 +177,35 @@ KV6Mesh::KV6Mesh(const std::string &name) {
 // p0 -> position of ray
 // v0 -> direction of ray
 // *h -> set to the (world) position of the hit (unchanged if not hit)
-// Adapted from voxlap5.c by Ken Silverman
-bool KV6::sprhitscan(glm::vec3 p0, glm::vec3 v0, glm::vec3 *h) {
-    // todo this isn't accurate
+// Adapted from https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms/18459#18459
+bool KV6::sprhitscan(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 *h) {
+    auto piv = glm::vec3{ this->mesh->xpiv, this->mesh->ypiv, this->mesh->zpiv };
+    auto siz = glm::vec3{ this->mesh->xsiz, this->mesh->ysiz, this->mesh->zsiz };
+
+    glm::vec3 min = ace::vox2draw(-piv);
+    glm::vec3 max = ace::vox2draw(siz - piv);
+
     glm::mat4 mm = this->get_model();
-    glm::vec3 ss = -ace::draw2vox(glm::vec3{ mm[0] });
-    glm::vec3 sh = -ace::draw2vox(glm::vec3{ mm[1] });
-    glm::vec3 sf = ace::draw2vox(glm::vec3{ mm[2] });
-    glm::vec3 v(dot(v0, ss), dot(v0, sh), dot(v0, sf));
+    glm::mat4 inverse = glm::inverse(mm);
 
-    glm::vec3 sprp(ace::draw2vox(this->position));
-    glm::vec3 t(p0 - sprp);
-    glm::vec3 u(dot(t, ss), dot(t, sh), dot(t, sf));
-    u /= glm::vec3{ dot(ss, ss), dot(sh, sh), dot(sf, sf) };
-    u += glm::vec3{ this->mesh->xpiv, this->mesh->ypiv, this->mesh->zpiv };
+    glm::vec3 r_origin = inverse * glm::vec4(ace::vox2draw(ray_origin), 1.0);
+    glm::vec3 r_direction = glm::normalize(inverse * glm::vec4(ace::vox2draw(ray_direction), 0.0));
 
-    int ix0 = 0;
-    int ix1 = this->mesh->xsiz;
-    float g = ix0;
-    t.x = float(ix1);               (*(long *)&t.x)--;
-    t.y = float(this->mesh->ysiz);  (*(long *)&t.y)--;
-    t.z = float(this->mesh->zsiz);  (*(long *)&t.z)--;
-    float f;
-    if (u.x <   g) { if (v.x <= 0) return false; f = (g - u.x) / v.x; u.x = g; u.y += v.y*f; u.z += v.z*f; }
-    else if (u.x > t.x) { if (v.x >= 0) return false; f = (t.x - u.x) / v.x; u.x = t.x; u.y += v.y*f; u.z += v.z*f; }
-    if (u.y <   0) { if (v.y <= 0) return false; f = (0 - u.y) / v.y; u.y = 0; u.x += v.x*f; u.z += v.z*f; }
-    else if (u.y > t.y) { if (v.y >= 0) return false; f = (t.y - u.y) / v.y; u.y = t.y; u.x += v.x*f; u.z += v.z*f; }
-    if (u.z <   0) { if (v.z <= 0) return false; f = (0 - u.z) / v.z; u.z = 0; u.x += v.x*f; u.y += v.y*f; }
-    else if (u.z > t.z) { if (v.z >= 0) return false; f = (t.z - u.z) / v.z; u.z = t.z; u.x += v.x*f; u.y += v.y*f; }
+    glm::vec3 dirfrac = 1.0f / r_direction;
+    float t1 = (min.x - r_origin.x) * dirfrac.x;
+    float t2 = (max.x - r_origin.x) * dirfrac.x;
+    float t3 = (min.y - r_origin.y) * dirfrac.y;
+    float t4 = (max.y - r_origin.y) * dirfrac.y;
+    float t5 = (min.z - r_origin.z) * dirfrac.z;
+    float t6 = (max.z - r_origin.z) * dirfrac.z;
 
-    glm::ivec3 a(u.x - 0.5, u.y - 0.5, u.z - 0.5);
-    if ((unsigned long)(a.x - ix0) >= ix1) return false;
-    if ((unsigned long)a.y >= this->mesh->ysiz) return false;
-    if ((unsigned long)a.z >= this->mesh->zsiz) return false;
+    float tmin = std::max(std::max(std::min(t1, t2), std::min(t3, t4)), std::min(t5, t6));
+    float tmax = std::min(std::min(std::max(t1, t2), std::max(t3, t4)), std::max(t5, t6));
 
-    u -= glm::vec3{ this->mesh->xpiv, this->mesh->ypiv, this->mesh->zpiv };
-    *h = glm::vec3{ dot(v, {ss.x, sh.x, sf.x}), dot(v, {ss.y, sh.y, sf.y}), dot(v, {ss.z, sh.z, sf.z}) } + sprp;
+    if (tmax < 0 || tmin > tmax) {
+        return false;
+    }
+
+    *h = ace::draw2vox(glm::vec3(mm * glm::vec4(r_origin + r_direction * tmin, 1.0)));
     return true;
 }

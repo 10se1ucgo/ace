@@ -82,27 +82,31 @@ namespace ace { namespace gl {
     }
 
     ShaderManager::ShaderManager():
-    model({
-        { "shaders/model.vert", GL_VERTEX_SHADER },
-        { "shaders/model.frag", GL_FRAGMENT_SHADER }
-    }), 
-    map({
-        { "shaders/map.vert", GL_VERTEX_SHADER },
-        { "shaders/map.frag", GL_FRAGMENT_SHADER }
-    }), 
-    sprite({
-        { "shaders/sprite.vert", GL_VERTEX_SHADER },
-        { "shaders/sprite.frag", GL_FRAGMENT_SHADER }
-    }),
-    billboard({
-        { "shaders/bb.vert", GL_VERTEX_SHADER },
-        { "shaders/bb.geom", GL_GEOMETRY_SHADER },
-        { "shaders/bb.frag", GL_FRAGMENT_SHADER }
-    }), 
-    text({
-        { "shaders/text.vert", GL_VERTEX_SHADER },
-        { "shaders/text.frag", GL_FRAGMENT_SHADER }
-    }) {
+        model({
+            { "shaders/model.vert", GL_VERTEX_SHADER },
+            { "shaders/model.frag", GL_FRAGMENT_SHADER }
+        }), 
+        map({
+            { "shaders/map.vert", GL_VERTEX_SHADER },
+            { "shaders/map.frag", GL_FRAGMENT_SHADER }
+        }), 
+        sprite({
+            { "shaders/sprite.vert", GL_VERTEX_SHADER },
+            { "shaders/sprite.frag", GL_FRAGMENT_SHADER }
+        }),
+        billboard({
+            { "shaders/bb.vert", GL_VERTEX_SHADER },
+            { "shaders/bb.geom", GL_GEOMETRY_SHADER },
+            { "shaders/bb.frag", GL_FRAGMENT_SHADER }
+        }), 
+        text({
+            { "shaders/text.vert", GL_VERTEX_SHADER },
+            { "shaders/text.frag", GL_FRAGMENT_SHADER }
+        }),
+        line({
+            { "shaders/line.vert", GL_VERTEX_SHADER },
+            { "shaders/line.frag", GL_FRAGMENT_SHADER }
+        }) {
     }
 }}
 

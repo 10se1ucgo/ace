@@ -8,9 +8,6 @@ namespace ace { namespace draw {
     using namespace ace::draw::detail;
 
     namespace {
-
-        
-
         void gen_faces(const float x, const float y, const float z, const uint8_t vis, const glm::vec3 color, std::vector<VXLVertex> &v) {
             const float x0 = x, x1 = x + 1.0f;
             const float y0 = -z - 1.0f, y1 = -z;
@@ -98,7 +95,7 @@ namespace ace { namespace draw {
         this->vbo.upload();
     }
 
-    void VXLBlocks::draw(const glm::mat4& pv, gl::ShaderProgram& s) const {
+    void VXLBlocks::draw(gl::ShaderProgram& s) const {
         s.uniform("model", model_matrix(this->position, this->rotation, this->scale));
         this->vao.draw(GL_TRIANGLES, this->vbo.draw_count);
     }
@@ -172,7 +169,7 @@ namespace ace { namespace draw {
             if (scene.time >= i->first) {
                 int x = i->second.x, y = i->second.y, z = i->second.z;
                 if(this->get_solid(x, y, z)) {
-                    this->set_point(x, y, z, true, (0x7F << 24) | this->colors[get_pos(x, y, z)]);
+                    this->set_point(x, y, z, true, (0x7F << 24) | this->get_color(x, y, z));
                 }
                 i = damage_queue.erase(i);
             } else {
@@ -181,12 +178,24 @@ namespace ace { namespace draw {
         }
     }
 
-    void DrawMap::draw(const glm::vec3 &position, gl::ShaderProgram &shader) {
+    void DrawMap::draw(gl::ShaderProgram &shader) {
+        // for (auto &p : this->pillars) {
+        //     if (p.contains(draw2vox(this->scene.cam.position))) {
+        //         this->scene.debug.draw_quad({ p.x, 0, p.y }, { p.x, -64, p.y }, { p.x + PILLAR_SIZE, -64, p.y }, { p.x + PILLAR_SIZE, 0, p.y }, glm::vec3{ 0, 1, 0 });
+        //     }
+        //
+        // }
+
         for (auto &p : this->pillars) {
+            if (p.contains(draw2vox(this->scene.cam.position))) {
+                this->scene.debug.draw_cube({ p.x + 8, -32, p.y + 8 }, { PILLAR_SIZE, 64, PILLAR_SIZE }, { 1, 0, 0 });
+            }
             if (this->scene.cam.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
                 p.draw();
             }
         }
+
+
     }
 
     Pillar &DrawMap::get_pillar(const int x, const int y, const int z) {

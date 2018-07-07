@@ -29,7 +29,7 @@ struct KV6Mesh {
     ace::gl::experimental::vao vao;
     ace::gl::experimental::vbo<detail::KV6Vertex> vbo;
 
-    long xsiz, ysiz, zsiz, num_voxels;
+    int32_t xsiz, ysiz, zsiz, num_voxels;
     float xpiv, ypiv, zpiv;
 };
 
@@ -51,7 +51,7 @@ struct KV6 {
         return ace::model_matrix(position, rot, scale);
     }
 
-    void draw(const glm::mat4 &pv, ace::gl::ShaderProgram &s) const {
+    void draw(ace::gl::ShaderProgram &s) const {
         const glm::mat4 model(this->get_model());
         s.uniform("model", model);
         s.uniform("normal_matrix", glm::mat3(transpose(inverse(model))));
@@ -59,7 +59,7 @@ struct KV6 {
         this->mesh->draw();
     }
 
-    void draw_local(const glm::mat4 &p, ace::gl::ShaderProgram &s) const {
+    void draw_local(ace::gl::ShaderProgram &s) const {
         s.uniform("model", this->get_local_model());
         s.uniform("normal_matrix", glm::mat3(transpose(inverse(ace::model_matrix(position, lighting_rotation, scale))))); // for lighting and stuff. WHAT AM I DOING
         s.uniform("local", true);

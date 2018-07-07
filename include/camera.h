@@ -39,15 +39,19 @@ public:
     void update(double dt);
     void update_view();
 
-    void set_projection(float fov, float w, float h, float nearc=0.1f, float farc=256.f) {
-        this->nearc = nearc;
-        this->farc = farc;
-        this->_projection = glm::perspective(glm::radians(fov), w / h, nearc, farc);
-
-        auto x = sizeof(Camera);
-    }
+    void set_projection(float fov, float w, float h, float nearc = 0.1f, float farc = 256.f);
 
     bool box_in_frustum(float x0, float y0, float z0, float x1, float y1, float z1);
+    bool box_in_frustum(glm::vec3 p0, glm::vec3 p1) {
+        return this->box_in_frustum(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
+    }
+
+    bool point_in_frustrum(glm::vec3 point) {
+        for (const auto &plane : this->planes) {
+            if (dot(glm::vec3(plane), point) < -plane.w) return false;
+        }
+        return true;
+    }
 private:
     glm::mat4 _projection, _view, pv;
     float nearc{ 0.1f }, farc{ 256.f };

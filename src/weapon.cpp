@@ -56,9 +56,9 @@ namespace ace {
 
     void SpadeTool::draw() {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
-            this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
+            this->mdl.draw(this->ply.scene.shaders.model);
         } else {
-            this->mdl.draw_local(this->ply.scene.cam.projection(), this->ply.scene.shaders.model);
+            this->mdl.draw_local(this->ply.scene.shaders.model);
         }
     }
 
@@ -145,9 +145,9 @@ namespace ace {
         this->ply.scene.shaders.model.uniform("replacement_color", glm::vec3(this->ply.color) / 255.f);
 
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
-            this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
+            this->mdl.draw(this->ply.scene.shaders.model);
         } else {
-            this->mdl.draw_local(this->ply.scene.cam.projection(), this->ply.scene.shaders.model);
+            this->mdl.draw_local(this->ply.scene.shaders.model);
         }
 
 
@@ -159,7 +159,7 @@ namespace ace {
 
         glEnable(GL_BLEND);
         glDepthMask(GL_FALSE);
-        this->ghost_block->draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.map);
+        this->ghost_block->draw(this->ply.scene.shaders.map);
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
 
@@ -250,9 +250,9 @@ namespace ace {
 
     void GrenadeTool::draw() {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
-            this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
+            this->mdl.draw(this->ply.scene.shaders.model);
         } else {
-            this->mdl.draw_local(this->ply.scene.cam.projection(), this->ply.scene.shaders.model);
+            this->mdl.draw_local(this->ply.scene.shaders.model);
         }
     }
 
@@ -301,9 +301,9 @@ namespace ace {
 
     void Weapon::draw() {
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
-            this->mdl.draw(this->ply.scene.cam.matrix(), this->ply.scene.shaders.model);
+            this->mdl.draw(this->ply.scene.shaders.model);
         } else {
-            this->mdl.draw_local(this->ply.scene.cam.projection(), this->ply.scene.shaders.model);
+            this->mdl.draw_local(this->ply.scene.shaders.model);
         }
     }
 

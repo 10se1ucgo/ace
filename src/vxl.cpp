@@ -213,7 +213,7 @@ namespace ace {
         if (!is_valid_pos(x, y, z))
             return false;
         ;
-        return this->geometry.test(get_pos(x, y, z));
+        return this->geometry[get_pos(x, y, z)];
     }
 
     uint32_t AceMap::get_color(int x, int y, int z, bool wrapped) {
@@ -385,7 +385,7 @@ namespace ace {
         return true;
     }
 
-    bool AceMap::cast_ray(const glm::vec3& position, const glm::vec3& direction, long* x, long* y, long* z, float length, bool isdirection) const {
+    bool AceMap::can_see(const glm::vec3 &position, const glm::vec3 &direction, long *x, long *y, long *z, float length, bool isdirection) const {
         double x0 = position.x; double y0 = position.y; double z0 = position.z;
         double x1 = direction.x; double y1 = direction.y; double z1 = direction.z;
 

@@ -18,7 +18,7 @@ namespace ace { namespace world {
     };
 
     struct DebrisGroup : WorldObject {
-        DebrisGroup(scene::GameScene& scene, glm::vec3 position, glm::u8vec3 color, float vel_mod, int num);
+        DebrisGroup(scene::GameScene &scene, glm::vec3 position, glm::u8vec3 color, float vel_mod, int num);
 
         bool update(double dt) override;
         void draw() override;

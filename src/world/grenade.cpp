@@ -38,9 +38,9 @@ namespace ace { namespace world {
     }
 
     void Grenade::draw() {
-        scene.shaders.model.bind();
-        scene.shaders.model.uniform("replacement_color", glm::vec3{ 0.f });
-        this->mesh.draw(scene.cam.matrix(), scene.shaders.model);
+        this->scene.shaders.model.bind();
+        this->scene.shaders.model.uniform("replacement_color", glm::vec3{ 0.f });
+        this->mesh.draw(this->scene.shaders.model);
     }
 
     bool Grenade::move(double dt) {

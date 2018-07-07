@@ -25,10 +25,10 @@ namespace ace { namespace world {
         if (!this->visible())
             return;
 
-        scene.shaders.model.bind();
-        scene.shaders.model.uniform("replacement_color", this->scene.teams[this->team].float_color);
+        this->scene.shaders.model.bind();
+        this->scene.shaders.model.uniform("replacement_color", this->scene.get_team(this->team).float_color);
         this->mesh.position = vox2draw(position);
-        this->mesh.draw(scene.cam.matrix(), scene.shaders.model);
+        this->mesh.draw(this->scene.shaders.model);
     }
 
     bool Entity::visible() const {

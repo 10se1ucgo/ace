@@ -101,6 +101,7 @@ namespace ace { namespace gl {
             } catch (const std::out_of_range &) {
                 const GLuint loc = glGetUniformLocation(this->program, name.c_str());
                 this->uniform_cache[name] = loc;
+                fmt::print("Loaded uniform location {}@{}\n", name, loc);
                 return loc;
             }
         }
@@ -162,7 +163,7 @@ namespace ace { namespace gl {
             return ubo;
         }
         
-        ShaderProgram model, map, sprite, billboard, text;
+        ShaderProgram model, map, sprite, billboard, text, line;
     };
 
     #undef DECLARE_UNIFORM

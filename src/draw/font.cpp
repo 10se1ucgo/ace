@@ -15,7 +15,7 @@ namespace ace { namespace draw {
                     auto row = x * g->bitmap.width + y * 8;
                     for (auto bi = 0; bi < std::min(8, int(g->bitmap.width) - y * 8); bi++) {
                         auto bit = byte & (1 << (7 - bi));
-                        vec[row + bi] = bool(bit) * 255;
+                        vec[row + bi] = bit ? 255 : 0;
                     }
                 }
             }
@@ -39,11 +39,11 @@ namespace ace { namespace draw {
         this->update();
     }
 
-    void Text::draw() {
+    void Text::draw() const {
         this->font->draw(*this);
     }
 
-    void Text::draw_shadowed() {
+    void Text::draw_shadowed() const {
         this->font->draw_shadowed(*this);
     }
 
@@ -169,25 +169,22 @@ namespace ace { namespace draw {
     glm::vec2 Font::measure(const std::string& str, glm::vec2 scale) const {
         // this is bad
 
-        glm::vec2 size;
-        float max_char_height = -std::numeric_limits<float>::infinity();
+        glm::ivec2 size(0, 0);
         int pen = 0, lines = 1;
         for(unsigned char c : str) {
             if(c == '\n') {
-                size.x = std::max(float(pen), size.x);
+                size.x = std::max(pen, size.x);
                 pen = 0;
                 lines++;
             }
             pen += chars[c].advance.x;
-            max_char_height = std::max(max_char_height, float(chars[c].bearing.y));
+            size.y = std::max(chars[c].bearing.y, size.y);
         }
-        size.x = std::max(float(pen), size.x);
+        size.x = std::max(pen, size.x);
         if(lines > 1) {
-            size.y = lines * this->_line_height;
-        } else {
-            size.y = max_char_height;
+            size.y += (lines - 1) * this->_line_height;
         }
-        return size * scale;
+        return glm::vec2(size) * scale;
     }
 
     void Font::render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const {
@@ -216,12 +213,12 @@ namespace ace { namespace draw {
 
         if (!w || !h) return;
 
-        v.push_back({ { x,     y }, glyph.tl, color }); // tl
-        v.push_back({ { x + w, y }, glyph.tr, color }); // tr
-        v.push_back({ { x,     y + h }, glyph.bl, color }); // bl
+        v.push_back({ { x,     y }, glyph.tl, color }); // top left
+        v.push_back({ { x + w, y }, glyph.tr, color }); // top right
+        v.push_back({ { x,     y + h }, glyph.bl, color }); // bottom left
         v.push_back({ { x + w, y }, glyph.tr, color });
         v.push_back({ { x,     y + h }, glyph.bl, color });
-        v.push_back({ { x + w, y + h }, glyph.br, color }); // br
+        v.push_back({ { x + w, y + h }, glyph.br, color }); // bottom right
     }
 
     void Font::draw(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {

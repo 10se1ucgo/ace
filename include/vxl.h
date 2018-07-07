@@ -75,7 +75,7 @@ namespace ace {
         bool set_point(size_t pos, bool solid, uint32_t color);
         bool check_node(int x, int y, int z, bool destroy, std::vector<VXLBlock> &destroyed);
 
-        bool cast_ray(const glm::vec3 &position, const glm::vec3 &direction, long *x, long *y, long *z, float length = 32, bool isdirection=true) const;
+        bool can_see(const glm::vec3 &position, const glm::vec3 &direction, long *x, long *y, long *z, float length = 32, bool isdirection=true) const;
         Face hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const;
 
         bool clipworld(long x, long y, long z) const;
@@ -115,15 +115,16 @@ namespace ace {
             return i;
         }
     protected:
+        void add_node(std::vector<glm::ivec3> &v, const int x, const int y, const int z) const {
+            if (this->get_solid(x, y, z))
+                v.emplace_back(x, y, z);
+        }
+
+    private:
         std::bitset<MAP_X * MAP_Y * MAP_Z> geometry;
         std::unordered_map<size_t, uint32_t> colors;
 
         std::vector<glm::ivec3> nodes;
         std::unordered_set<glm::ivec3> marked;
-
-        void add_node(std::vector<glm::ivec3> &v, const int x, const int y, const int z) const {
-            if (this->get_solid(x, y, z))
-                v.emplace_back(x, y, z);
-        }
     };
 }

@@ -4,6 +4,7 @@
 #include <utility>
 #include <vector>
 #include <memory>
+#include <chrono>
 
 namespace ace { 
 class GameClient;
@@ -40,6 +41,11 @@ namespace util {
         template<typename TFunc, typename... TArgs>
         task_type call_later(double seconds, TFunc&& func, TArgs&&... args) {
             return tasks.emplace(this->get_time(seconds), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        }
+
+        template<typename Rep, typename Period, typename TFunc, typename... TArgs>
+        task_type call_later(std::chrono::duration<Rep, Period> time, TFunc&& func, TArgs&&... args) {
+            return tasks.emplace(this->get_time(std::chrono::duration_cast<std::chrono::duration<double>>(time).count()), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
         }
 
         template<typename TFunc, typename... TArgs>

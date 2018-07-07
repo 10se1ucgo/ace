@@ -46,7 +46,7 @@ namespace ace { namespace world {
 
         glEnable(GL_BLEND);
         glDepthMask(GL_FALSE);
-        this->mesh.draw(scene.cam.matrix(), s);
+        this->mesh.draw(s);
         glDepthMask(GL_TRUE);
         glDisable(GL_BLEND);
     }

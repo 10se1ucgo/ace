@@ -449,19 +449,19 @@ namespace ace { namespace world {
 
         scene.shaders.model.uniform("replacement_color", this->scene.teams[this->team].float_color * 0.5f);
         if(!this->alive) {
-            if(!local_player) this->mdl_dead.draw(scene.cam.matrix(), scene.shaders.model);
+            if(!local_player) this->mdl_dead.draw(this->scene.shaders.model);
             return;
         }
 
         if(!local_player || scene.thirdperson) {
-            this->mdl_head.draw(scene.cam.matrix(), scene.shaders.model);
-            this->mdl_torso.draw(scene.cam.matrix(), scene.shaders.model);
-            this->mdl_legl.draw(scene.cam.matrix(), scene.shaders.model);
-            this->mdl_legr.draw(scene.cam.matrix(), scene.shaders.model);
-            this->mdl_arms.draw(scene.cam.matrix(), scene.shaders.model);
+            this->mdl_head.draw(this->scene.shaders.model);
+            this->mdl_torso.draw(this->scene.shaders.model);
+            this->mdl_legl.draw(this->scene.shaders.model);
+            this->mdl_legr.draw(this->scene.shaders.model);
+            this->mdl_arms.draw(this->scene.shaders.model);
             tool->draw();
         } else if(!this->sprint && this->switch_time < 0.5f && this->get_tool()->drawable() && !(this->secondary_fire && this->weapon_equipped)) {
-            this->mdl_arms.draw_local(scene.cam.projection(), scene.shaders.model);
+            this->mdl_arms.draw_local(this->scene.shaders.model);
             tool->draw();
         }
     }

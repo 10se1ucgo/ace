@@ -40,14 +40,14 @@ namespace ace { namespace draw {
         VXLBlocks(const std::vector<VXLBlock> &blocks) : VXLBlocks(blocks, get_centroid(blocks)) { }
         VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
         void update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center, bool gen_vis=false);
-        void draw(const glm::mat4 &pv, gl::ShaderProgram &s) const;
+        void draw(gl::ShaderProgram &s) const;
 
         gl::experimental::vao vao;
         gl::experimental::vbo<detail::VXLVertex> vbo;
         glm::vec3 scale, rotation, position, centroid;
 
     private:
-        static uint8_t get_vis(std::unordered_set<glm::ivec3> &map, glm::ivec3 pos);
+        static uint8_t get_vis(std::unordered_set<glm::ivec3> &set, glm::ivec3 pos);
     };
 
     struct Pillar {
@@ -55,6 +55,10 @@ namespace ace { namespace draw {
 
         void update();
         void draw();
+
+        bool contains(glm::vec3 pos) const {
+            return this->x <= pos.x && pos.x <= this->x + PILLAR_SIZE && this->y <= pos.y && pos.y <= this->y + PILLAR_SIZE;
+        }
 
         bool dirty;
         AceMap &map;
@@ -68,7 +72,7 @@ namespace ace { namespace draw {
         DrawMap(scene::GameScene &s, uint8_t *buf = nullptr);
 
         void update(double dt);
-        void draw(const glm::vec3 &position, gl::ShaderProgram& shader);
+        void draw(gl::ShaderProgram &shader);
 
         bool set_point(int x, int y, int z, bool solid, uint32_t color) override;
         bool build_point(int x, int y, int z, glm::u8vec3 color, bool force=false);

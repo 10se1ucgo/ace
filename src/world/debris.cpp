@@ -43,19 +43,21 @@ namespace ace { namespace world {
     }
 
     bool DebrisGroup::update(double dt) {
-        life -= dt;
-        if (life <= 0) return true;
+        this->life -= dt;
+        if (this->life <= 0) return true;
 
-        for(auto &d : debris) {
+        for(auto &d : this->debris) {
             d.update(dt);
         }
         return false;
     }
 
     void DebrisGroup::draw() {
-        float size = life * .1f;
-        for(const auto &d : debris) {
-            this->scene.billboards.draw({ vox2draw(d.p), d.color, size });
+        float size = this->life * .1f;
+        for(const auto &d : this->debris) {
+            auto pos = vox2draw(d.p);
+            if (this->scene.cam.point_in_frustrum(pos))
+                this->scene.billboards.draw({ pos, d.color, size });
         }
     }
 }}

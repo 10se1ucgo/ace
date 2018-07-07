@@ -12,6 +12,7 @@ namespace ace { namespace draw {
     };
 
     struct Layer {
+        // i want a scoped enum that will implicitly convert to int because im weird that way
         enum : int {
             BACKGROUND = -100,
             FRAME,
