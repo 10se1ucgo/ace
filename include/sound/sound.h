@@ -13,13 +13,13 @@
 
 namespace ace { namespace sound {
     // is this cheating
-    using abo = gl::GLObj<alGenBuffers, alDeleteBuffers, ALuint>;
+    using _abo = gl::GLObj<alGenBuffers, alDeleteBuffers, ALuint>;
     using aso = gl::GLObj<alGenSources, alDeleteSources, ALuint>;
 
     struct SoundBuffer {
         SoundBuffer(const std::string &name);
 
-        abo abo;
+        _abo abo;
     };
 
     struct Sound {

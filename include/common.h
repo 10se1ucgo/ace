@@ -1,13 +1,19 @@
-#pragma once
+﻿#pragma once 
 #include <random>
 #include <chrono>
 #include <cmath>
+
+#define GLM_ENABLE_EXPERIMENTAL
 
 #include "fmt/format.h"
 #include "glm/glm.hpp"
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/type_trait.hpp"
 #include "glm/gtx/string_cast.hpp"
+
+#ifndef _WIN32
+#define is_same_v is_same
+#endif
 
 namespace ace {
     // Simple, generic wrappers around standard C++ <random>
@@ -44,7 +50,7 @@ namespace ace {
         template<typename T>
         std::enable_if_t<std::is_enum<T>::value, T> choice_range(T first, T last) {
             using underlying = std::underlying_type_t<T>;
-            using type = std::conditional_t<std::is_same_v<signed char, std::make_signed_t<underlying>>, int, underlying>;
+            using type = std::conditional_t<std::is_same_v<signed char, std::make_signed_t<underlying>>::value, int, underlying>;
             // uniform_int_distribution prohibits char types, for whatever reason.
             return T(random::random(type(first), type(last)));
         }
@@ -133,4 +139,4 @@ namespace fmt {
 #define ACE_NO_COPY_MOVE(T) \
     ACE_NO_COPY(T) \
     T(T&&) = delete; \
-    void operator=(T&&) = delete; \
+    void operator=(T&&) = delete;

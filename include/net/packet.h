@@ -1,7 +1,8 @@
 #pragma once
+#include <vector>
 #include "fmt/format.h"
 #include "glm/glm.hpp"
-
+#include "common.h"
 #include "util/except.h"
 
 namespace ace { namespace net {
@@ -129,7 +130,7 @@ namespace ace { namespace net {
         }
     };
 
-    enum class PACKET : uint8_t {
+    enum class PACKET : int8_t {
         PositionData,
         OrientationData,
         WorldUpdate,
@@ -164,14 +165,14 @@ namespace ace { namespace net {
         ChangeWeapon,
     };
 
-    enum class WEAPON : uint8_t {
+    enum class WEAPON : int8_t {
         INVALID = -1,
         SEMI,
         SMG,
         SHOTGUN,
     };
 
-    enum class HIT : uint8_t {
+    enum class HIT : int8_t {
         INVALID = -1,
         TORSO,
         HEAD,
@@ -180,7 +181,7 @@ namespace ace { namespace net {
         MELEE,
     };
 
-    enum class TOOL : uint8_t {
+    enum class TOOL : int8_t {
         INVALID = -1,
         SPADE,
         BLOCK,
@@ -188,7 +189,7 @@ namespace ace { namespace net {
         GRENADE,
     };
 
-    enum class ACTION : uint8_t {
+    enum class ACTION : int8_t {
         INVALID = -1,
         BUILD,
         DESTROY,
@@ -196,7 +197,7 @@ namespace ace { namespace net {
         GRENADE,
     };
 
-    enum class CHAT : uint8_t {
+    enum class CHAT : int8_t {
         INVALID = -1,
         ALL,
         TEAM,
@@ -204,7 +205,7 @@ namespace ace { namespace net {
 //        BIG
     };
 
-    enum class OBJECT : uint8_t {
+    enum class OBJECT : int8_t {
         INVALID = -1,
         BLUE_FLAG,
         GREEN_FLAG,
@@ -212,7 +213,7 @@ namespace ace { namespace net {
         GREEN_BASE,
     };
 
-    enum class KILL : uint8_t {
+    enum class KILL : int8_t {
         INVALID = -1,
         WEAPON,
         HEADSHOT,
@@ -223,7 +224,7 @@ namespace ace { namespace net {
         CLASS_CHANGE,
     };
 
-    enum class DISCONNECT : uint8_t {
+    enum class DISCONNECT : int8_t {
         INVALID = -1,
         UNDEFINED,
         BANNED,
@@ -232,7 +233,7 @@ namespace ace { namespace net {
         FULL,
     };
 
-    enum class DAMAGE : uint8_t {
+    enum class DAMAGE : int8_t {
         INVALID = -1,
         FALL,
         OTHER,

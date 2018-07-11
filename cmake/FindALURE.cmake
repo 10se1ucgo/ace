@@ -7,6 +7,7 @@ find_path(ALURE_INCLUDE_DIR alure.h
   PATH_SUFFIXES include
   PATHS
     /usr/include
+    /usr/include/AL
     /usr/local/include
 )
 

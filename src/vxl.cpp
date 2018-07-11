@@ -1,3 +1,4 @@
+#include "common.h"
 #include "vxl.h"
 
 #include <random>
@@ -5,7 +6,6 @@
 #include <unordered_set>
 
 #include "fmt/printf.h"
-#include "common.h"
 
 namespace ace {
     namespace {
