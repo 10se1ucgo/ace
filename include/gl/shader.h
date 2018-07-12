@@ -129,7 +129,7 @@ namespace ace { namespace gl {
 
             void upload() {
                 this->bind();
-                auto buffer = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
+                void *buffer = glMapBuffer(GL_UNIFORM_BUFFER, GL_WRITE_ONLY);
                 memcpy(buffer, &this->data, sizeof(this->data));
                 glUnmapBuffer(GL_UNIFORM_BUFFER);
             }

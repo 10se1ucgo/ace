@@ -174,8 +174,8 @@ KV6Mesh::KV6Mesh(const std::string &name) {
     this->vbo.upload();
 }
 
-// p0 -> position of ray
-// v0 -> direction of ray
+// ray_origin -> position of ray
+// ray_direction -> direction of ray
 // *h -> set to the (world) position of the hit (unchanged if not hit)
 // Adapted from https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms/18459#18459
 bool KV6::sprhitscan(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 *h) {

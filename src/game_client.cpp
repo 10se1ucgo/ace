@@ -77,8 +77,8 @@ namespace ace {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, antialias);
 
         auto &window_mode = config.json["graphics"].at("window_mode").get_ref<const std::string &>();
-        this->w = config.json["graphics"].at("window_width");
-        this->h = config.json["graphics"].at("window_height");
+        this->w = config.json["graphics"].value("window_width", 800);
+        this->h = config.json["graphics"].value("window_height", 600);
 
         this->window = SDL_CreateWindow(
             this->window_title.c_str(),

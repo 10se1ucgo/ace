@@ -182,7 +182,7 @@ namespace ace { namespace scene {
 
         this->client.shaders->sprite.bind();
         this->client.shaders->sprite.uniform("projection", this->projection);
-        this->client.sprites.draw(this->client.shaders->sprite);
+        this->client.sprites.flush(this->client.shaders->sprite);
 
         this->client.shaders->text.bind();
         this->client.fonts.draw(this->projection, this->client.shaders->text);

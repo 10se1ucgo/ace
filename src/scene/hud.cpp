@@ -83,8 +83,8 @@ namespace ace { namespace scene {
     }
 
     void MapDisplay::update(double dt) {
-        this->big.position.x = hud.scene.client.width() / 2.f;
-        this->big.position.y = hud.scene.client.height() / 2.f;
+        this->big.position = this->hud.scene.client.size() / 2.f;
+
         this->mini.position = { hud.scene.client.width() - 15, 15 };
         glm::vec2 d(draw2vox(this->hud.scene.cam.position));
         this->mini.set_region(d - glm::vec2{64}, d + glm::vec2{64});
@@ -267,7 +267,7 @@ namespace ace { namespace scene {
 
         this->scene.shaders.sprite.bind();
         this->scene.shaders.sprite.uniform("projection", projection);
-        this->sprites.draw(scene.shaders.sprite);
+        this->sprites.flush(scene.shaders.sprite);
         
         this->scene.shaders.text.bind();
         this->scene.client.fonts.draw(projection, scene.shaders.text);
@@ -293,7 +293,7 @@ namespace ace { namespace scene {
 
         if(this->state == State::Exit) {
             if(scancode == SDL_SCANCODE_Y)
-                this->scene.client.net.disconnect();
+                return this->scene.client.net.disconnect();
             else if(scancode == SDL_SCANCODE_N)
                 this->state = State::None;
         }

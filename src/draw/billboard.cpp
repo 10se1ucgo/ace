@@ -11,7 +11,7 @@ namespace ace { namespace draw {
         this->vbo->emplace_back(bb);
     }
 
-    void BillboardManager::draw(gl::ShaderProgram &s) {
+    void BillboardManager::flush(gl::ShaderProgram &s) {
         this->vbo.upload();
         this->vao.draw(GL_POINTS, this->vbo.draw_count, this->vbo.draw_offset);
     }

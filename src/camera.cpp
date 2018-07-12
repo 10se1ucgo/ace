@@ -68,11 +68,11 @@ void Camera::update_view() {
 void Camera::set_projection(float fov, float w, float h, float nearc, float farc) {
     this->nearc = nearc;
     this->farc = farc;
-    if(this->scene.client.keyboard.keys[SDL_SCANCODE_F11]) {
-        this->_projection = glm::ortho<float>(-20, 20, -20, 20, nearc, farc);
-    } else {
+    // if(this->scene.client.keyboard.keys[SDL_SCANCODE_F11]) {
+    //     this->_projection = glm::ortho<float>(-20, 20, -20, 20, nearc, farc);
+    // } else {
         this->_projection = glm::perspective(glm::radians(fov), w / h, nearc, farc);
-    }
+    // }
     
 }
 
@@ -83,9 +83,9 @@ void Camera::mouse(double dt) {
 }
 
 void Camera::keyboard(double dt) {
-    if (!scene.thirdperson && this->scene.ply) return;
+    if (!this->scene.thirdperson && this->scene.ply) return;
 
-    const Uint8 *keyboard = scene.client.keyboard.keys;
+    const Uint8 *keyboard = this->scene.client.keyboard.keys;
     float speed = this->speed * dt;
     if (keyboard[this->scene.client.config.get_key("sprint")])
         speed *= 3.0f;
@@ -97,9 +97,9 @@ void Camera::keyboard(double dt) {
         this->position += normalize(cross(this->forward, this->up)) * speed;
     if (keyboard[this->scene.client.config.get_key("left")])
         this->position -= normalize(cross(this->forward, this->up)) * speed;
-    if (keyboard[this->scene.client.config.get_key("jump")] && !scene.thirdperson)
+    if (keyboard[this->scene.client.config.get_key("jump")] && !this->scene.thirdperson)
         this->position += speed * this->up;
-    if (keyboard[this->scene.client.config.get_key("crouch")] && !scene.thirdperson)
+    if (keyboard[this->scene.client.config.get_key("crouch")] && !this->scene.thirdperson)
         this->position -= speed * this->up;
 }
 
@@ -120,7 +120,6 @@ bool Camera::box_in_frustum(float x0, float y0, float z0, float x1, float y1, fl
         for (int i = 0; i < 8 && !in; i++) {
             in |= dot(plane, points[i]) >= -plane.w;
         }
-        // fmt::print("\n");
         if (!in) return false;
     }
     return true;

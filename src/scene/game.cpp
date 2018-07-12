@@ -10,6 +10,7 @@
 #include "scene/loading.h"
 
 using namespace ace::gl::literals;
+using namespace std::chrono_literals;
 
 namespace ace { namespace scene {
     void Team::update_players(GameScene &scene) {
@@ -33,8 +34,8 @@ namespace ace { namespace scene {
         state_data(state_data),
         teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color, net::TEAM::TEAM1)},
                 {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }),
-        pd_upd(this->client.tasks.call_every(1, false, &GameScene::send_position_update, this)),
-        od_upd(this->client.tasks.call_every(1/30.f, false, &GameScene::send_orientation_update, this)),
+        pd_upd(this->client.tasks.call_every(1.0, false, &GameScene::send_position_update, this)),
+        od_upd(this->client.tasks.call_every(1.0 / 30, false, &GameScene::send_orientation_update, this)),
         ply_name(std::move(ply_name)) {
         // pyspades has a dumb system where sending more
         // than one PositionData packet every 0.7 seconds will cause you to rubberband
@@ -99,7 +100,7 @@ namespace ace { namespace scene {
             this->debug.draw_ray(vox2draw(this->ply->e), this->ply->draw_forward * 25.f, this->get_team(this->ply->team).float_color);
 
         this->shaders.billboard.bind();
-        this->billboards.draw(this->shaders.billboard);
+        this->billboards.flush(this->shaders.billboard);
 
         this->shaders.line.bind();
         this->debug.flush(this->cam.matrix(), this->shaders.line);
@@ -483,12 +484,12 @@ namespace ace { namespace scene {
         return ok;
     }
 
-    bool GameScene::damage_point(int x, int y, int z, uint8_t damage, Face f, bool destroy) {
+    bool GameScene::damage_point(int x, int y, int z, uint8_t damage, Face f, bool allow_destroy) {
         if(f != Face::INVALID) {
             this->create_object<world::DebrisGroup>(draw::DrawMap::get_face(x, y, z, f), glm::vec3(unpack_argb(this->map.get_color(x, y, z))), 0.25f, 4);
         }
 
-        if (damage && this->map.damage_point(x, y, z, damage) && destroy) {
+        if (damage && this->map.damage_point(x, y, z, damage) && allow_destroy) {
             this->destroy_point(x, y, z);
             return true;
         }
@@ -497,7 +498,7 @@ namespace ace { namespace scene {
 
     void GameScene::set_zoom(bool zoom) {
         this->cam.sensitivity = zoom ? this->cam.zoom_sensitivity : this->cam.normal_sensitivity;
-        this->cam.set_projection(zoom ? 37.5f : 75.0f, client.width(), client.height(), 0.1f, 128.f);
+        this->cam.set_projection(zoom ? 37.5f : 75.0f, this->client.width(), this->client.height(), 0.1f, 128.f);
     }
 
     void GameScene::send_block_action(int x, int y, int z, net::ACTION type) const {

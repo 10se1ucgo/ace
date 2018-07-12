@@ -59,7 +59,7 @@ namespace ace {
         return { x, y, z };
     }
 
-    // euler to direction
+    // (yaw, pitch) to direction vec3
     inline glm::vec3 ang2dir(float yaw, float pitch) {
         yaw = glm::radians(yaw);
         pitch = glm::radians(pitch);
@@ -68,18 +68,22 @@ namespace ace {
                  glm::cos(pitch) * glm::sin(yaw) };
     }
 
-    inline glm::vec2 dir2ang(const glm::vec3 &dir) {
+    // direction vector to (yaw, pitch)
+    inline glm::vec2 dir2ang(glm::vec3 dir) {
         return { glm::degrees(glm::atan(dir.z, dir.x)), glm::degrees(asin(dir.y)) };
     }
 
+    // convert VOXLAP position (Z is depth) to OpenGL position (Y is height)
     inline glm::vec3 vox2draw(glm::vec3 vox) {
         return { vox.x, -vox.z, vox.y };
     }
 
+    // convert OpenGL position (Y is height) to VOXLAP position (Z is depth)
     inline glm::vec3 draw2vox(glm::vec3 draw) {
         return { draw.x, draw.z, -draw.y };
     }
 
+    // Generate a model matrix from `model` translated by `m_position`, rotated by `m_rotation` and scaled by `m_scale`. 
     inline glm::mat4 model_matrix(glm::vec3 m_position, glm::vec3 m_rotation, glm::vec3 m_scale, glm::mat4 model = glm::mat4(1.0f)) {
         glm::vec3 rot(glm::radians(m_rotation));
         model = glm::translate(model, m_position);
@@ -89,6 +93,7 @@ namespace ace {
         return  glm::scale(model, m_scale);
     }
 
+    // cosine wave generator
     inline float wave(float x, float a, float b) {
         return (glm::cos(x * glm::pi<float>()) * (a - b) + (a + b)) / 2.f;
     }

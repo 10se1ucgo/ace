@@ -55,6 +55,13 @@ namespace util {
             return ptr;
         }
 
+        template<typename Rep, typename Period, typename TFunc, typename... TArgs>
+        loop_type call_every(std::chrono::duration<Rep, Period> time, bool now, TFunc&& func, TArgs&&... args) {
+            loop_type ptr(std::make_shared<detail::LoopingCall>(std::chrono::duration_cast<std::chrono::duration<double>>(time).count(), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...), now ? 0.0 : this->get_time(interval)));
+            this->loops.emplace_back(ptr);
+            return ptr;
+        }
+
         double get_time(double seconds);
     };
 }}

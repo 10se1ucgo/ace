@@ -49,10 +49,9 @@ namespace ace { namespace net {
     BaseNetClient::enet_initer BaseNetClient::initer;
 
     BaseNetClient::~BaseNetClient() {
-        enet_host_flush(this->host);
-        enet_host_destroy(this->host);
         if (this->peer != nullptr)
-            enet_peer_disconnect(this->peer, 0);
+            enet_peer_disconnect_now(this->peer, 0);
+        enet_host_destroy(this->host);
     };
 
     BaseNetClient::BaseNetClient() : host(enet_host_create(nullptr, 1, 1, 0, 0)), peer(nullptr) {
@@ -83,10 +82,11 @@ namespace ace { namespace net {
     }
 
     void BaseNetClient::connect(const char *host, int port, uint32_t data) {
-        if (this->peer != nullptr) {
-            enet_peer_reset(this->peer);
-            this->peer = nullptr;
-        }
+        // if (this->peer != nullptr) {
+        //     enet_peer_disconnect(this->peer, 0);
+        //     this->peer = nullptr;
+        // }
+        this->disconnect();
 
         fmt::print("CONNECTING TO {}:{}\n", host, port);
         ENetAddress address;
@@ -105,6 +105,7 @@ namespace ace { namespace net {
     void BaseNetClient::disconnect() {
         if (this->peer != nullptr) {
             enet_peer_disconnect(this->peer, 0);
+            this->peer = nullptr;
         }
     }
 
@@ -122,8 +123,6 @@ namespace ace { namespace net {
         if(err < 0) {
             fmt::print(stderr, "COULD NOT SEND PACKET WITH ERR {} FOR DATA {}\n", err, hex_data.str());
         }
-
-//        enet_packet_destroy(packet);
     }
 
     NetworkClient::NetworkClient(ace::GameClient &client) : BaseNetClient(), client(client), disconnect_reason(DISCONNECT::INVALID), state(NetState::UNCONNECTED) {
@@ -168,8 +167,6 @@ namespace ace { namespace net {
             uint8_t *data = br.get(&len);
             this->map_writer.write(data, len);
         } break;
-//        case PACKET::StateData:
-//            state = NetState::CONNECTED;
         default: {
             auto packet = get_loader(packet_id);
             if (packet == nullptr) {

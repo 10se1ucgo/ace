@@ -28,7 +28,7 @@ namespace ace { namespace draw {
 
         void draw(glm::vec4 tint, glm::mat3 model, glm::vec4 region = { 0, 0, 1, 1 });
         void draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale = { 1.0, 1.0 }, Align align = Align::TOP_LEFT, glm::vec4 region = { 0, 0, 1, 1 });
-        void draw(gl::ShaderProgram &s);
+        void flush(gl::ShaderProgram &s);
 
         void set_antialias(bool antialias);
 
@@ -87,7 +87,7 @@ namespace ace { namespace draw {
         }
 
         void flush(gl::ShaderProgram& s) {
-            this->group->draw(s);
+            this->group->flush(s);
         }
 
         glm::vec2 get_position() const {
@@ -121,7 +121,7 @@ namespace ace { namespace draw {
         SpriteGroup *get(const std::string &name);
         SpriteGroup *get(const std::string &name, SDL_Surface *data);
 
-        void draw(gl::ShaderProgram &s);
+        void flush(gl::ShaderProgram &s);
     private:
         std::unordered_map<std::string, SpriteGroup> sprites;
     };

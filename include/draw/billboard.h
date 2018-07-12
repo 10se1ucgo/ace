@@ -17,7 +17,7 @@ namespace ace { namespace draw {
         BillboardManager();
 
         void draw(Billboard bb);
-        void draw(gl::ShaderProgram &s);
+        void flush(gl::ShaderProgram &s);
 
         gl::experimental::vao vao;
         gl::experimental::streaming_vbo<Billboard> vbo;

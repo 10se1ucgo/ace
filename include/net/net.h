@@ -80,7 +80,6 @@ namespace ace { namespace net {
 
     struct NetworkClient : BaseNetClient {
         NetworkClient(ace::GameClient &client);
-        ACE_NO_COPY_MOVE(NetworkClient)
 
 //        using BaseNetClient::connect;
         void connect(const Server &server);

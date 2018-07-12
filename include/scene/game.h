@@ -76,8 +76,8 @@ namespace ace { namespace scene {
         void on_text_finished(bool cancelled) override;
 
         bool build_point(int x, int y, int z, glm::u8vec3 color, bool s2c = false);
-        bool destroy_point(int x, int y, int z, net::ACTION type=net::ACTION::DESTROY, bool s2c = false);
-        bool damage_point(int x, int y, int z, uint8_t damage, Face f=Face::INVALID, bool destroy = true);
+        bool destroy_point(int x, int y, int z, net::ACTION type = net::ACTION::DESTROY, bool s2c = false);
+        bool damage_point(int x, int y, int z, uint8_t damage, Face f = Face::INVALID, bool allow_destroy = true);
 
         void set_zoom(bool zoom);
         void set_fog_color(glm::vec3 color);
@@ -121,7 +121,7 @@ namespace ace { namespace scene {
         std::vector<std::unique_ptr<world::WorldObject>> objects;
         std::vector<std::unique_ptr<world::WorldObject>> queued_objects;
 
-        world::DrawPlayer *get_ply(int pid, bool create=true, bool local_player=false) {
+        world::DrawPlayer *get_ply(int pid, bool create = true, bool local_player = false) {
             auto ply = players.find(pid);
             world::DrawPlayer *ptr;
             if(ply != players.end()) {

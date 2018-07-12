@@ -106,7 +106,7 @@ namespace ace { namespace scene {
 
         this->client.shaders->sprite.bind();
         this->client.shaders->sprite.uniform("projection", this->projection);
-        this->client.sprites.draw(this->client.shaders->sprite);
+        this->client.sprites.flush(this->client.shaders->sprite);
 
         this->client.shaders->text.bind();
         this->client.fonts.draw(this->projection, this->client.shaders->text);
@@ -150,15 +150,15 @@ namespace ace { namespace scene {
     }
 
     void LoadingScene::start_game() {
+        if (this->game_scene == nullptr) return;
+
         // hey so im pretty sure calling client.set_scene invalidates this object (client.set_scene() destroys the current scene)
         // so im gonna quickly copy/move all of the important stuff out of the class before we destroy it
         // is this bad design? absolutely. i think.
-        if (this->game_scene == nullptr) return;
-
         auto saved_loaders(std::move(this->saved_loaders));
         auto *scene = this->game_scene.get();
-        
         this->client.set_scene(std::move(this->game_scene));
+
         for (auto &pkt : saved_loaders) {
             scene->on_packet(pkt.first, std::move(pkt.second));
         }
@@ -166,7 +166,7 @@ namespace ace { namespace scene {
     }
 
     void LoadingScene::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
-        if (scancode == SDL_SCANCODE_ESCAPE && pressed) this->client.quit();
+        if (scancode == SDL_SCANCODE_ESCAPE && pressed) this->client.net.disconnect();
     }
 //
     void LoadingScene::on_mouse_motion(int x, int y, int dx, int dy) {

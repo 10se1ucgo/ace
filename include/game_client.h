@@ -31,7 +31,7 @@ namespace ace {
         nlohmann::json json;
     private:
         // SDL_GetScancodeFromName is quite slow (strcmp over every key name)
-        std::unordered_map<std::string, SDL_Scancode> name_to_scancode; 
+        std::unordered_map<std::string, SDL_Scancode> keybind_to_scancode; 
     };
 
     class GameClient {

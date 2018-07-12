@@ -62,7 +62,7 @@ namespace ace { namespace draw {
         this->models->emplace_back(tint, model, region);
     }
 
-    void SpriteGroup::draw(gl::ShaderProgram &s) {
+    void SpriteGroup::flush(gl::ShaderProgram &s) {
         if (this->models->empty()) return;
 
         glActiveTexture(GL_TEXTURE0);
@@ -101,7 +101,7 @@ namespace ace { namespace draw {
         return &insert_or_assign(sprites, name, SpriteGroup{ name, data }).first->second;
     }
 
-    void SpriteManager::draw(gl::ShaderProgram &s) {
+    void SpriteManager::flush(gl::ShaderProgram &s) {
         std::vector<SpriteGroup *> groups;
         groups.reserve(this->sprites.size());
 
@@ -111,7 +111,7 @@ namespace ace { namespace draw {
 
         std::sort(groups.begin(), groups.end(), [](const SpriteGroup *lhs, const SpriteGroup *rhs) { return lhs->order < rhs->order; });
         for(auto &x : groups) {
-            x->draw(s);
+            x->flush(s);
         }
 //        for (auto &x : sorted_view(this->sprites.begin(), this->sprites.end(), [](auto *lhs, auto *rhs) { return lhs->second.order < rhs->second.order; })) {
 //            x->second.draw(s);
