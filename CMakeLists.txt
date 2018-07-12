@@ -14,20 +14,23 @@ if (MSVC)
     set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
     set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
     add_definitions(-DCURL_STATICLIB)
+else (MSVC) #Just assume everyone on windows uses msvc for now
+    set(LIBDL_LIBRARY dl)
 endif (MSVC)
 
+set(OpenGL_GL_PREFERENCE GLVND)
 find_package(SDL2 REQUIRED)
 find_package(SDL2_image REQUIRED)
 find_package(ENet REQUIRED)
 find_package(CURL REQUIRED)
 find_package(ZLIB REQUIRED)
-find_package(FreeType REQUIRED)
+find_package(Freetype REQUIRED)
 find_package(OpenGL REQUIRED)
 find_package(OpenAL REQUIRED)
 find_package(GLM REQUIRED)
 find_package(ALURE REQUIRED)
 
-find_path(JSON_INCLUDE_DIRS "nlohmann/json.hpp")
+find_path(JSON_INCLUDE_DIRS "nlohmann/json.hpp" HINTS "include")
 if(JSON_INCLUDE_DIRS STREQUAL "JSON_INCLUDE_DIRS-NOTFOUND")
   message( FATAL_ERROR "Nlohmann JSON library not found" )
 endif()
@@ -52,5 +55,6 @@ target_link_libraries(ace ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES}
                           ${ZLIB_LIBRARIES}
                           ${OPENAL_LIBRARY} ${ALURE_LIBRARY}
                           ${FREETYPE_LIBRARIES}
-                          ${CURL_LIBRARIES} 
+                          ${CURL_LIBRARIES}
+                          ${LIBDL_LIBRARY}
                           fmt::fmt)

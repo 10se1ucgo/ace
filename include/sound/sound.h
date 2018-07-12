@@ -19,7 +19,7 @@ namespace ace { namespace sound {
     struct SoundBuffer {
         SoundBuffer(const std::string &name);
 
-        abo abo;
+        abo buffer;
     };
 
     struct Sound {

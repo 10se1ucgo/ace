@@ -120,7 +120,7 @@ namespace ace { namespace scene {
         }
 
         this->frame.progress_bar->value = client.net.map_writer.vec.size();
-        this->frame.progress_bar->range = std::max(1u, client.net.map_writer.vec.capacity());
+        this->frame.progress_bar->range = std::max(size_t(1), client.net.map_writer.vec.capacity());
         if(this->game_scene) {
             this->frame.progress_bar->value = this->frame.progress_bar->range;
         }

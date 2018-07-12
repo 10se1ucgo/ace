@@ -68,5 +68,5 @@ namespace ace {
 }
 
 
-#define THROW_ERROR(fmt, ...) throw ace::RuntimeException(__FILE__, __LINE__, __func__, fmt, __VA_ARGS__)
+#define THROW_ERROR(fmt, ...) throw ace::RuntimeException(__FILE__, __LINE__, __func__, fmt, ##__VA_ARGS__)
 

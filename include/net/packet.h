@@ -1,7 +1,8 @@
 #pragma once
+#include <vector>
 #include "fmt/format.h"
 #include "glm/glm.hpp"
-
+#include "common.h"
 #include "util/except.h"
 
 namespace ace { namespace net {
@@ -165,15 +166,15 @@ namespace ace { namespace net {
     };
 
     enum class WEAPON : uint8_t {
-        INVALID = -1,
-        SEMI,
+        INVALID = 255,
+        SEMI = 1,
         SMG,
         SHOTGUN,
     };
 
     enum class HIT : uint8_t {
-        INVALID = -1,
-        TORSO,
+        INVALID = 255,
+        TORSO = 1,
         HEAD,
         ARMS,
         LEGS,
@@ -181,40 +182,40 @@ namespace ace { namespace net {
     };
 
     enum class TOOL : uint8_t {
-        INVALID = -1,
-        SPADE,
+        INVALID = 255,
+        SPADE = 1,
         BLOCK,
         WEAPON,
         GRENADE,
     };
 
     enum class ACTION : uint8_t {
-        INVALID = -1,
-        BUILD,
+        INVALID = 255,
+        BUILD = 1,
         DESTROY,
         SPADE,
         GRENADE,
     };
 
     enum class CHAT : uint8_t {
-        INVALID = -1,
-        ALL,
+        INVALID = 255,
+        ALL = 1,
         TEAM,
         SYSTEM,
 //        BIG
     };
 
     enum class OBJECT : uint8_t {
-        INVALID = -1,
-        BLUE_FLAG,
+        INVALID = 255,
+        BLUE_FLAG = 1,
         GREEN_FLAG,
         BLUE_BASE,
         GREEN_BASE,
     };
 
     enum class KILL : uint8_t {
-        INVALID = -1,
-        WEAPON,
+        INVALID = 255,
+        WEAPON = 1,
         HEADSHOT,
         MELEE,
         GRENADE,
@@ -224,8 +225,8 @@ namespace ace { namespace net {
     };
 
     enum class DISCONNECT : uint8_t {
-        INVALID = -1,
-        UNDEFINED,
+        INVALID = 255,
+        UNDEFINED = 1,
         BANNED,
         KICKED,
         WRONG_VERSION,
@@ -233,8 +234,8 @@ namespace ace { namespace net {
     };
 
     enum class DAMAGE : uint8_t {
-        INVALID = -1,
-        FALL,
+        INVALID = 255,
+        FALL = 1,
         OTHER,
     };
 

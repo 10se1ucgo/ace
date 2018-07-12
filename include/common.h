@@ -1,4 +1,4 @@
-#pragma once
+﻿#pragma once 
 #include <random>
 #include <chrono>
 #include <cmath>
@@ -44,7 +44,7 @@ namespace ace {
         template<typename T>
         std::enable_if_t<std::is_enum<T>::value, T> choice_range(T first, T last) {
             using underlying = std::underlying_type_t<T>;
-            using type = std::conditional_t<std::is_same_v<signed char, std::make_signed_t<underlying>>, int, underlying>;
+            using type = std::conditional_t<std::is_same<signed char, std::make_signed_t<underlying>>::value, int, underlying>;
             // uniform_int_distribution prohibits char types, for whatever reason.
             return T(random::random(type(first), type(last)));
         }
@@ -133,4 +133,4 @@ namespace fmt {
 #define ACE_NO_COPY_MOVE(T) \
     ACE_NO_COPY(T) \
     T(T&&) = delete; \
-    void operator=(T&&) = delete; \
+    void operator=(T&&) = delete;

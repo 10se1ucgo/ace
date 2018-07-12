@@ -1,3 +1,4 @@
+#include <algorithm>
 #include "net/url.h"
 #include "util/except.h"
 

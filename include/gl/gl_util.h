@@ -152,7 +152,7 @@ namespace ace { namespace gl {
         struct texture2d {
             static constexpr GLenum target = GL_TEXTURE_2D;
             static constexpr GLenum gl_format = GL_RGBA;
-            static constexpr auto sdl_format = SDL_PIXELFORMAT_RGBA32;
+            static constexpr Uint32 sdl_format = SDL_PIXELFORMAT_RGBA32;
             using pixel_type = uint32_t;
 
             texture2d(int width = 0, int height = 0, std::unique_ptr<pixel_type[]> pixels = nullptr);
