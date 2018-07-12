@@ -130,7 +130,7 @@ namespace ace { namespace net {
         }
     };
 
-    enum class PACKET : int8_t {
+    enum class PACKET : uint8_t {
         PositionData,
         OrientationData,
         WorldUpdate,
