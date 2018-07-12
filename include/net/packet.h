@@ -165,57 +165,57 @@ namespace ace { namespace net {
         ChangeWeapon,
     };
 
-    enum class WEAPON : int8_t {
-        INVALID = -1,
-        SEMI,
+    enum class WEAPON : uint8_t {
+        INVALID = 255,
+        SEMI = 1,
         SMG,
         SHOTGUN,
     };
 
-    enum class HIT : int8_t {
-        INVALID = -1,
-        TORSO,
+    enum class HIT : uint8_t {
+        INVALID = 255,
+        TORSO = 1,
         HEAD,
         ARMS,
         LEGS,
         MELEE,
     };
 
-    enum class TOOL : int8_t {
-        INVALID = -1,
-        SPADE,
+    enum class TOOL : uint8_t {
+        INVALID = 255,
+        SPADE = 1,
         BLOCK,
         WEAPON,
         GRENADE,
     };
 
-    enum class ACTION : int8_t {
-        INVALID = -1,
-        BUILD,
+    enum class ACTION : uint8_t {
+        INVALID = 255,
+        BUILD = 1,
         DESTROY,
         SPADE,
         GRENADE,
     };
 
-    enum class CHAT : int8_t {
-        INVALID = -1,
-        ALL,
+    enum class CHAT : uint8_t {
+        INVALID = 255,
+        ALL = 1,
         TEAM,
         SYSTEM,
 //        BIG
     };
 
-    enum class OBJECT : int8_t {
-        INVALID = -1,
-        BLUE_FLAG,
+    enum class OBJECT : uint8_t {
+        INVALID = 255,
+        BLUE_FLAG = 1,
         GREEN_FLAG,
         BLUE_BASE,
         GREEN_BASE,
     };
 
-    enum class KILL : int8_t {
-        INVALID = -1,
-        WEAPON,
+    enum class KILL : uint8_t {
+        INVALID = 255,
+        WEAPON = 1,
         HEADSHOT,
         MELEE,
         GRENADE,
@@ -224,24 +224,24 @@ namespace ace { namespace net {
         CLASS_CHANGE,
     };
 
-    enum class DISCONNECT : int8_t {
-        INVALID = -1,
-        UNDEFINED,
+    enum class DISCONNECT : uint8_t {
+        INVALID = 255,
+        UNDEFINED = 1,
         BANNED,
         KICKED,
         WRONG_VERSION,
         FULL,
     };
 
-    enum class DAMAGE : int8_t {
-        INVALID = -1,
-        FALL,
+    enum class DAMAGE : uint8_t {
+        INVALID = 255,
+        FALL = 1,
         OTHER,
     };
 
-    enum class TEAM : int8_t {
-        SPECTATOR = -1,
-        TEAM1,
+    enum class TEAM : uint8_t {
+        SPECTATOR = 255,
+        TEAM1 = 1,
         TEAM2,
         NEUTRAL,
     };

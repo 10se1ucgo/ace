@@ -23,7 +23,7 @@ namespace ace { namespace sound {
 
     SoundBuffer::SoundBuffer(const std::string& name) {
         CHECK_AL_ERROR();
-        if(alureBufferDataFromFile(name.c_str(), this->abo) == AL_FALSE) {
+        if(alureBufferDataFromFile(name.c_str(), this->buffer) == AL_FALSE) {
             THROW_ERROR("FAILED TO LOAD SOUND FILE {} WITH ERROR{}\n", name, alureGetErrorString());
         }
     }
@@ -36,7 +36,7 @@ namespace ace { namespace sound {
     void Sound::set_buf(SoundBuffer *buf) {
         this->stop();
         if (buf != nullptr) {
-            alSourcei(this->snd, AL_BUFFER, buf->abo);
+            alSourcei(this->snd, AL_BUFFER, buf->buffer);
             CHECK_AL_ERROR();
         }
     }

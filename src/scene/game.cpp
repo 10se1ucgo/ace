@@ -604,7 +604,5 @@ namespace ace { namespace scene {
         glClearColor(color.r, color.g, color.b, 1.0f);
         this->uniforms->light_pos = normalize(glm::vec3{ -0.16, 0.8, 0.56 });
         this->uniforms->fog_color = color;
-        auto &y = this->uniforms;
-        auto x = y->fog_color;
     }
 }}
