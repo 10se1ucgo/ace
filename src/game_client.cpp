@@ -30,7 +30,6 @@ namespace ace {
     }
 
     SDL_Scancode GameConfig::get_key(const std::string &key) {
-        ; // k.get<std::underlying_type_t<SDL_Scancode>>();
         auto &entry(this->json["controls"].at(key));
         if (entry.is_number()) {
             return SDL_Scancode(entry.get<std::underlying_type_t<SDL_Scancode>>());
