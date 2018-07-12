@@ -239,9 +239,9 @@ namespace ace { namespace net {
         OTHER,
     };
 
-    enum class TEAM : uint8_t {
-        SPECTATOR = 255,
-        TEAM1 = 1,
+    enum class TEAM : int8_t {
+        SPECTATOR = -1,
+        TEAM1,
         TEAM2,
         NEUTRAL,
     };
