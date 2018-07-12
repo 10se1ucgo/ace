@@ -26,7 +26,17 @@ namespace ace {
     GameConfig::GameConfig(std::string file_name) {
         std::ifstream{ file_name } >> this->json;
         
-        // i >> j;
+        // this doesnt work because `mouse/ads_sensitivity` is under the "controls" object. probably just gonna leave it that way for now
+        // for (const auto &entry : this->json["controls"].items()) {
+        //     auto &val = entry.value();
+        //     SDL_Scancode code;
+        //     if(val.is_number_integer()) {
+        //         code = SDL_Scancode(val.get<std::underlying_type_t<SDL_Scancode>>());
+        //     } else {
+        //         code = SDL_GetScancodeFromName(val.get_ref<const std::string &>().c_str());
+        //     }
+        //     fmt::print("{}: {}\n", entry.key(), code);
+        // }
     }
 
     SDL_Scancode GameConfig::get_key(const std::string &key) {
@@ -36,9 +46,9 @@ namespace ace {
         }
 
         const auto &key_name = entry.get_ref<const std::string &>();
-        auto it = this->name_to_scancode.find(key_name);
-        if(it == this->name_to_scancode.end()) {
-            return this->name_to_scancode[key_name] = SDL_GetScancodeFromName(key_name.c_str());
+        auto it = this->keybind_to_scancode.find(key_name);
+        if(it == this->keybind_to_scancode.end()) {
+            return this->keybind_to_scancode[key_name] = SDL_GetScancodeFromName(key_name.c_str());
         }
 
         return it->second;
@@ -59,7 +69,7 @@ namespace ace {
             SDL_ERROR("IMG_Init");
 
         SDL_GL_LoadLibrary(nullptr);
-        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+        SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_PROFILE_MASK, SDL_GL_CONTEXT_PROFILE_CORE);
 
@@ -91,8 +101,17 @@ namespace ace {
             SDL_ERROR("SDL_CreateWindow");
 
         this->context = SDL_GL_CreateContext(this->window);
-        if (this->context == nullptr)
-            SDL_ERROR("SDL_GL_CreateContext");
+        if (this->context == nullptr) {
+            // lower version and try again
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 3);
+            SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
+            this->context = SDL_GL_CreateContext(this->window);
+            fmt::print("Couldn't load OpenGL 4.3, falling back to 3.3...\n");
+            if(this->context == nullptr) {
+                SDL_ERROR("SDL_GL_CreateContext");
+            }
+        }
+            
 
         if (!gladLoadGLLoader(SDL_GL_GetProcAddress)) {
             THROW_ERROR("gladLoaderGLLoader fail");

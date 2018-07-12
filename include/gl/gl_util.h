@@ -130,7 +130,8 @@ namespace ace { namespace gl {
                 if (this->data.size() * sizeof(T) + this->current_offset > this->vbo_size) {
                     this->vbo_size = this->data.capacity() * sizeof(T) * 2; // steal the vector's geometric growth pattern B)
                     this->current_offset = 0;
-                    glInvalidateBufferData(this->handle);
+                    // if(GLAD_GL_VERSION_4_3)
+                    //     glInvalidateBufferData(this->handle);
                     glBufferData(GL_ARRAY_BUFFER, this->vbo_size, nullptr, this->usage);
                 }
 
