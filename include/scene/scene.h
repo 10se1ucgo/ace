@@ -7,11 +7,18 @@ namespace ace {
     
     namespace scene {
     struct Scene {
-        Scene(ace::GameClient &client) : time(0.0), ms_time(0), client(client) {
+        Scene(ace::GameClient &client) : client(client) {
         }
         virtual ~Scene() = default;
 
-        virtual void update(double dt) { this->time += dt; ms_time = this->time * 1000; }
+        virtual void update(double dt) {
+            this->time += dt;
+            this->ms_time = this->time * 1000;
+        }
+        virtual void fixed_update(double dt) {
+            this->fixed_time += dt;
+            this->ms_fixed_time = this->fixed_time * 1000;
+        }
         virtual void draw() { }
 
         virtual void on_key(SDL_Scancode scancode, int modifiers, bool pressed) { };
@@ -25,8 +32,8 @@ namespace ace {
         virtual void on_net_event(net::NetState event) { }
         virtual void on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) { fmt::print("UNHANDLED PACKET {}\n", type); };
 
-        double time;
-        uint64_t ms_time;
+        double time = 0.0, fixed_time = 0.0;
+        uint64_t ms_time = 0, ms_fixed_time = 0;
         ace::GameClient &client;
     };
 

@@ -63,6 +63,7 @@ namespace ace { namespace scene {
         void start();
         void draw() override;
         void update(double dt) override;
+        void fixed_update(double dt) override;
 
         void on_key(SDL_Scancode scancode, int modifiers, bool pressed) override;
         void on_mouse_motion(int x, int y, int dx, int dy) override;

@@ -194,8 +194,6 @@ namespace ace { namespace draw {
                 p.draw();
             }
         }
-
-
     }
 
     Pillar &DrawMap::get_pillar(const int x, const int y, const int z) {

@@ -16,7 +16,7 @@ namespace ace {
 
     struct AcePlayer {
         explicit AcePlayer(scene::GameScene &scene);
-        long update(double dt);
+        long fixed_update(double dt);
         long update_dead(double dt);
         void set_orientation(float x, float y, float z);
 
@@ -34,7 +34,8 @@ namespace ace {
     struct DrawPlayer : AcePlayer {
         explicit DrawPlayer(scene::GameScene& scene, bool local_player = false);
 
-        long update(double dt);
+        void update(double dt);
+        long fixed_update(double dt);
         void draw();
 
         void set_position(float x, float y, float z);
@@ -54,11 +55,9 @@ namespace ace {
 
         void play_sound(const std::string &name, int volume=100) const;
 
-        
-
         uint8_t pid{}, health{};
-        net::WEAPON weapon{net::WEAPON::INVALID};
-        net::TOOL tool{net::TOOL::INVALID};
+        net::WEAPON equipped_weapon{net::WEAPON::INVALID};
+        net::TOOL held_tool{net::TOOL::INVALID};
         net::TEAM team{net::TEAM::SPECTATOR};
         uint32_t kills{};
         glm::u8vec3 color{112, 112, 112};

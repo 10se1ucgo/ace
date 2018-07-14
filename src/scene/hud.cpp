@@ -208,7 +208,7 @@ namespace ace { namespace scene {
             this->sys48->draw_shadowed(std::to_string(this->scene.ply->health), { scene.client.width() / 2.f, scene.client.height() - 20 }, scene.ply->health <= 20 ? glm::vec3{ 1, 0, 0 } : glm::vec3{ 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
 
             this->ammo_icon.position = { scene.client.width(), scene.client.height() - 20 };
-            if (this->scene.ply->tool == net::TOOL::BLOCK) {
+            if (this->scene.ply->held_tool == net::TOOL::BLOCK) {
                 this->pal.draw();
                 this->palret.tint = glm::vec4{ float(int(scene.time * 2) % 2) };
                 this->palret.tint.a = 1.0f;

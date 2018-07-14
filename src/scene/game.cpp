@@ -118,40 +118,48 @@ namespace ace { namespace scene {
     void GameScene::update(double dt) {
         Scene::update(dt);
 
-        for (auto &kv : teams) {
+        for (auto &kv : this->teams) {
             kv.second.update_players(*this);
         }
 
-        map.update(dt);
+        this->map.update(dt);
 
-        cam.update(dt);
-        for (auto &kv : players) {
+        this->cam.update(dt);
+        for (auto &kv : this->players) {
             kv.second->update(dt);
         }
-        cam.update_view();
+        this->cam.update_view();
 
-        for (auto &kv : entities) {
+        for (auto &kv : this->entities) {
             kv.second->update(dt);
         }
 
-        while(!queued_objects.empty()) {
-            const auto it = queued_objects.end() - 1;
+        while(!this->queued_objects.empty()) {
+            const auto it = this->queued_objects.end() - 1;
             this->objects.emplace_back(std::move(*it));
-            queued_objects.erase(it);
+            this->queued_objects.erase(it);
         }
-        for (auto i = objects.begin(); i != objects.end();) {
+        for (auto i = this->objects.begin(); i != this->objects.end();) {
             if ((*i)->update(dt)) {
-                i = objects.erase(i);
+                i = this->objects.erase(i);
             } else {
                 ++i;
             }
         }
 
-        hud.update(dt);
+        this->hud.update(dt);
+    }
+
+    void GameScene::fixed_update(double dt) {
+        Scene::fixed_update(dt);
+
+        for (auto &kv : this->players) {
+            kv.second->fixed_update(dt);
+        }
     }
 
     void GameScene::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
-        hud.on_key(scancode, modifiers, pressed);
+        this->hud.on_key(scancode, modifiers, pressed);
 
         if (pressed) {
 #ifndef NDEBUG
@@ -188,15 +196,15 @@ namespace ace { namespace scene {
     };
 
     void GameScene::on_mouse_motion(int x, int y, int dx, int dy) {
-        hud.on_mouse_motion(x, y, dx, dy);
+        this->hud.on_mouse_motion(x, y, dx, dy);
     }
 
     void GameScene::on_mouse_button(int button, bool pressed) {
-        hud.on_mouse_button(button, pressed);
+        this->hud.on_mouse_button(button, pressed);
     }
 
     void GameScene::on_window_resize(int ow, int oh) {
-        hud.on_window_resize(ow, oh);
+        this->hud.on_window_resize(ow, oh);
         glViewport(0, 0, this->client.width(), this->client.height());
         this->set_zoom(false);
     }

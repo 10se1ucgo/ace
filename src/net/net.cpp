@@ -110,7 +110,7 @@ namespace ace { namespace net {
     }
 
     void BaseNetClient::send(const void *data, size_t len, enet_uint32 flags) const {
-        if (this->peer == nullptr) THROW_ERROR("SENDING PACKET ON INVALID PEER\n");
+        if (this->peer == nullptr) return fmt::print(stderr, "SENDING PACKET ON INVALID PEER\n");
 
         fmt::MemoryWriter hex_data;
         for (size_t i = 0; i < len; i++) {

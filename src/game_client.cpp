@@ -67,6 +67,8 @@ namespace ace {
     // void GameConfig::write() {
     // }
 
+    constexpr double FIXED_DELTA_TIMESTEP = 1.0 / 60.0;
+
     GameClient::GameClient(std::string caption /*, int w, int h, WINDOW_STYLE style */):
         net(*this), tasks(*this), window_title(std::move(caption)) {
 
@@ -152,11 +154,19 @@ namespace ace {
 
     void GameClient::run() {
         Uint64 last = SDL_GetPerformanceCounter();
+        double fixed_accum = 0;
         while (!this->_quit) {
             Uint64 now = SDL_GetPerformanceCounter();
             double dt = (now - last) / double(SDL_GetPerformanceFrequency());
             this->time += dt;
             last = now;
+
+            fixed_accum += dt;
+            while(fixed_accum >= FIXED_DELTA_TIMESTEP) {
+                // this->fixed_update(FIXED_DELTA_TIMESTEP);
+                this->scene->fixed_update(FIXED_DELTA_TIMESTEP);
+                fixed_accum -= FIXED_DELTA_TIMESTEP;
+            }
 
             this->update(dt);
         }

@@ -18,7 +18,7 @@ namespace ace { namespace world {
         this->lastclimb = 0.0;
     }
 
-    long AcePlayer::update(double dt) {
+    long AcePlayer::fixed_update(double dt) {
         if(!this->alive) {
             return this->update_dead(dt);
         }
@@ -252,9 +252,9 @@ namespace ace { namespace world {
         AcePlayer(scene),
         mdl_head(scene.models.get("playerhead.kv6")),
         mdl_torso(scene.models.get("playertorso.kv6")),
-        mdl_arms(scene.models.get("playerarms.kv6")),
         mdl_legr(scene.models.get("playerleg.kv6")),
         mdl_legl(scene.models.get("playerleg.kv6")),
+        mdl_arms(scene.models.get("playerarms.kv6")),
         mdl_dead(scene.models.get("playerdead.kv6")),
         local_player(local_player),
         blocks(*this), spade(*this), grenades(*this), switch_time(0.0) {
@@ -263,17 +263,24 @@ namespace ace { namespace world {
         this->restock(true);
     }
 
-    long DrawPlayer::update(double dt) {
+    const char *STEPS[] = {
+        "footstep1.wav", "footstep2.wav", "footstep3.wav", "footstep4.wav",
+        "wade1.wav", "wade2.wav", "wade3.wav", "wade4.wav"
+    };
+
+    void DrawPlayer::update(double dt) {
         if(!this->get_tool()->available()) {
-            this->set_tool(net::TOOL(uint8_t(this->tool) - 1));
+            this->set_tool(net::TOOL(uint8_t(this->held_tool) - 1));
         }
 
-        if (this->local_player && this->alive) {
+        if (!this->alive) return;
+
+        if (this->local_player) {
             double old_switch = this->switch_time;
             this->switch_time = std::max(old_switch - dt, 0.0);
             if(old_switch > 0 && this->switch_time <= 0.0) {
                 net::SetTool st;
-                st.tool = this->tool;
+                st.tool = this->held_tool;
                 this->scene.client.net.send_packet(st);
             }
 
@@ -295,46 +302,45 @@ namespace ace { namespace world {
                 changed |= this->set_fire(mouse & SDL_BUTTON(SDL_BUTTON_LEFT), mouse & SDL_BUTTON(SDL_BUTTON_RIGHT));
                 if (changed) this->scene.send_input_update();
             }
+
+            if (!this->scene.thirdperson) {
+                this->scene.cam.position = vox2draw(this->e);
+            }
         } else {
             this->switch_time = 0.0;
         }
-       
-        
+
+        if (fabs(this->v.x) > 0.01f || fabs(this->v.y) > 0.01f) {
+            if (scene.time >= this->next_footstep && (mf || mb || ml || mr) && !this->airborne && !this->crouch && !this->sneak) {
+
+                int step = this->scene.ms_time & 3;
+                std::string sound = fmt::format("{}{}.wav", this->wade ? "wade" : "footstep", step);
+                this->play_sound(STEPS[step + int(this->wade) * 4]);
+                //                this->scene.client.sound.play(sound, vox2draw(this->p) + 0.5f, 100, this->local_player && !this->scene.thirdperson);
+                this->next_footstep = scene.time + (this->sprint ? 0.386f : 0.512f);
+            }
+        }
+
+        this->get_tool()->update(dt);
+    }
+
+    long DrawPlayer::fixed_update(double dt) {
         if (this->jump && !this->airborne && this->alive) {
             this->play_sound(this->wade ? "waterjump.wav" : "jump.wav");
         }
 
+        long ret = AcePlayer::fixed_update(dt);
 
-
-        long ret = AcePlayer::update(dt);
-
-        if(!this->alive) {
+        if (!this->alive) {
             return -2;
         }
 
-        if(ret == -1) {
+        if (ret == -1) {
             this->play_sound(this->wade ? "waterland.wav" : "land.wav");
         } else if (ret > 0 && this->local_player) {
             this->play_sound("fallhurt.wav");
         }
 
-        if(this->local_player && !this->scene.thirdperson) {
-            this->scene.cam.position = vox2draw(this->e);
-        }
-
-        
-        
-        if(fabs(v.x) > 0.01f || fabs(v.y) > 0.01f) {
-            if (scene.time >= this->next_footstep && (mf || mb || ml || mr) && !this->airborne && !this->crouch && !this->sneak) {
-
-                int step = (scene.ms_time & 3) + 1;
-                std::string sound = fmt::format("{}{}.wav", this->wade ? "wade" : "footstep", step);
-                this->play_sound(sound);
-//                this->scene.client.sound.play(sound, vox2draw(this->p) + 0.5f, 100, this->local_player && !this->scene.thirdperson);
-                this->next_footstep = scene.time + (this->sprint ? 0.386f : 0.512f);
-            }
-        }
-        this->get_tool()->update(dt);
         return ret;
     }
 
@@ -387,12 +393,12 @@ namespace ace { namespace world {
         if (!this->get_tool(tool)->available() && this->local_player) return;
 
         this->switch_time = 0.5f;
-        if (tool == this->tool) return;
+        if (tool == this->held_tool) return;
         
         this->weapon_equipped = tool == net::TOOL::WEAPON;
         Tool *t = this->get_tool();
         if (t) t->holster();
-        this->tool = tool;
+        this->held_tool = tool;
         t = this->get_tool();
         if(t) t->deploy();
         
@@ -403,10 +409,10 @@ namespace ace { namespace world {
     }
 
     void DrawPlayer::set_weapon(net::WEAPON weapon) {
-        if (weapon == this->weapon) return;
+        if (weapon == this->equipped_weapon) return;
 
-        this->weapon = weapon;
-        switch (this->weapon) {
+        this->equipped_weapon = weapon;
+        switch (this->equipped_weapon) {
         case net::WEAPON::SEMI: this->weapon_obj = std::make_unique<SemiWeapon>(*this); break;
         case net::WEAPON::SMG: this->weapon_obj = std::make_unique<SMGWeapon>(*this); break;
         case net::WEAPON::SHOTGUN: this->weapon_obj = std::make_unique<ShotgunWeapon>(*this); break;
@@ -471,7 +477,7 @@ namespace ace { namespace world {
 ;    }
 
     Tool *DrawPlayer::get_tool(net::TOOL tool) {
-        if (tool == net::TOOL::INVALID) tool = this->tool;
+        if (tool == net::TOOL::INVALID) tool = this->held_tool;
 
         switch(tool) {
         case net::TOOL::BLOCK: return &this->blocks;
@@ -483,8 +489,10 @@ namespace ace { namespace world {
     }
 
     void DrawPlayer::transform() {
-        const glm::vec2 angles = dir2ang(draw_forward);
+        const glm::vec2 angles = dir2ang(this->draw_forward);
         const float yaw = angles.x, pitch = angles.y;
+        glm::vec2 angles2 = dir2ang(this->f);
+        fmt::print("{},{} vs {},{}\n", -yaw + 90, -pitch, angles2.x, angles2.y);
 
         if (!this->alive) {
             this->mdl_dead.rotation = { 0, -yaw + 90, 0 };
@@ -512,7 +520,8 @@ namespace ace { namespace world {
 
             if (fabs(v.x) > 0.01f || fabs(v.y) > 0.01f) {
                 float rot1, rot2;
-                rot1 = rot2 = (scene.ms_time & 511) - 255.f;
+                rot1 = rot2 = (this->scene.ms_time & 511) - 255.f;
+
                 rot1 *= this->f.x * this->v.x + this->f.y * this->v.y * 0.028f * 30;
                 rot2 *= this->s.x * this->v.x + this->s.y * this->v.y * 0.028f * 30;
 
@@ -520,17 +529,17 @@ namespace ace { namespace world {
                 //            rot2 *= 0.028;
                 //            rot1 *= 30;
                 //            rot2 *= 30;
-                if ((scene.ms_time & 1023) > 511) {
-                    mdl_legl.rotation.x = -rot1;
-                    mdl_legl.rotation.z = -rot2;
-                    mdl_legr.rotation.x = rot1;
-                    mdl_legr.rotation.z = rot2;
+                if ((this->scene.ms_time & 1023) > 511) {
+                    this->mdl_legl.rotation.x = -rot1;
+                    this->mdl_legl.rotation.z = -rot2;
+                    this->mdl_legr.rotation.x = rot1;
+                    this->mdl_legr.rotation.z = rot2;
                 }
                 else {
-                    mdl_legl.rotation.x = rot1;
-                    mdl_legl.rotation.z = rot2;
-                    mdl_legr.rotation.x = -rot1;
-                    mdl_legr.rotation.z = -rot2;
+                    this->mdl_legl.rotation.x = rot1;
+                    this->mdl_legl.rotation.z = rot2;
+                    this->mdl_legr.rotation.x = -rot1;
+                    this->mdl_legr.rotation.z = -rot2;
                 }
             }
         } else {
