@@ -93,7 +93,7 @@ namespace ace { namespace draw {
         try {
             return &sprites.at(name);
         } catch (std::out_of_range &) {
-            return &sprites.emplace(name, "png/" + name).first->second;
+            return &sprites.emplace(name, get_resource_path("png/" + name)).first->second;
         }
     }
 

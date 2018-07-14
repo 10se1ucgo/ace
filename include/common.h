@@ -8,8 +8,38 @@
 #include "glm/gtc/matrix_transform.hpp"
 #include "glm/gtx/type_trait.hpp"
 #include "glm/gtx/string_cast.hpp"
+#include "SDL_filesystem.h"
 
 namespace ace {
+    inline const std::string &resource_dir() {
+        static struct PathFinder { // hah
+            // If im correct PathFinder's constructor should be called on the first call to this
+            // this way the path will be initialized (hopefully) after SDL_Init (provided nobody calls this before GameClient's ctor)
+            
+            // I can't put this in GameClient because most of the resource managers have no attachment to the client or scene
+            // but they need to be able to use this path. Also don't want to make it a global variable because it shouldn't be mutable.
+            // I also don't want to call SDL_GetBasePath often, because the documentation says it might not be necessarily fast.
+            // It's also a useless number of memory allocations.
+
+            // Can't use an if statement because an empty string is valid (SDL_GBP returns nullptr on error)
+            // And making a string/bool pair is not CLEVER ENOUGH FOR ME
+            PathFinder() {
+                char *base_path = SDL_GetBasePath();
+                if(base_path) {
+                    this->path.assign(base_path);
+                }
+                SDL_free(base_path);
+            }
+            std::string path;
+        } finder;
+        return finder.path;
+    }
+
+    // Currently just adds the resource dir to the resource path, but maybe later I'll need to expand it.
+    inline std::string get_resource_path(const std::string &resource) {
+        return resource_dir() + resource;
+    }
+
     // Simple, generic wrappers around standard C++ <random>
     namespace random {
         inline std::default_random_engine &engine() {
@@ -133,7 +163,7 @@ namespace fmt {
 
 #define ACE_NO_COPY(T) \
     T(const T &other) = delete; \
-    void operator=(const T &other) = delete; \
+    void operator=(const T &other) = delete;
 
 #define ACE_NO_COPY_MOVE(T) \
     ACE_NO_COPY(T) \

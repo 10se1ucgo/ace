@@ -24,7 +24,9 @@ namespace ace {
     };
 
     struct GameConfig {
-        GameConfig(std::string file_name);
+        GameConfig();
+        GameConfig(const std::string &file_name);
+        void read(const std::string &file_name);
 
         SDL_Scancode get_key(const std::string &key);
 

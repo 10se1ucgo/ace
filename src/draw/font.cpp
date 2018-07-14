@@ -83,7 +83,7 @@ namespace ace { namespace draw {
         this->vao.attrib_pointer("2f,2f,3f", this->vbo.handle);
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, tex);
+        glBindTexture(GL_TEXTURE_2D, this->tex);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_S, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_WRAP_T, GL_CLAMP_TO_EDGE);
         glTexParameteri(GL_TEXTURE_2D, GL_TEXTURE_MIN_FILTER, GL_NEAREST);
@@ -91,7 +91,18 @@ namespace ace { namespace draw {
 
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, this->width, this->height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+
+        // I noticed that some fonts would have weird spots at the bottom.
+        // Probably because the default contents of a texture are undefined and some glyphs don't fill up the entire block?
+        // Clear texture if available, otherwise just upload an empty texture.
+        if(GLAD_GL_VERSION_4_4 || GLAD_GL_ARB_clear_texture) {
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, this->width, this->height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+            uint8_t r = 0;
+            glClearTexImage(this->tex, 0, GL_RED, GL_UNSIGNED_BYTE, &r);
+        } else {
+            std::vector<uint8_t> data(this->width * this->height, 0);
+            glTexImage2D(GL_TEXTURE_2D, 0, GL_RED, this->width, this->height, 0, GL_RED, GL_UNSIGNED_BYTE, data.data());
+        }
 
         std::vector<uint8_t> bmpbuffer; // if using FT_LOAD_MONOCHROME;
         unsigned int x = 0;
@@ -107,16 +118,16 @@ namespace ace { namespace draw {
             }
             glTexSubImage2D(GL_TEXTURE_2D, 0, x, 0, g->bitmap.width, g->bitmap.rows, GL_RED, GL_UNSIGNED_BYTE, buffer);
 
-            chars[c].advance = { g->advance.x >> 6, g->advance.y >> 6 };
-            chars[c].dim = { g->bitmap.width, g->bitmap.rows };
-            chars[c].bearing = { g->bitmap_left, g->bitmap_top };
-            auto tx = float(x) / width;
-            chars[c].tx = tx;
+            this->chars[c].advance = { g->advance.x >> 6, g->advance.y >> 6 };
+            this->chars[c].dim = { g->bitmap.width, g->bitmap.rows };
+            this->chars[c].bearing = { g->bitmap_left, g->bitmap_top };
+            auto tx = float(x) / this->width;
+            this->chars[c].tx = tx;
 
-            chars[c].tl = { tx, 0 };
-            chars[c].tr = { tx + chars[c].dim.x / float(this->width), 0 };
-            chars[c].bl = { tx, chars[c].dim.y / float(this->height) };
-            chars[c].br = { tx + chars[c].dim.x / float(this->width), chars[c].dim.y / float(this->height) };
+            this->chars[c].tl = { tx, 0 };
+            this->chars[c].tr = { tx + this->chars[c].dim.x / float(this->width), 0 };
+            this->chars[c].bl = { tx, this->chars[c].dim.y / float(this->height) };
+            this->chars[c].br = { tx + this->chars[c].dim.x / float(this->width), this->chars[c].dim.y / float(this->height) };
 
             x += g->bitmap.width + 1;
         }
@@ -131,7 +142,7 @@ namespace ace { namespace draw {
         if (this->vbo->empty()) return;
 
         glActiveTexture(GL_TEXTURE0);
-        glBindTexture(GL_TEXTURE_2D, tex);
+        glBindTexture(GL_TEXTURE_2D, this->tex);
         
         this->vbo.upload();
         this->vao.draw(GL_TRIANGLES, this->vbo.draw_count, this->vbo.draw_offset);
@@ -177,8 +188,8 @@ namespace ace { namespace draw {
                 pen = 0;
                 lines++;
             }
-            pen += chars[c].advance.x;
-            size.y = std::max(chars[c].bearing.y, size.y);
+            pen += this->chars[c].advance.x;
+            size.y = std::max(this->chars[c].bearing.y, size.y);
         }
         size.x = std::max(pen, size.x);
         if(lines > 1) {
@@ -202,7 +213,7 @@ namespace ace { namespace draw {
     }
 
     void Font::add_glyph(char c, glm::vec2 &pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const {
-        auto &glyph = chars[uint8_t(c)];
+        auto &glyph = this->chars[uint8_t(c)];
 
         float x = pos.x + glyph.bearing.x * scale.x;
         float y = pos.y - glyph.bearing.y * scale.y;
@@ -267,7 +278,7 @@ namespace ace { namespace draw {
         try {
             return &fonts.at(n);
         } catch (std::out_of_range &) {
-            return &fonts.emplace(std::move(n), Font("font/" + name, size, !antialias, this->ftl)).first->second;
+            return &fonts.emplace(std::move(n), Font(get_resource_path("font/" + name), size, !antialias, this->ftl)).first->second;
         }
     }
 

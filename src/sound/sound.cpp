@@ -155,9 +155,8 @@ namespace ace { namespace sound {
     SoundBuffer *SoundManager::get(const std::string& name) {
         try {
             return &buffers.at(name);
-        }
-        catch (std::out_of_range &) {
-            return &buffers.emplace(name, "wav/" + name).first->second;
+        } catch (std::out_of_range &) {
+            return &buffers.emplace(name, get_resource_path("wav/" + name)).first->second;
         }
     }
 }}

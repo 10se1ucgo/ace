@@ -157,7 +157,7 @@ namespace ace { namespace scene {
     MainMenuScene::MainMenuScene(GameClient &client) : Scene(client),
         projection(glm::ortho(0.f, float(this->client.width()), float(this->client.height()), 0.0f)) {
 
-        SDL_Surface *cursor(draw::load_image("png/cursor.png").first);
+        SDL_Surface *cursor(draw::load_image(get_resource_path("png/cursor.png")).first);
         SDL_SetCursor(SDL_CreateColorCursor(cursor, 0, 0));
 
         this->set_menu<MainMenu>();

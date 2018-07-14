@@ -20,23 +20,30 @@ namespace ace {
         fmt::print("=============O P E N G L  D E B U G  C A L L B A C K=============\n");
     }
 
+    void print_gl_info() {
+        fmt::print("OpenGL: {}\n", glGetString(GL_VERSION));
+        fmt::print("GLSL: {}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
+        fmt::print("Renderer: {}\n", glGetString(GL_RENDERER));
+        fmt::print("Vendor: {}\n", glGetString(GL_VENDOR));
+        GLint num_ext;
+        glGetIntegerv(GL_NUM_EXTENSIONS, &num_ext);
+        fmt::print("Extensions ({}): ", num_ext);
+        for(int i = 0; i < num_ext; i++) {
+            fmt::print("{},", glGetStringi(GL_EXTENSIONS, i));
+        }
+        fmt::print("\n");
+    }
 
 #define SDL_ERROR(msg) THROW_ERROR("{}: {}\n", msg, SDL_GetError())
 
-    GameConfig::GameConfig(std::string file_name) {
+    GameConfig::GameConfig() {  }
+
+    GameConfig::GameConfig(const std::string &file_name) {
+        this->read(file_name);
+    }
+
+    void GameConfig::read(const std::string &file_name) {
         std::ifstream{ file_name } >> this->json;
-        
-        // this doesnt work because `mouse/ads_sensitivity` is under the "controls" object. probably just gonna leave it that way for now
-        // for (const auto &entry : this->json["controls"].items()) {
-        //     auto &val = entry.value();
-        //     SDL_Scancode code;
-        //     if(val.is_number_integer()) {
-        //         code = SDL_Scancode(val.get<std::underlying_type_t<SDL_Scancode>>());
-        //     } else {
-        //         code = SDL_GetScancodeFromName(val.get_ref<const std::string &>().c_str());
-        //     }
-        //     fmt::print("{}: {}\n", entry.key(), code);
-        // }
     }
 
     SDL_Scancode GameConfig::get_key(const std::string &key) {
@@ -61,12 +68,14 @@ namespace ace {
     // }
 
     GameClient::GameClient(std::string caption /*, int w, int h, WINDOW_STYLE style */):
-        net(*this), tasks(*this), config("config.json"), window_title(std::move(caption)) {
+        net(*this), tasks(*this), window_title(std::move(caption)) {
 
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
             SDL_ERROR("SDL_Init");
         if (IMG_Init(IMG_INIT_PNG) < 0)
             SDL_ERROR("IMG_Init");
+
+        this->config.read(get_resource_path("config.json"));
 
         SDL_GL_LoadLibrary(nullptr);
         SDL_GL_SetAttribute(SDL_GL_CONTEXT_MAJOR_VERSION, 4);
@@ -85,7 +94,7 @@ namespace ace {
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLEBUFFERS, bool(antialias));
         SDL_GL_SetAttribute(SDL_GL_MULTISAMPLESAMPLES, antialias);
 
-        auto &window_mode = config.json["graphics"].at("window_mode").get_ref<const std::string &>();
+        auto window_mode = config.json["graphics"].value("window_mode", "windowed");
         this->w = config.json["graphics"].value("window_width", 800);
         this->h = config.json["graphics"].value("window_height", 600);
 
@@ -111,7 +120,6 @@ namespace ace {
                 SDL_ERROR("SDL_GL_CreateContext");
             }
         }
-            
 
         if (!gladLoadGLLoader(SDL_GL_GetProcAddress)) {
             THROW_ERROR("gladLoaderGLLoader fail");
@@ -126,10 +134,7 @@ namespace ace {
             glDebugMessageCallback(gl_error, nullptr);
         }
 
-        fmt::print("OpenGL: {}\n", glGetString(GL_VERSION));
-        fmt::print("GLSL: {}\n", glGetString(GL_SHADING_LANGUAGE_VERSION));
-        fmt::print("Renderer: {}\n", glGetString(GL_RENDERER));
-        fmt::print("Vendor: {}\n", glGetString(GL_VENDOR));
+        print_gl_info();
 
         this->keyboard.keys = SDL_GetKeyboardState(&this->keyboard.numkeys);
 

@@ -77,7 +77,7 @@ struct KV6Manager {
             return &models.at(name);
         } catch (std::out_of_range &) {
 //            auto x = std::make_unique<KV6Mesh>("kv6/" + name);
-            return &models.emplace(name, "kv6/" + name).first->second;
+            return &models.emplace(name, ace::get_resource_path("kv6/" + name)).first->second;
         }
     }
 private:
