@@ -166,77 +166,77 @@ namespace ace { namespace net {
     };
 
     enum class WEAPON : uint8_t {
-        INVALID = 255,
-        SEMI = 1,
+        SEMI,
         SMG,
         SHOTGUN,
+        INVALID = 255,
     };
 
     enum class HIT : uint8_t {
-        INVALID = 255,
-        TORSO = 1,
+        TORSO,
         HEAD,
         ARMS,
         LEGS,
         MELEE,
+        INVALID = 255,
     };
 
     enum class TOOL : uint8_t {
-        INVALID = 255,
-        SPADE = 1,
+        SPADE,
         BLOCK,
         WEAPON,
         GRENADE,
+        INVALID = 255,
     };
 
     enum class ACTION : uint8_t {
-        INVALID = 255,
-        BUILD = 1,
+        BUILD,
         DESTROY,
         SPADE,
         GRENADE,
+        INVALID = 255,
     };
 
     enum class CHAT : uint8_t {
-        INVALID = 255,
-        ALL = 1,
+        ALL,
         TEAM,
         SYSTEM,
-//        BIG
+        // BIG
+        INVALID = 255,
     };
 
     enum class OBJECT : uint8_t {
-        INVALID = 255,
-        BLUE_FLAG = 1,
+        BLUE_FLAG,
         GREEN_FLAG,
         BLUE_BASE,
         GREEN_BASE,
+        INVALID = 255,
     };
 
     enum class KILL : uint8_t {
-        INVALID = 255,
-        WEAPON = 1,
+        WEAPON,
         HEADSHOT,
         MELEE,
         GRENADE,
         FALL,
         TEAM_CHANGE,
         CLASS_CHANGE,
+        INVALID = 255,
     };
 
     enum class DISCONNECT : uint8_t {
-        INVALID = 255,
-        UNDEFINED = 1,
+        UNDEFINED,
         BANNED,
         KICKED,
         WRONG_VERSION,
         FULL,
+        INVALID = 255,
     };
 
     enum class DAMAGE : uint8_t {
-        INVALID = 255,
-        FALL = 1,
+        FALL,
         OTHER,
+        INVALID = 255,
     };
 
     enum class TEAM : int8_t {
