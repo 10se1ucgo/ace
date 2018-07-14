@@ -203,7 +203,7 @@ namespace ace { namespace world {
         {
             this->v.x *= 0.5f;
             this->v.y *= 0.5f;
-            this->lastclimb = scene.time;
+            this->lastclimb = this->scene.fixed_time;
             nz--;
             m = -1.35f;
         }
@@ -243,7 +243,7 @@ namespace ace { namespace world {
 
     void AcePlayer::reposition(double dt) {
         this->e = this->p;
-        double f = this->lastclimb - scene.time; /* FIXME meaningful name */
+        double f = this->lastclimb - this->scene.fixed_time; /* FIXME meaningful name */
         if (f>-0.25f)
             this->e.z += (f + 0.25f) / 0.25f;
     }
