@@ -491,8 +491,6 @@ namespace ace { namespace world {
     void DrawPlayer::transform() {
         const glm::vec2 angles = dir2ang(this->draw_forward);
         const float yaw = angles.x, pitch = angles.y;
-        glm::vec2 angles2 = dir2ang(this->f);
-        fmt::print("{},{} vs {},{}\n", -yaw + 90, -pitch, angles2.x, angles2.y);
 
         if (!this->alive) {
             this->mdl_dead.rotation = { 0, -yaw + 90, 0 };

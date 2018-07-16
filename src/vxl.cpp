@@ -459,10 +459,7 @@ namespace ace {
 
     // ken silverman is a wizard
     Face AceMap::hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const {
-        long ixi, iyi, izi, dx, dy, dz, dxi, dyi, dzi;
-        float f, kx, ky, kz;
-        const size_t VSID = MAP_X;
-    
+        constexpr size_t VSID = MAP_X;
 
         h->x = p.x;
         h->y = p.y;
@@ -471,12 +468,15 @@ namespace ace {
             return Face::INVALID;
         }
 
-        // what the fuck?
-        ixi = ((signed long *)&d.x)[1] >> 31 | 1;
-        iyi = ((signed long *)&d.y)[1] >> 31 | 1;
-        izi = ((signed long *)&d.z)[1] >> 31 | 1;
+        // ok after 10 minutes of experimenting it seems that this code is equivalent to
+        // ixi = d.x < 0.0 ? -1 : 1; (but way faster)
+        // thanks ken
+        int ixi = reinterpret_cast<const int32_t *>(&d.x)[1] >> 31 | 1;
+        int iyi = reinterpret_cast<const int32_t *>(&d.y)[1] >> 31 | 1;
+        int izi = reinterpret_cast<const int32_t *>(&d.z)[1] >> 31 | 1;
 
-        f = 0x3fffffff / VSID;
+        float f = 0x3fffffff / VSID;
+        float kx, ky, kz;
         if((fabs(d.x) >= fabs(d.y)) && (fabs(d.x) >= fabs(d.z))) {
             kx = 1024.0;
             if (d.y == 0) ky = f; else ky = std::min(fabs(d.x / d.y) * 1024.0, double(f));
@@ -490,9 +490,9 @@ namespace ace {
             if (d.x == 0) kx = f; else kx = std::min(fabs(d.z / d.x) * 1024.0, double(f));
             if (d.y == 0) ky = f; else ky = std::min(fabs(d.z / d.y) * 1024.0, double(f));
         }
-        dxi = kx; dx = (p.x - (float)h->x) * kx; if (ixi >= 0) dx = dxi - dx;
-        dyi = ky; dy = (p.y - (float)h->y) * ky; if (iyi >= 0) dy = dyi - dy;
-        dzi = kz; dz = (p.z - (float)h->z) * kz; if (izi >= 0) dz = dzi - dz;
+        int dxi = kx; int dx = (p.x - float(h->x)) * kx; if (ixi >= 0) dx = dxi - dx;
+        int dyi = ky; int dy = (p.y - float(h->y)) * ky; if (iyi >= 0) dy = dyi - dy;
+        int dzi = kz; int dz = (p.z - float(h->z)) * kz; if (izi >= 0) dz = dzi - dz;
 
         while (true) {
             Face dir;
