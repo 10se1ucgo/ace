@@ -61,12 +61,43 @@ namespace ace { namespace gl {
     }
 
     using vao = GLObj<detail::gen_vertex_arrays, detail::delete_vertex_arrays>;
-    using vbo = GLObj<detail::gen_buffers, detail::del_buffers>;
+    using buffer = GLObj<detail::gen_buffers, detail::del_buffers>;
     using texture = GLObj<detail::gen_textures, detail::del_textures>;
 
     namespace experimental {
+        template<typename T = GLuint>
+        struct ebo {
+            explicit ebo(GLenum usage = GL_STATIC_DRAW) : usage(usage) {
+
+            }
+
+            void upload() {
+                if (this->data.empty()) return;
+
+                this->bind();
+                if (GLAD_GL_VERSION_4_3) {
+                    glInvalidateBufferData(this->handle);
+                }
+
+                this->index_count = this->data.size();
+                glBufferData(GL_ELEMENT_ARRAY_BUFFER, this->index_count * sizeof(T), this->data.data(), this->usage);
+                this->data.clear();
+            }
+
+            void bind() const {
+                glBindBuffer(GL_ELEMENT_ARRAY_BUFFER, this->handle);
+            }
+
+            std::vector<T> *operator->() { return &this->data; }
+
+            gl::buffer handle;
+            std::vector<T> data;
+            GLenum usage;
+            GLsizei index_count{ };
+        };
+
         struct vao {
-            vao &attrib_pointer(const std::string &format, const gl::vbo &buffer, int divisor = 0);
+            vao &attrib_pointer(const std::string &format, const gl::buffer &buffer, int divisor = 0);
 
             void draw(GLenum mode, GLsizei count, GLint first = 0) const {
                 if (count == 0) return;
@@ -97,7 +128,7 @@ namespace ace { namespace gl {
             void upload() {
                 if (this->data.empty()) return;
 
-                glBindBuffer(GL_ARRAY_BUFFER, this->handle);
+                this->bind();
                 if(GLAD_GL_VERSION_4_3) {
                     glInvalidateBufferData(this->handle);
                 }
@@ -108,9 +139,13 @@ namespace ace { namespace gl {
                 this->data.clear();
             }
 
+            void bind() const {
+                glBindBuffer(GL_ARRAY_BUFFER, this->handle);
+            }
+
             std::vector<T> *operator->() { return &this->data; }
 
-            gl::vbo handle;
+            gl::buffer handle;
             std::vector<T> data;
             GLenum usage;
             size_t vbo_size{};
@@ -148,6 +183,71 @@ namespace ace { namespace gl {
 
             size_t current_offset{}, draw_offset{};
         };
+
+        // basic mesh builder kinda thing
+        template<typename TVertex>
+        struct mesh {
+            using index_t = GLuint;
+
+            mesh(const std::string &attribute_format, GLenum usage = GL_STATIC_DRAW) : vbo(usage), ebo(usage) {
+                this->vao.attrib_pointer(attribute_format, this->vbo.handle);
+            }
+
+            template<typename... TArgs>
+            void add_vert(TArgs&&... vert) {
+                this->vbo->emplace_back(std::forward<TArgs>(vert)...);
+            }
+
+            void index_triangle(index_t x, index_t y, index_t z) {
+                this->ebo->push_back(x); this->ebo->push_back(y); this->ebo->push_back(z);
+            }
+
+            void index_triangle() {
+                auto cnt = this->vbo->size();
+                this->index_triangle(cnt - 3, cnt - 2, cnt - 1);
+            }
+
+            void add_triangle(const TVertex &a, const TVertex &b, const TVertex &c) {
+                this->vbo->push_back(a);
+                this->vbo->push_back(b);
+                this->vbo->push_back(c);
+                this->index_triangle();
+            }
+
+            void index_quad() {
+                auto cnt = this->vbo->size();
+                this->index_triangle(cnt - 4, cnt - 3, cnt - 1);
+                this->index_triangle(cnt - 3, cnt - 2, cnt - 1);
+            }
+
+            void add_quad(const TVertex &a, const TVertex &b, const TVertex &c, const TVertex &d) {
+                this->vbo->push_back(a);
+                this->vbo->push_back(b);
+                this->vbo->push_back(c);
+                this->vbo->push_back(d);
+                this->index_quad();
+            }
+
+            void clear() {
+                this->vbo->clear();
+                this->ebo->clear();
+            }
+
+            void upload() {
+                this->vao.bind();
+                this->vbo.upload();
+                this->ebo.upload();
+            }
+
+            void draw() {
+                glDrawElements(GL_TRIANGLES, this->ebo.index_count, GL_UNSIGNED_INT, nullptr);
+            }
+
+            experimental::vao vao;
+            experimental::vbo<TVertex> vbo; // vertices
+            experimental::ebo<index_t> ebo; // triangles
+        };
+
 
         // RGBA32 texture helper
         struct texture2d {

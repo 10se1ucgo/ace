@@ -136,7 +136,7 @@ namespace ace { namespace gl {
 
             T *operator->() { return &this->data; }
 
-            gl::vbo handle;
+            gl::buffer handle;
             T data;
         };
     }

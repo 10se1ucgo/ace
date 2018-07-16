@@ -61,7 +61,7 @@ namespace ace { namespace gl {
 
         LIMITATION: VERTEX BUFFER *MUST* BE TIGHTLY PACKED (TODO: fix)
         */
-        vao &vao::attrib_pointer(const std::string &format, const gl::vbo &buffer, int divisor) {
+        vao &vao::attrib_pointer(const std::string &format, const gl::buffer &buffer, int divisor) {
             size_t stride = 0;
 
             this->bind();
