@@ -50,67 +50,67 @@ namespace {
         uint16_t height;
     };
 
-    void gen_faces(float x, float y, float z, glm::vec3 color, glm::vec3 kv6norm, uint8_t vis, std::vector<KV6Vertex> &v) {
+    void gen_faces(float x, float y, float z, glm::vec3 color, glm::vec3 kv6norm, uint8_t vis, ace::gl::experimental::mesh<KV6Vertex> &mesh) {
         const float x0 = x - 0.5f, x1 = x + 0.5f;
         const float y0 = y - 0.5f, y1 = y + 0.5f;
         const float z0 = z - 0.5f, z1 = z + 0.5f;
 
         // vis = 0b11111111;
 
-
         if (vis & 1 << 0) {
-            //LEFT
-            v.push_back({ { x0, y0, z0 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
-            v.push_back({ { x0, y1, z0 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
-            v.push_back({ { x0, y0, z1 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
-            v.push_back({ { x0, y0, z1 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
-            v.push_back({ { x0, y1, z0 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
-            v.push_back({ { x0, y1, z1 }, color,{ -1, 0, 0 }, kv6norm/*, 0*/ });
+            // LEFT
+            mesh.add_quad(
+                { { x0, y0, z0 }, color, { -1, 0, 0 }, kv6norm },
+                { { x0, y0, z1 }, color, { -1, 0, 0 }, kv6norm },
+                { { x0, y1, z1 }, color, { -1, 0, 0 }, kv6norm },
+                { { x0, y1, z0 }, color, { -1, 0, 0 }, kv6norm }
+            );
         }
         if (vis & 1 << 1) {
-            //RIGHT
-            v.push_back({ { x1, y0, z0 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
-            v.push_back({ { x1, y0, z1 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
-            v.push_back({ { x1, y1, z0 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
-            v.push_back({ { x1, y1, z0 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
-            v.push_back({ { x1, y0, z1 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
-            v.push_back({ { x1, y1, z1 }, color,{ 1, 0, 0 }, kv6norm,/* 1 */});
+            // RIGHT
+            mesh.add_quad(
+                { { x1, y0, z0 }, color, { 1, 0, 0 }, kv6norm },
+                { { x1, y1, z0 }, color, { 1, 0, 0 }, kv6norm },
+                { { x1, y1, z1 }, color, { 1, 0, 0 }, kv6norm },
+                { { x1, y0, z1 }, color, { 1, 0, 0 }, kv6norm }
+            );
         }
         if (vis & 1 << 2) {
-            //BACK
-            v.push_back({ { x0, y0, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
-            v.push_back({ { x1, y0, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
-            v.push_back({ { x0, y1, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
-            v.push_back({ { x0, y1, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
-            v.push_back({ { x1, y0, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
-            v.push_back({ { x1, y1, z0 }, color,{ 0, 0, -1 }, kv6norm/*, 2*/ });
+            // BACK
+            mesh.add_quad(
+                { { x0, y0, z0 }, color, { 0, 0, -1 }, kv6norm },
+                { { x0, y1, z0 }, color, { 0, 0, -1 }, kv6norm },
+                { { x1, y1, z0 }, color, { 0, 0, -1 }, kv6norm },
+                { { x1, y0, z0 }, color, { 0, 0, -1 }, kv6norm }
+            );
         }
         if (vis & 1 << 3) {
-            //FRONT
-            v.push_back({ { x0, y0, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
-            v.push_back({ { x0, y1, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
-            v.push_back({ { x1, y0, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
-            v.push_back({ { x1, y0, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
-            v.push_back({ { x0, y1, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
-            v.push_back({ { x1, y1, z1 }, color,{ 0, 0, 1 }, kv6norm,/* 3 */});
+            // FRONT
+            mesh.add_quad(
+                { { x0, y0, z1 }, color, { 0, 0, 1 }, kv6norm },
+                { { x1, y0, z1 }, color, { 0, 0, 1 }, kv6norm },
+                { { x1, y1, z1 }, color, { 0, 0, 1 }, kv6norm },
+                { { x0, y1, z1 }, color, { 0, 0, 1 }, kv6norm }
+            );
         }
         if (vis & 1 << 4) {
-            //TOP
-            v.push_back({ { x0, y1, z0 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
-            v.push_back({ { x1, y1, z0 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
-            v.push_back({ { x0, y1, z1 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
-            v.push_back({ { x0, y1, z1 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
-            v.push_back({ { x1, y1, z0 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
-            v.push_back({ { x1, y1, z1 }, color,{ 0, 1, 0 }, kv6norm,/* 4 */});
+            // TOP
+            mesh.add_quad(
+                { { x0, y1, z0 }, color, { 0, 1, 0 }, kv6norm },
+                { { x0, y1, z1 }, color, { 0, 1, 0 }, kv6norm },
+                { { x1, y1, z1 }, color, { 0, 1, 0 }, kv6norm },
+                { { x1, y1, z0 }, color, { 0, 1, 0 }, kv6norm }
+
+            );
         }
         if (vis & 1 << 5) {
-            //BOTTOM
-            v.push_back({ { x0, y0, z0 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
-            v.push_back({ { x0, y0, z1 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
-            v.push_back({ { x1, y0, z0 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
-            v.push_back({ { x1, y0, z0 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
-            v.push_back({ { x0, y0, z1 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
-            v.push_back({ { x1, y0, z1 }, color,{ 0, -1, 0 }, kv6norm/*, 5*/ });
+            // BOTTOM
+            mesh.add_quad(
+                { { x0, y0, z0 }, color, { 0, -1, 0 }, kv6norm },
+                { { x1, y0, z0 }, color, { 0, -1, 0 }, kv6norm },
+                { { x1, y0, z1 }, color, { 0, -1, 0 }, kv6norm },
+                { { x0, y0, z1 }, color, { 0, -1, 0 }, kv6norm }
+            );
         }
     }
 }
@@ -156,7 +156,6 @@ KV6Mesh::KV6Mesh(const std::string &name) {
     }
     fclose(f);
     
-    this->vbo->reserve(24 * this->num_voxels);
 
     int p = 0;
     for(long x = 0; x < this->xsiz; x++) {
@@ -164,14 +163,13 @@ KV6Mesh::KV6Mesh(const std::string &name) {
             uint16_t siz = xyoffset[x * this->ysiz + y];
             for (uint16_t i = 0; i < siz; i++) {
                 KV6Vox &b = blocks[p];
-                gen_faces(x - this->xpiv, -b.height + this->zpiv, y - this->ypiv, glm::vec3{ b.r, b.g, b.b } / 255.f, NORMAL_TABLE[b.normal], b.vis, this->vbo.data);
+                gen_faces(x - this->xpiv, -b.height + this->zpiv, y - this->ypiv, glm::vec3{ b.r, b.g, b.b } / 255.f, NORMAL_TABLE[b.normal], b.vis, this->mesh);
                 p++;
             }
         }
     }
 
-    this->vao.attrib_pointer("3f,3f,3f,3f", this->vbo.handle);
-    this->vbo.upload();
+    this->mesh.upload();
 }
 
 // ray_origin -> position of ray

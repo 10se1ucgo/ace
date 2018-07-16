@@ -20,4 +20,13 @@ namespace ace { namespace draw {
             FOREGROUND = 0
         };
     };
+
+    namespace colors {
+        inline glm::vec3 red() { return { 1.f, 0.f, 0.f }; }
+        inline glm::vec3 orange() { return { 1.f, 0.5f, 0.f }; }
+        inline glm::vec3 yellow() { return { 1.f, 1.f, 0.f }; }
+        inline glm::vec3 green() { return { 0.f, 1.f, 0.f }; }
+        inline glm::vec3 blue() { return { 0.f, 0.f, 1.f }; }
+        inline glm::vec3 purple() { return { 0.5f, 0.f, 1.f }; }
+    };
 }}

@@ -8,7 +8,7 @@ namespace ace { namespace draw {
     using namespace ace::draw::detail;
 
     namespace {
-        void gen_faces(const float x, const float y, const float z, const uint8_t vis, const glm::vec3 color, std::vector<VXLVertex> &v) {
+        void gen_faces(const float x, const float y, const float z, const uint8_t vis, glm::vec3 color, gl::experimental::mesh<VXLVertex> &mesh) {
             const float x0 = x, x1 = x + 1.0f;
             const float y0 = -z - 1.0f, y1 = -z;
             const float z0 = y, z1 = y + 1.0f;
@@ -16,58 +16,61 @@ namespace ace { namespace draw {
             // vis = 0b11111111;
 
             if (vis & 1 << int(Face::LEFT)) {
-                v.push_back({ { x0, y0, z0 }, color, 0 });
-                v.push_back({ { x0, y1, z0 }, color, 0 });
-                v.push_back({ { x0, y0, z1 }, color, 0 });
-                v.push_back({ { x0, y0, z1 }, color, 0 });
-                v.push_back({ { x0, y1, z0 }, color, 0 });
-                v.push_back({ { x0, y1, z1 }, color, 0 });
+                mesh.add_quad(
+                    { { x0, y0, z0 }, color, 0 },
+                    { { x0, y0, z1 }, color, 0 },
+                    { { x0, y1, z1 }, color, 0 },
+                    { { x0, y1, z0 }, color, 0 }
+                );
+                // auto cnt = mesh.vbo->size();
+                // mesh.index_triangle(cnt - 4, cnt - 3, cnt - 1);
+                // mesh.index_triangle(cnt - 3, cnt - 2, cnt - 1);
             }
             if (vis & 1 << int(Face::RIGHT)) {
-                v.push_back({ { x1, y0, z0 }, color, 1 });
-                v.push_back({ { x1, y0, z1 }, color, 1 });
-                v.push_back({ { x1, y1, z0 }, color, 1 });
-                v.push_back({ { x1, y1, z0 }, color, 1 });
-                v.push_back({ { x1, y0, z1 }, color, 1 });
-                v.push_back({ { x1, y1, z1 }, color, 1 });
+                mesh.add_quad(
+                    { { x1, y0, z0 }, color, 1 },
+                    { { x1, y1, z0 }, color, 1 },
+                    { { x1, y1, z1 }, color, 1 },
+                    { { x1, y0, z1 }, color, 1 }
+                );
             }
             if (vis & 1 << int(Face::BACK)) {
-                v.push_back({ { x0, y0, z0 }, color, 2 });
-                v.push_back({ { x1, y0, z0 }, color, 2 });
-                v.push_back({ { x0, y1, z0 }, color, 2 });
-                v.push_back({ { x0, y1, z0 }, color, 2 });
-                v.push_back({ { x1, y0, z0 }, color, 2 });
-                v.push_back({ { x1, y1, z0 }, color, 2 });
+                mesh.add_quad(
+                    { { x0, y0, z0 }, color, 2 },
+                    { { x0, y1, z0 }, color, 2 },
+                    { { x1, y1, z0 }, color, 2 },
+                    { { x1, y0, z0 }, color, 2 }
+                );
             }
             if (vis & 1 << int(Face::FRONT)) {
-                v.push_back({ { x0, y0, z1 }, color, 3 });
-                v.push_back({ { x0, y1, z1 }, color, 3 });
-                v.push_back({ { x1, y0, z1 }, color, 3 });
-                v.push_back({ { x1, y0, z1 }, color, 3 });
-                v.push_back({ { x0, y1, z1 }, color, 3 });
-                v.push_back({ { x1, y1, z1 }, color, 3 });
+                mesh.add_quad(
+                    { { x0, y0, z1 }, color, 3 },
+                    { { x1, y0, z1 }, color, 3 },
+                    { { x1, y1, z1 }, color, 3 },
+                    { { x0, y1, z1 }, color, 3 }
+                );
             }
             if (vis & 1 << int(Face::TOP)) {
-                v.push_back({ { x0, y1, z0 }, color, 4 });
-                v.push_back({ { x1, y1, z0 }, color, 4 });
-                v.push_back({ { x0, y1, z1 }, color, 4 });
-                v.push_back({ { x0, y1, z1 }, color, 4 });
-                v.push_back({ { x1, y1, z0 }, color, 4 });
-                v.push_back({ { x1, y1, z1 }, color, 4 });
+                mesh.add_quad(
+                    { { x0, y1, z0 }, color, 4 },
+                    { { x0, y1, z1 }, color, 4 },
+                    { { x1, y1, z1 }, color, 4 },
+                    { { x1, y1, z0 }, color, 4 }
+
+                );
             }
             if (vis & 1 << int(Face::BOTTOM)) {
-                v.push_back({ { x0, y0, z0 }, color, 5 });
-                v.push_back({ { x0, y0, z1 }, color, 5 });
-                v.push_back({ { x1, y0, z0 }, color, 5 });
-                v.push_back({ { x1, y0, z0 }, color, 5 });
-                v.push_back({ { x0, y0, z1 }, color, 5 });
-                v.push_back({ { x1, y0, z1 }, color, 5 });
+                mesh.add_quad(
+                    { { x0, y0, z0 }, color, 5 },
+                    { { x1, y0, z0 }, color, 5 },
+                    { { x1, y0, z1 }, color, 5 },
+                    { { x0, y0, z1 }, color, 5 }
+                );
             }
         }
     }
 
     VXLBlocks::VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) : scale(1), rotation(0), position(0) {
-        this->vao.attrib_pointer("3f,3f,1B", this->vbo.handle);
         this->update(blocks, center);
     }
 
@@ -89,15 +92,15 @@ namespace ace { namespace draw {
                 block.position.x - this->centroid.x,
                 block.position.y - this->centroid.y,
                 block.position.z - this->centroid.z,
-                gen_vis ? VXLBlocks::get_vis(bmap, block.position) : block.vis, glm::vec3{ r, g, b } / 255.f, this->vbo.data
+                gen_vis ? VXLBlocks::get_vis(bmap, block.position) : block.vis, glm::vec3{ r, g, b } / 255.f, this->mesh
             );
         }
-        this->vbo.upload();
+        this->mesh.upload();
     }
 
     void VXLBlocks::draw(gl::ShaderProgram& s) const {
         s.uniform("model", model_matrix(this->position, this->rotation, this->scale));
-        this->vao.draw(GL_TRIANGLES, this->vbo.draw_count);
+        this->mesh.draw();
     }
 
     uint8_t VXLBlocks::get_vis(std::unordered_set<glm::ivec3> &set, glm::ivec3 pos) {
@@ -114,7 +117,6 @@ namespace ace { namespace draw {
     }
 
     Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {
-        this->vao.attrib_pointer("3f,3f,1B", this->vbo.handle);
     }
 
     void Pillar::update() {
@@ -129,19 +131,19 @@ namespace ace { namespace draw {
                     uint8_t r, g, b, a;
                     unpack_bytes(col, &a, &r, &g, &b);
 
-                    gen_faces(ax, ay, az, vis, (glm::vec3{ r, g, b } * (map.sunblock(ax, ay, az) / 127.f) * (a / 127.f)) / 255.f, this->vbo.data);
+                    gen_faces(ax, ay, az, vis, (glm::vec3{ r, g, b } * (map.sunblock(ax, ay, az) / 127.f) * (a / 127.f)) / 255.f, this->mesh);
                 }
             }
         }
 
-        this->vbo.upload();
+        this->mesh.upload();
         this->dirty = false;
     }
 
     void Pillar::draw() {
         if (dirty) this->update();
 
-        this->vao.draw(GL_TRIANGLES, this->vbo.draw_count);
+        this->mesh.draw();
     }
 
     std::unique_ptr<uint8_t[]> read_file(const std::string &file_path) {

@@ -207,11 +207,12 @@ namespace ace { namespace gl {
                 this->index_triangle(cnt - 3, cnt - 2, cnt - 1);
             }
 
-            void add_triangle(const TVertex &a, const TVertex &b, const TVertex &c) {
+            void add_triangle(const TVertex &a, const TVertex &b, const TVertex &c, bool index = true) {
                 this->vbo->push_back(a);
                 this->vbo->push_back(b);
                 this->vbo->push_back(c);
-                this->index_triangle();
+                if(index)
+                    this->index_triangle();
             }
 
             void index_quad() {
@@ -220,12 +221,13 @@ namespace ace { namespace gl {
                 this->index_triangle(cnt - 3, cnt - 2, cnt - 1);
             }
 
-            void add_quad(const TVertex &a, const TVertex &b, const TVertex &c, const TVertex &d) {
+            void add_quad(const TVertex &a, const TVertex &b, const TVertex &c, const TVertex &d, bool index = true) {
                 this->vbo->push_back(a);
                 this->vbo->push_back(b);
                 this->vbo->push_back(c);
                 this->vbo->push_back(d);
-                this->index_quad();
+                if(index)
+                    this->index_quad();
             }
 
             void clear() {
@@ -239,7 +241,8 @@ namespace ace { namespace gl {
                 this->ebo.upload();
             }
 
-            void draw() {
+            void draw() const {
+                this->vao.bind();
                 glDrawElements(GL_TRIANGLES, this->ebo.index_count, GL_UNSIGNED_INT, nullptr);
             }
 

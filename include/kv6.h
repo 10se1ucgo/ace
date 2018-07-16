@@ -20,14 +20,13 @@ namespace detail {
 }
 
 struct KV6Mesh {
-    KV6Mesh(const std::string &name);
+    explicit KV6Mesh(const std::string &name);
 
     void draw() const {
-        this->vao.draw(GL_TRIANGLES, this->vbo.draw_count);
+        this->mesh.draw();
     }
 
-    ace::gl::experimental::vao vao;
-    ace::gl::experimental::vbo<detail::KV6Vertex> vbo;
+    ace::gl::experimental::mesh<detail::KV6Vertex> mesh{ "3f,3f,3f,3f" };
 
     int32_t xsiz, ysiz, zsiz, num_voxels;
     float xpiv, ypiv, zpiv;

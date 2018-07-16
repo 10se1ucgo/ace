@@ -42,8 +42,7 @@ namespace ace { namespace draw {
         void update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center, bool gen_vis=false);
         void draw(gl::ShaderProgram &s) const;
 
-        gl::experimental::vao vao;
-        gl::experimental::vbo<detail::VXLVertex> vbo;
+        gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3f,1B" };
         glm::vec3 scale, rotation, position, centroid;
 
     private:
@@ -63,8 +62,7 @@ namespace ace { namespace draw {
         bool dirty;
         AceMap &map;
         size_t x, y;
-        gl::experimental::vao vao;
-        gl::experimental::vbo<detail::VXLVertex> vbo{GL_DYNAMIC_DRAW};
+        gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3f,1B", GL_DYNAMIC_DRAW };
     };
 
     struct DrawMap : AceMap {
