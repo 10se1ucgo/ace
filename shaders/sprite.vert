@@ -21,8 +21,8 @@ uniform vec2 dims;
 void main() {
     vec2 tcoords[4] = vec2[](
         region.xy,
-        vec2(region.x, region.w),
-        vec2(region.z, region.y),
+        region.xw,
+        region.zy,
         region.zw
     );
 

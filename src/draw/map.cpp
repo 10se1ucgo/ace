@@ -8,6 +8,134 @@ namespace ace { namespace draw {
     using namespace ace::draw::detail;
 
     namespace {
+        uint8_t vertex_ao(bool side1, bool side2, bool corner) {
+            if (side1 && side2) { return 3; }
+            return side1 + side2 + corner;
+        }
+
+        bool get_solid_waterless(AceMap &map, const int x, const int y, const int z) {
+            if (z == MAP_Z - 1) return false;
+            return map.get_solid(x, y, z, true);
+        }
+
+        void get_surrounding(AceMap &map, const int x, const int y, const int z, std::array<bool, 27> &ret) {
+            int i = 0;
+            for (int az = z + 1; az >= z - 1; az--) {
+            //  for(int ay = y - 1; ay <= y + 1; ay++) {
+            //      for(int ax = x - 1; ax <= ax + 1; ax++) { yes im the devil
+
+                ret[i++] = get_solid_waterless(map, x - 1, y - 1, az);
+                ret[i++] = get_solid_waterless(map, x, y - 1, az);
+                ret[i++] = get_solid_waterless(map, x + 1, y - 1, az);
+
+                ret[i++] = get_solid_waterless(map, x - 1, y, az);
+                ret[i++] = get_solid_waterless(map, x, y, az);
+                ret[i++] = get_solid_waterless(map, x + 1, y, az);
+
+                ret[i++] = get_solid_waterless(map, x - 1, y + 1, az);
+                ret[i++] = get_solid_waterless(map, x, y + 1, az);
+                ret[i++] = get_solid_waterless(map, x + 1, y + 1, az);
+            }
+        }
+
+        void gen_faces_with_ao(const float x, const float y, const float z, const uint8_t vis, const glm::vec3 color, gl::experimental::mesh<VXLVertex> &mesh, const std::array<bool, 27> &surr) {
+            const float x0 = x, x1 = x + 1.0f;
+            const float y0 = -z - 1.0f, y1 = -z;
+            const float z0 = y, z1 = y + 1.0f;
+
+            // vis = 0b11111111;
+
+
+            uint8_t ao[4];
+            if (vis & 1 << int(Face::LEFT)) {
+                ao[0] = vertex_ao(surr[9], surr[21], surr[18]);
+                ao[1] = vertex_ao(surr[15], surr[21], surr[24]);
+                ao[2] = vertex_ao(surr[3], surr[9], surr[0]);
+                ao[3] = vertex_ao(surr[3], surr[15], surr[6]);
+                bool flipped = ao[0] + ao[3] <= ao[1] + ao[2]; // TODO: https://0fps.net/2013/07/03/ambient-occlusion-for-minecraft-like-worlds/ "Details regarding meshing" 
+
+                mesh.add_quad(
+                    { { x0, y0, z0 }, color, 0, ao[2] },
+                    { { x0, y0, z1 }, color, 0, ao[3] },
+                    { { x0, y1, z1 }, color, 0, ao[1] },
+                    { { x0, y1, z0 }, color, 0, ao[0] }
+                );
+                // auto cnt = mesh.vbo->size();
+                // mesh.index_triangle(cnt - 4, cnt - 3, cnt - 1);
+                // mesh.index_triangle(cnt - 3, cnt - 2, cnt - 1);
+            }
+            if (vis & 1 << int(Face::RIGHT)) {
+                ao[0] = vertex_ao(surr[17], surr[23], surr[26]);
+                ao[1] = vertex_ao(surr[11], surr[23], surr[20]);
+                ao[2] = vertex_ao(surr[5], surr[17], surr[8]);
+                ao[3] = vertex_ao(surr[5], surr[11], surr[2]);
+                bool flipped = ao[0] + ao[3] <= ao[1] + ao[2];
+
+                mesh.add_quad(
+                    { { x1, y0, z0 }, color, 1, ao[3] },
+                    { { x1, y1, z0 }, color, 1, ao[1] },
+                    { { x1, y1, z1 }, color, 1, ao[0] },
+                    { { x1, y0, z1 }, color, 1, ao[2] }
+                );
+            }
+            if (vis & 1 << int(Face::BACK)) {
+                ao[0] = vertex_ao(surr[11], surr[19], surr[20]);
+                ao[1] = vertex_ao(surr[9], surr[19], surr[18]);
+                ao[2] = vertex_ao(surr[1], surr[11], surr[2]);
+                ao[3] = vertex_ao(surr[1], surr[9], surr[0]);
+                bool flipped = ao[0] + ao[3] <= ao[1] + ao[2];
+
+                mesh.add_quad(
+                    { { x0, y0, z0 }, color, 2, ao[3] },
+                    { { x0, y1, z0 }, color, 2, ao[1] },
+                    { { x1, y1, z0 }, color, 2, ao[0] },
+                    { { x1, y0, z0 }, color, 2, ao[2] }
+                );
+            }
+            if (vis & 1 << int(Face::FRONT)) {
+                ao[0] = vertex_ao(surr[15], surr[25], surr[24]);
+                ao[1] = vertex_ao(surr[17], surr[25], surr[26]);
+                ao[2] = vertex_ao(surr[7], surr[15], surr[6]);
+                ao[3] = vertex_ao(surr[7], surr[17], surr[8]);
+                bool flipped = ao[0] + ao[3] <= ao[1] + ao[2];
+
+                mesh.add_quad(
+                    { { x0, y0, z1 }, color, 3, ao[2] },
+                    { { x1, y0, z1 }, color, 3, ao[3] },
+                    { { x1, y1, z1 }, color, 3, ao[1] },
+                    { { x0, y1, z1 }, color, 3, ao[0] }
+                );
+            }
+            if (vis & 1 << int(Face::TOP)) {
+                ao[0] = vertex_ao(surr[21], surr[19], surr[18]);
+                ao[1] = vertex_ao(surr[19], surr[23], surr[20]);
+                ao[2] = vertex_ao(surr[21], surr[25], surr[24]);
+                ao[3] = vertex_ao(surr[23], surr[25], surr[26]);
+                bool flipped = ao[0] + ao[3] <= ao[1] + ao[2];
+
+                mesh.add_quad(
+                    { { x0, y1, z0 }, color, 4, ao[0] },
+                    { { x0, y1, z1 }, color, 4, ao[2] },
+                    { { x1, y1, z1 }, color, 4, ao[3] },
+                    { { x1, y1, z0 }, color, 4, ao[1] }
+                );
+            }
+            if (vis & 1 << int(Face::BOTTOM)) {
+                ao[0] = vertex_ao(surr[3], surr[7], surr[6]);
+                ao[1] = vertex_ao(surr[5], surr[7], surr[8]);
+                ao[2] = vertex_ao(surr[1], surr[3], surr[0]);
+                ao[3] = vertex_ao(surr[1], surr[5], surr[2]);
+                bool flipped = ao[0] + ao[3] <= ao[1] + ao[2];
+
+                mesh.add_quad(
+                    { { x0, y0, z0 }, color, 5, ao[2] },
+                    { { x1, y0, z0 }, color, 5, ao[3] },
+                    { { x1, y0, z1 }, color, 5, ao[1] },
+                    { { x0, y0, z1 }, color, 5, ao[0] }
+                );
+            }
+        }
+
         void gen_faces(const float x, const float y, const float z, const uint8_t vis, glm::vec3 color, gl::experimental::mesh<VXLVertex> &mesh) {
             const float x0 = x, x1 = x + 1.0f;
             const float y0 = -z - 1.0f, y1 = -z;
@@ -56,7 +184,6 @@ namespace ace { namespace draw {
                     { { x0, y1, z1 }, color, 4 },
                     { { x1, y1, z1 }, color, 4 },
                     { { x1, y1, z0 }, color, 4 }
-
                 );
             }
             if (vis & 1 << int(Face::BOTTOM)) {
@@ -120,6 +247,7 @@ namespace ace { namespace draw {
     }
 
     void Pillar::update() {
+        std::array<bool, 27> surrounding;
         for (size_t ax = this->x; ax < this->x + PILLAR_SIZE; ax++) {
             for (size_t ay = this->y; ay < this->y + PILLAR_SIZE; ay++) {
                 for (size_t az = 0; az < MAP_Z; az++) {
@@ -131,7 +259,8 @@ namespace ace { namespace draw {
                     uint8_t r, g, b, a;
                     unpack_bytes(col, &a, &r, &g, &b);
 
-                    gen_faces(ax, ay, az, vis, (glm::vec3{ r, g, b } * (map.sunblock(ax, ay, az) / 127.f) * (a / 127.f)) / 255.f, this->mesh);
+                    get_surrounding(this->map, ax, ay, az, surrounding);
+                    gen_faces_with_ao(ax, ay, az, vis, (glm::vec3{ r, g, b } * (map.sunblock(ax, ay, az) / 127.f) * (a / 127.f)) / 255.f, this->mesh, surrounding);
                 }
             }
         }

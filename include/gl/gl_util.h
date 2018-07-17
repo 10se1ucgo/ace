@@ -161,7 +161,7 @@ namespace ace { namespace gl {
             void upload() {
                 if (this->data.empty()) return;
 
-                glBindBuffer(GL_ARRAY_BUFFER, this->handle);
+                this->bind();
                 if (this->data.size() * sizeof(T) + this->current_offset > this->vbo_size) {
                     this->vbo_size = this->data.capacity() * sizeof(T) * 2; // steal the vector's geometric growth pattern B)
                     this->current_offset = 0;

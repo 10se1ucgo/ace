@@ -27,11 +27,11 @@ void main() {
     frag_color = bb[0].color;
     EmitVertex();
 
-    gl_Position = pv * vec4(((cam_right + cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    gl_Position = pv * vec4(((-cam_right - cam_up) * bb[0].size) + bb[0].pos, 1.0);
     frag_color = bb[0].color;
     EmitVertex();
 
-    gl_Position = pv * vec4(((-cam_right - cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    gl_Position = pv * vec4(((cam_right + cam_up) * bb[0].size) + bb[0].pos, 1.0);
     frag_color = bb[0].color;
     EmitVertex();
 

@@ -2,6 +2,7 @@
 layout (location = 0) in vec3 pos;
 layout (location = 1) in vec3 vertex_color;
 layout (location = 2) in uint face;
+layout (location = 3) in uint ao_level;
 
 out vec3 color;
 out float fog;
@@ -31,9 +32,16 @@ const float shading[6] = float[](
     0.5
 );
 
+const float ao[4] = float[](
+    1.0,
+    0.9,
+    0.8,
+    0.6
+);
+
 void main() {
     vec4 view_space = view * model * vec4(pos, 1.0);
     gl_Position = proj * view_space;
-    color = (vertex_color == filter_color ? replacement_color : vertex_color) * shading[face];
-    fog = 1.0 - clamp((128 - length(view_space.xyz)) / 64, 0.0, 1.0);
+    color = (vertex_color == filter_color ? replacement_color : vertex_color) * shading[face] * ao[ao_level];
+    fog = 1.0 - clamp((128 - length(view_space)) / 64, 0.0, 1.0);
 }
