@@ -52,13 +52,14 @@ namespace ace { namespace draw {
                 ao[1] = vertex_ao(surr[15], surr[21], surr[24]);
                 ao[2] = vertex_ao(surr[3], surr[9], surr[0]);
                 ao[3] = vertex_ao(surr[3], surr[15], surr[6]);
-                bool flipped = ao[0] + ao[3] <= ao[1] + ao[2]; // TODO: https://0fps.net/2013/07/03/ambient-occlusion-for-minecraft-like-worlds/ "Details regarding meshing" 
+                bool flipped = ao[0] + ao[3] <= ao[1] + ao[2];
 
                 mesh.add_quad(
                     { { x0, y0, z0 }, color, 0, ao[2] },
                     { { x0, y0, z1 }, color, 0, ao[3] },
                     { { x0, y1, z1 }, color, 0, ao[1] },
-                    { { x0, y1, z0 }, color, 0, ao[0] }
+                    { { x0, y1, z0 }, color, 0, ao[0] },
+                    flipped
                 );
                 // auto cnt = mesh.vbo->size();
                 // mesh.index_triangle(cnt - 4, cnt - 3, cnt - 1);
@@ -75,7 +76,8 @@ namespace ace { namespace draw {
                     { { x1, y0, z0 }, color, 1, ao[3] },
                     { { x1, y1, z0 }, color, 1, ao[1] },
                     { { x1, y1, z1 }, color, 1, ao[0] },
-                    { { x1, y0, z1 }, color, 1, ao[2] }
+                    { { x1, y0, z1 }, color, 1, ao[2] },
+                    flipped
                 );
             }
             if (vis & 1 << int(Face::BACK)) {
@@ -89,7 +91,8 @@ namespace ace { namespace draw {
                     { { x0, y0, z0 }, color, 2, ao[3] },
                     { { x0, y1, z0 }, color, 2, ao[1] },
                     { { x1, y1, z0 }, color, 2, ao[0] },
-                    { { x1, y0, z0 }, color, 2, ao[2] }
+                    { { x1, y0, z0 }, color, 2, ao[2] },
+                    flipped
                 );
             }
             if (vis & 1 << int(Face::FRONT)) {
@@ -103,7 +106,8 @@ namespace ace { namespace draw {
                     { { x0, y0, z1 }, color, 3, ao[2] },
                     { { x1, y0, z1 }, color, 3, ao[3] },
                     { { x1, y1, z1 }, color, 3, ao[1] },
-                    { { x0, y1, z1 }, color, 3, ao[0] }
+                    { { x0, y1, z1 }, color, 3, ao[0] },
+                    flipped
                 );
             }
             if (vis & 1 << int(Face::TOP)) {
@@ -117,7 +121,8 @@ namespace ace { namespace draw {
                     { { x0, y1, z0 }, color, 4, ao[0] },
                     { { x0, y1, z1 }, color, 4, ao[2] },
                     { { x1, y1, z1 }, color, 4, ao[3] },
-                    { { x1, y1, z0 }, color, 4, ao[1] }
+                    { { x1, y1, z0 }, color, 4, ao[1] },
+                    flipped
                 );
             }
             if (vis & 1 << int(Face::BOTTOM)) {
@@ -131,7 +136,8 @@ namespace ace { namespace draw {
                     { { x0, y0, z0 }, color, 5, ao[2] },
                     { { x1, y0, z0 }, color, 5, ao[3] },
                     { { x1, y0, z1 }, color, 5, ao[1] },
-                    { { x0, y0, z1 }, color, 5, ao[0] }
+                    { { x0, y0, z1 }, color, 5, ao[0] },
+                    flipped
                 );
             }
         }

@@ -221,13 +221,15 @@ namespace ace { namespace gl {
                 this->index_triangle(cnt - 3, cnt - 2, cnt - 1);
             }
 
-            void add_quad(const TVertex &a, const TVertex &b, const TVertex &c, const TVertex &d, bool index = true) {
-                this->vbo->push_back(a);
+            void add_quad(const TVertex &a, const TVertex &b, const TVertex &c, const TVertex &d, bool flip = false) {
+                if(!flip)
+                    this->vbo->push_back(a);
                 this->vbo->push_back(b);
                 this->vbo->push_back(c);
                 this->vbo->push_back(d);
-                if(index)
-                    this->index_quad();
+                if(flip)
+                    this->vbo->push_back(a);
+                this->index_quad();
             }
 
             void clear() {

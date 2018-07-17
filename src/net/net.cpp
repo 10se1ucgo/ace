@@ -69,6 +69,7 @@ namespace ace { namespace net {
                 break;
             case ENET_EVENT_TYPE_DISCONNECT:
                 this->peer = nullptr;
+                this->already_requested_disconnect = false;
                 this->on_disconnect(event);
                 break;
             case ENET_EVENT_TYPE_RECEIVE:
@@ -103,9 +104,18 @@ namespace ace { namespace net {
     }
 
     void BaseNetClient::disconnect() {
-        if (this->peer != nullptr) {
-            enet_peer_disconnect(this->peer, 0);
+        if (this->peer == nullptr) return;
+            
+        if (this->already_requested_disconnect) {
+            enet_peer_disconnect_now(this->peer, 0);
             this->peer = nullptr;
+            this->already_requested_disconnect = false;
+            ENetEvent event;
+            event.data = 0;
+            this->on_disconnect(event);
+        } else {
+            enet_peer_disconnect(this->peer, 0);
+            this->already_requested_disconnect = true;
         }
     }
 

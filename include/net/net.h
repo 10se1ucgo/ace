@@ -71,6 +71,7 @@ namespace ace { namespace net {
 
         ENetHost *host;
         ENetPeer *peer;
+        bool already_requested_disconnect{ false };
 
         static struct enet_initer {
             enet_initer() { enet_initialize(); }
