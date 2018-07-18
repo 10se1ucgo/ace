@@ -38,13 +38,11 @@ namespace ace { namespace draw {
             }
         }
 
-        void gen_faces_with_ao(const float x, const float y, const float z, const uint8_t vis, const glm::vec3 color, gl::experimental::mesh<VXLVertex> &mesh, const std::array<bool, 27> &surr) {
+        // TODO merge with gen_faces
+        void gen_faces_with_ao(const float x, const float y, const float z, const uint8_t vis, const glm::u8vec3 color, gl::experimental::mesh<VXLVertex> &mesh, const std::array<bool, 27> &surr) {
             const float x0 = x, x1 = x + 1.0f;
             const float y0 = -z - 1.0f, y1 = -z;
             const float z0 = y, z1 = y + 1.0f;
-
-            // vis = 0b11111111;
-
 
             uint8_t ao[4];
             if (vis & 1 << int(Face::LEFT)) {
@@ -61,9 +59,6 @@ namespace ace { namespace draw {
                     { { x0, y1, z0 }, color, 0, ao[0] },
                     flipped
                 );
-                // auto cnt = mesh.vbo->size();
-                // mesh.index_triangle(cnt - 4, cnt - 3, cnt - 1);
-                // mesh.index_triangle(cnt - 3, cnt - 2, cnt - 1);
             }
             if (vis & 1 << int(Face::RIGHT)) {
                 ao[0] = vertex_ao(surr[17], surr[23], surr[26]);
@@ -142,7 +137,7 @@ namespace ace { namespace draw {
             }
         }
 
-        void gen_faces(const float x, const float y, const float z, const uint8_t vis, glm::vec3 color, gl::experimental::mesh<VXLVertex> &mesh) {
+        void gen_faces(const float x, const float y, const float z, const uint8_t vis, glm::u8vec3 color, gl::experimental::mesh<VXLVertex> &mesh) {
             const float x0 = x, x1 = x + 1.0f;
             const float y0 = -z - 1.0f, y1 = -z;
             const float z0 = y, z1 = y + 1.0f;
@@ -156,9 +151,6 @@ namespace ace { namespace draw {
                     { { x0, y1, z1 }, color, 0 },
                     { { x0, y1, z0 }, color, 0 }
                 );
-                // auto cnt = mesh.vbo->size();
-                // mesh.index_triangle(cnt - 4, cnt - 3, cnt - 1);
-                // mesh.index_triangle(cnt - 3, cnt - 2, cnt - 1);
             }
             if (vis & 1 << int(Face::RIGHT)) {
                 mesh.add_quad(
@@ -221,11 +213,13 @@ namespace ace { namespace draw {
             uint8_t r, g, b, a;
             unpack_bytes(block.color, &a, &r, &g, &b);
 
+
+
             gen_faces(
                 block.position.x - this->centroid.x,
                 block.position.y - this->centroid.y,
                 block.position.z - this->centroid.z,
-                gen_vis ? VXLBlocks::get_vis(bmap, block.position) : block.vis, glm::vec3{ r, g, b } / 255.f, this->mesh
+                gen_vis ? VXLBlocks::get_vis(bmap, block.position) : block.vis, glm::u8vec3{ r, g, b }, this->mesh
             );
         }
         this->mesh.upload();
@@ -249,11 +243,12 @@ namespace ace { namespace draw {
         return vis;
     }
 
-    Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {
+    Pillar::Pillar(DrawMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {
     }
 
     void Pillar::update() {
         std::array<bool, 27> surrounding;
+        bool use_ao = this->map.scene.client.config.json["graphics"].value("ambient_occlusion", true);
         for (size_t ax = this->x; ax < this->x + PILLAR_SIZE; ax++) {
             for (size_t ay = this->y; ay < this->y + PILLAR_SIZE; ay++) {
                 for (size_t az = 0; az < MAP_Z; az++) {
@@ -261,12 +256,18 @@ namespace ace { namespace draw {
                     if (az == MAP_Z - 1) vis &= 1 << int(Face::TOP);
                     if (vis == 0) continue;
 
-                    const uint32_t col = map.get_color(ax, ay, az);
                     uint8_t r, g, b, a;
-                    unpack_bytes(col, &a, &r, &g, &b);
+                    unpack_bytes(map.get_color(ax, ay, az), &a, &r, &g, &b);
 
-                    get_surrounding(this->map, ax, ay, az, surrounding);
-                    gen_faces_with_ao(ax, ay, az, vis, (glm::vec3{ r, g, b } * (map.sunblock(ax, ay, az) / 127.f) * (a / 127.f)) / 255.f, this->mesh, surrounding);
+                    const glm::u8vec3 color(glm::vec3{ r, g, b } * (map.sunblock(ax, ay, az) / 127.f) * (a / 127.f));
+
+                    if(use_ao) {
+                        get_surrounding(this->map, ax, ay, az, surrounding);
+                        gen_faces_with_ao(ax, ay, az, vis, color, this->mesh, surrounding);
+                    } else {
+                        gen_faces(ax, ay, az, vis, color, this->mesh);
+                    }
+                    
                 }
             }
         }

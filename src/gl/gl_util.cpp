@@ -84,7 +84,7 @@ namespace ace { namespace gl {
                 GLenum type = attrib.first;
                 size_t size = attrib.second;
                 bool normalized = false;
-                if(fmt.length() > 2u + offset && fmt.at(2 + offset) != 'n' && type != GL_FLOAT) {
+                if(fmt.length() > 2u + offset && fmt.at(2 + offset) == 'n' && type != GL_FLOAT) {
                     normalized = true;
                 }
 

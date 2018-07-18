@@ -16,7 +16,7 @@ namespace ace { namespace draw {
 #pragma pack(push, 1)
         struct VXLVertex {
             glm::vec3 vertex;
-            glm::vec3 color;
+            glm::u8vec3 color;
             GLubyte face;
             GLubyte ao{ 0 };
         };
@@ -43,15 +43,17 @@ namespace ace { namespace draw {
         void update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center, bool gen_vis=false);
         void draw(gl::ShaderProgram &s) const;
 
-        gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3f,1B,1B" };
+        gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B" };
         glm::vec3 scale, rotation, position, centroid;
 
     private:
         static uint8_t get_vis(std::unordered_set<glm::ivec3> &set, glm::ivec3 pos);
     };
 
+    struct DrawMap;
+
     struct Pillar {
-        Pillar(AceMap &map, size_t x, size_t y);
+        Pillar(DrawMap &map, size_t x, size_t y);
 
         void update();
         void draw();
@@ -61,9 +63,9 @@ namespace ace { namespace draw {
         }
 
         bool dirty;
-        AceMap &map;
+        DrawMap &map;
         size_t x, y;
-        gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3f,1B,1B", GL_DYNAMIC_DRAW };
+        gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B", GL_DYNAMIC_DRAW };
     };
 
     struct DrawMap : AceMap {

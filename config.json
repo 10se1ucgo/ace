@@ -28,6 +28,7 @@
         "window_height": 600,
         "vsync": false,
         "antialias": 4,
+        "ambient_occlusion": true,
         "debug": true
     }
 }
