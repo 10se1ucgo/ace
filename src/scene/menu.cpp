@@ -157,11 +157,19 @@ namespace ace { namespace scene {
     MainMenuScene::MainMenuScene(GameClient &client) : Scene(client),
         projection(glm::ortho(0.f, float(this->client.width()), float(this->client.height()), 0.0f)) {
 
-        SDL_Surface *cursor(draw::load_image(get_resource_path("png/cursor.png")).first);
-        SDL_SetCursor(SDL_CreateColorCursor(cursor, 0, 0));
+
+        try {
+            SDL_Surface *cursor(draw::load_image(get_resource_path("png/cursor.png")).first);
+            SDL_SetCursor(SDL_CreateColorCursor(cursor, 0, 0));
+        } catch (ace::RuntimeException &err) {
+        }
 
         this->set_menu<MainMenu>();
-        this->client.sound.play_music("test.ogg");
+
+        try {
+            this->client.sound.play_music("test.ogg");
+        } catch (ace::RuntimeException &err) {
+        }
 
         this->client.net.disconnect();
     }

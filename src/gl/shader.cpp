@@ -26,6 +26,9 @@ default: \
 namespace ace { namespace gl {
     Shader::Shader(const std::string &file, GLenum type): handle(glCreateShader(type)) {
         std::ifstream in(file, std::ios::in | std::ios::binary);
+        if(in.fail()) {
+            THROW_ERROR("Could not read shader file {}", file);
+        }
         std::string source{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
 
         const GLchar *source_buff = source.c_str();

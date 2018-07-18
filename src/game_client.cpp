@@ -119,7 +119,7 @@ namespace ace {
             this->context = SDL_GL_CreateContext(this->window);
             fmt::print("Couldn't load OpenGL 4.3, falling back to 3.3...\n");
             if(this->context == nullptr) {
-                SDL_ERROR("SDL_GL_CreateContext");
+                THROW_ERROR("OpenGL 3.3 or above REQUIRED! Please update your drivers and try again.\nSDL_GL_CreateContext: {}", SDL_GetError());
             }
         }
 

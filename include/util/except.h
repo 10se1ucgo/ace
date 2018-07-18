@@ -9,7 +9,7 @@ namespace ace {
     public:
         template <typename... T>
         RuntimeException(const char *file, size_t line, const char *function, const char *format, const T &...args) :
-            std::runtime_error(fmt::format("Error near {0}:{1}, in function {2}; {3}", file, line, function, fmt::format(format, args...))) {}
+            std::runtime_error(fmt::format("Error near {0}:{1}, in function {2}\n{3}", file, line, function, fmt::format(format, args...))) {}
     };
 
     static const char *get_gl_debug_source_name(GLenum source) {
