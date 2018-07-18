@@ -277,17 +277,17 @@ namespace ace { namespace scene {
         if (!pressed) return;
         this->update_color(scancode);
 
-        if(scancode == this->scene.client.config.get_key("all_chat")) {
+        if(scancode == this->scene.client.config.get_key("all_chat", SDL_SCANCODE_T)) {
             this->cur_chat_type = net::CHAT::ALL;
             this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
-        } else if(scancode == this->scene.client.config.get_key("team_chat")) {
+        } else if(scancode == this->scene.client.config.get_key("team_chat", SDL_SCANCODE_Y)) {
             this->cur_chat_type = net::CHAT::TEAM;
             this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
-        } else if(scancode == this->scene.client.config.get_key("map")) {
+        } else if(scancode == this->scene.client.config.get_key("map", SDL_SCANCODE_M)) {
             this->map_display.big_open = !this->map_display.big_open;
-        } else if (scancode == this->scene.client.config.get_key("change_team")) {
+        } else if (scancode == this->scene.client.config.get_key("change_team", SDL_SCANCODE_COMMA)) {
             this->state = State::ChangeTeam;
-        } else if (scancode == this->scene.client.config.get_key("change_weapon")) {
+        } else if (scancode == this->scene.client.config.get_key("change_weapon", SDL_SCANCODE_PERIOD)) {
             this->state = State::ChangeWeapon;
         }
 

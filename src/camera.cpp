@@ -87,19 +87,19 @@ void Camera::keyboard(double dt) {
 
     const Uint8 *keyboard = this->scene.client.keyboard.keys;
     float speed = this->speed * dt;
-    if (keyboard[this->scene.client.config.get_key("sprint")])
+    if (keyboard[this->scene.client.config.get_key("sprint", SDL_SCANCODE_LSHIFT)])
         speed *= 3.0f;
-    if (keyboard[this->scene.client.config.get_key("forward")])
+    if (keyboard[this->scene.client.config.get_key("forward", SDL_SCANCODE_W)])
         this->position += speed * this->forward;
-    if (keyboard[this->scene.client.config.get_key("back")])
+    if (keyboard[this->scene.client.config.get_key("back", SDL_SCANCODE_S)])
         this->position -= speed * this->forward;
-    if (keyboard[this->scene.client.config.get_key("right")])
+    if (keyboard[this->scene.client.config.get_key("right", SDL_SCANCODE_D)])
         this->position += normalize(cross(this->forward, this->up)) * speed;
-    if (keyboard[this->scene.client.config.get_key("left")])
+    if (keyboard[this->scene.client.config.get_key("left", SDL_SCANCODE_A)])
         this->position -= normalize(cross(this->forward, this->up)) * speed;
-    if (keyboard[this->scene.client.config.get_key("jump")] && !this->scene.thirdperson)
+    if (keyboard[this->scene.client.config.get_key("jump", SDL_SCANCODE_SPACE)] && !this->scene.thirdperson)
         this->position += speed * this->up;
-    if (keyboard[this->scene.client.config.get_key("crouch")] && !this->scene.thirdperson)
+    if (keyboard[this->scene.client.config.get_key("crouch", SDL_SCANCODE_LCTRL)] && !this->scene.thirdperson)
         this->position -= speed * this->up;
 }
 

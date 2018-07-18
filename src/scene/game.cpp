@@ -174,7 +174,7 @@ namespace ace { namespace scene {
                 default: break;
                 }
 
-                if (scancode == this->client.config.get_key("reload"))
+                if (scancode == this->client.config.get_key("reload", SDL_SCANCODE_R))
                     this->ply->get_tool()->reload();
             }
 

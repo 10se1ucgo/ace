@@ -29,6 +29,13 @@ namespace ace {
         void read(const std::string &file_name);
 
         SDL_Scancode get_key(const std::string &key);
+        SDL_Scancode get_key(const std::string &key, SDL_Scancode default_value) {
+            try {
+                return this->get_key(key);
+            } catch (nlohmann::json::out_of_range &e) {
+                return default_value;
+            }
+        }
 
         nlohmann::json json;
     private:

@@ -288,16 +288,16 @@ namespace ace { namespace world {
                 auto keys = this->scene.client.keyboard.keys;
                 auto mouse = this->scene.client.mouse.state;
                 bool changed = this->set_walk(
-                    keys[this->scene.client.config.get_key("forward")],
-                    keys[this->scene.client.config.get_key("back")],
-                    keys[this->scene.client.config.get_key("left")],
-                    keys[this->scene.client.config.get_key("right")]
+                    keys[this->scene.client.config.get_key("forward", SDL_SCANCODE_W)],
+                    keys[this->scene.client.config.get_key("back", SDL_SCANCODE_S)],
+                    keys[this->scene.client.config.get_key("left", SDL_SCANCODE_A)],
+                    keys[this->scene.client.config.get_key("right", SDL_SCANCODE_D)]
                 );
                 changed |= this->set_animation(
-                    keys[this->scene.client.config.get_key("jump")],
-                    keys[this->scene.client.config.get_key("crouch")],
-                    keys[this->scene.client.config.get_key("sneak")],
-                    keys[this->scene.client.config.get_key("sprint")]
+                    keys[this->scene.client.config.get_key("jump", SDL_SCANCODE_SPACE)],
+                    keys[this->scene.client.config.get_key("crouch", SDL_SCANCODE_LCTRL)],
+                    keys[this->scene.client.config.get_key("sneak", SDL_SCANCODE_V)],
+                    keys[this->scene.client.config.get_key("sprint", SDL_SCANCODE_LSHIFT)]
                 );
                 changed |= this->set_fire(mouse & SDL_BUTTON(SDL_BUTTON_LEFT), mouse & SDL_BUTTON(SDL_BUTTON_RIGHT));
                 if (changed) this->scene.send_input_update();
