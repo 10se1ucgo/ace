@@ -143,6 +143,7 @@ namespace ace {
 
     void BlockTool::draw() {
         this->ply.scene.shaders.model.uniform("replacement_color", glm::vec3(this->ply.color) / 255.f);
+        this->ply.scene.shaders.model.uniform("filter_color", glm::vec3(124.f) / 255.f);
 
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             this->mdl.draw(this->ply.scene.shaders.model);
@@ -150,6 +151,7 @@ namespace ace {
             this->mdl.draw_local(this->ply.scene.shaders.model);
         }
 
+        this->ply.scene.shaders.model.uniform("filter_color", glm::vec3(0.f));
 
         if (!this->ply.local_player || !this->can_primary() || this->ghost_block == nullptr) return;
 

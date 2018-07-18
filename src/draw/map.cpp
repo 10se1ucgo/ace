@@ -325,9 +325,11 @@ namespace ace { namespace draw {
         // }
 
         for (auto &p : this->pillars) {
+#ifndef NDEBUG
             if (p.contains(draw2vox(this->scene.cam.position))) {
                 this->scene.debug.draw_cube({ p.x + 8, -32, p.y + 8 }, { PILLAR_SIZE, 64, PILLAR_SIZE }, { 1, 0, 0 });
             }
+#endif
             if (this->scene.cam.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
                 p.draw();
             }

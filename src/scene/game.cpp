@@ -96,8 +96,10 @@ namespace ace { namespace scene {
             obj->draw();
         }
 
+#ifndef NDEBUG 
         if(this->ply) 
             this->debug.draw_ray(vox2draw(this->ply->e), this->ply->draw_forward * 25.f, this->get_team(this->ply->team).float_color);
+#endif
 
         this->shaders.billboard.bind();
         this->billboards.flush(this->shaders.billboard);
@@ -117,6 +119,8 @@ namespace ace { namespace scene {
 
     void GameScene::update(double dt) {
         Scene::update(dt);
+
+        this->thirdperson = !this->ply || !this->ply->alive;
 
         for (auto &kv : this->teams) {
             kv.second.update_players(*this);
@@ -360,13 +364,17 @@ namespace ace { namespace scene {
                 break;
             }
 
+            std::string msg;
+            glm::vec3 color;
             if(pkt->type == net::CHAT::ALL) {
-                auto msg = fmt::format("{} ({}): {}", ply->name, teams[ply->team].name, pkt->message);
-                this->hud.add_chat_message(msg, {1, 1, 1});
+                msg = fmt::format("{} ({}): {}", ply->name, teams[ply->team].name, pkt->message);
+                color = {1, 1, 1};
             } else {
-                auto msg = fmt::format("{}: {}", ply->name, pkt->message);
-                this->hud.add_chat_message(msg, teams[ply->team].float_color);
+                msg = fmt::format("{}: {}", ply->name, pkt->message);
+                color = teams[ply->team].float_color;
             }
+            this->hud.add_chat_message(msg, color);
+            fmt::print(msg + "\n");
         } break;
         case net::PACKET::MoveObject: {
             net::MoveObject *pkt = static_cast<net::MoveObject *>(loader);

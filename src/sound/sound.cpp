@@ -1,13 +1,10 @@
 #include "sound/sound.h"
 
-#include "SDL_audio.h"
-
+#include "alure.h"
+#include "alext.h"
 #include "glm/gtc/type_ptr.hpp"
 
 #include "util/except.h"
-
-
-#include "alure.h"
 
 namespace ace { namespace sound {
 
@@ -26,6 +23,7 @@ namespace ace { namespace sound {
         if(alureBufferDataFromFile(name.c_str(), this->buffer) == AL_FALSE) {
             THROW_ERROR("FAILED TO LOAD SOUND FILE {} WITH ERROR{}\n", name, alureGetErrorString());
         }
+        
     }
 
     Sound::Sound(SoundBuffer *buf) : position(0), velocity(0), volume(1), pitch(1), local(true) {
@@ -62,6 +60,8 @@ namespace ace { namespace sound {
     }
 
     void Sound::update() {
+        alSourcei(this->snd, AL_SOURCE_SPATIALIZE_SOFT, AL_TRUE);
+        CHECK_AL_ERROR();
         alSourcefv(this->snd, AL_POSITION, glm::value_ptr(local ? glm::vec3(0) : this->position));
         CHECK_AL_ERROR();
         alSourcefv(this->snd, AL_VELOCITY, glm::value_ptr(this->velocity));
