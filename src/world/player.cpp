@@ -314,7 +314,6 @@ namespace ace { namespace world {
             if (scene.time >= this->next_footstep && (mf || mb || ml || mr) && !this->airborne && !this->crouch && !this->sneak) {
 
                 int step = this->scene.ms_time & 3;
-                std::string sound = fmt::format("{}{}.wav", this->wade ? "wade" : "footstep", step);
                 this->play_sound(STEPS[step + int(this->wade) * 4]);
                 //                this->scene.client.sound.play(sound, vox2draw(this->p) + 0.5f, 100, this->local_player && !this->scene.thirdperson);
                 this->next_footstep = scene.time + (this->sprint ? 0.386f : 0.512f);

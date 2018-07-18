@@ -56,7 +56,7 @@ namespace ace { namespace gl {
 
         e.g.:
         "2f" == one vec2
-        "3i,4f,3x4f" == one ivec3, two vec4, one mat3x4
+        "3i,4f,3x4f" == one ivec3, one vec4, one mat3x4
         "1Bn" == one unsigned byte normalized to glsl float between [0.0, 1.0]
 
         LIMITATION: VERTEX BUFFER *MUST* BE TIGHTLY PACKED (TODO: fix)
