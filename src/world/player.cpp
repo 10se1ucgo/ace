@@ -269,7 +269,7 @@ namespace ace { namespace world {
     };
 
     void DrawPlayer::update(double dt) {
-        if(!this->get_tool()->available()) {
+        if(this->local_player && !this->get_tool()->available()) {
             this->set_tool(net::TOOL(uint8_t(this->held_tool) - 1));
         }
 

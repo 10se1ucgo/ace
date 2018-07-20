@@ -32,6 +32,10 @@ namespace ace {
         return pos <= get_pos(MAP_X - 1, MAP_Y - 1, MAP_Z - 1);
     }
 
+    inline bool is_valid_pos(glm::ivec3 pos) {
+        return is_valid_pos(pos.x, pos.y, pos.z);
+    }
+
     glm::u8vec3 jit_color(glm::u8vec3 color);
 
     struct VXLBlock {

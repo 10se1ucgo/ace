@@ -29,9 +29,11 @@ namespace ace {
 
         virtual bool on_primary() { return true; }
         virtual bool on_secondary() { return true; }
+        virtual bool on_use() { return true; }
 
         virtual bool can_primary();
         virtual bool can_secondary();
+        virtual bool can_use();
 
         virtual void update(double dt);
         virtual void draw() = 0;
@@ -103,6 +105,7 @@ namespace ace {
 
         float primary_rate() final { return 0.5f; }
         float secondary_rate() final { return -1; }
+        float use_rate() final { return 0.5f; }
 
         void restock(bool primary = false) final { Tool::restock(true); }
 
@@ -114,6 +117,7 @@ namespace ace {
 
         bool on_primary() final;
         bool on_secondary() final;
+        bool on_use() final;
 
         void ghost_block_line();
 

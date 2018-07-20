@@ -24,6 +24,10 @@ namespace ace {
         return (this->secondary_ammo > 0 || this->max_secondary() < 0) && this->ply.scene.time >= this->next_secondary;
     }
 
+    bool Tool::can_use() {
+        return this->ply.scene.time >= this->next_use;
+    }
+
     void Tool::update(double dt) {
         if (this->ply.sprint || this->ply.switch_time > 0) return;
 
@@ -34,6 +38,11 @@ namespace ace {
         } else if (this->ply.secondary_fire && this->secondary_rate() > 0.f) {
             if (this->can_secondary() && this->on_secondary()) {
                 this->next_secondary = this->ply.scene.time + this->secondary_rate();
+            }
+        // this is so disgusting im sorry
+        } else if (this->ply.local_player && this->ply.scene.client.keyboard.keys[this->ply.scene.client.config.get_key("use", SDL_SCANCODE_E)] && this->use_rate() > 0.f) {
+            if (this->can_use() && this->on_use()) {
+                this->next_use = this->ply.scene.time + this->use_rate();
             }
         }
     }
@@ -76,7 +85,7 @@ namespace ace {
         glm::ivec3 hit;
         Face f = this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit);
 
-        if (f == Face::INVALID || !all(lessThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
+        if (f == Face::INVALID || any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
             return this->ply.play_sound("woosh.wav");;
         }
 
@@ -116,7 +125,12 @@ namespace ace {
         if (this->ply.local_player) {
             glm::ivec3 hit;
             Face face = this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit);
+            if(any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
+                face = Face::INVALID;
+            }
             hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
+
+            
 
             if (!this->ply.secondary_fire) {
                 if (this->last_secondary) {
@@ -153,7 +167,7 @@ namespace ace {
 
         this->ply.scene.shaders.model.uniform("filter_color", glm::vec3(0.f));
 
-        if (!this->ply.local_player || !this->can_primary() || this->ghost_block == nullptr) return;
+        if (!this->ply.local_player || this->ghost_block == nullptr || !this->can_primary() || !is_valid_pos(this->m1) || (!is_valid_pos(this->m2) && this->ply.secondary_fire)) return;
 
         this->ply.scene.shaders.map.bind();
         this->ply.scene.shaders.map.uniform("alpha", 0.6f);
@@ -175,7 +189,7 @@ namespace ace {
 
         glm::ivec3 hit;
         Face face = this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit);
-        if (face == Face::INVALID) {
+        if (face == Face::INVALID || any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
             return false;
         }
         hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
@@ -186,6 +200,16 @@ namespace ace {
     }
 
     bool BlockTool::on_secondary() {
+        return true;
+    }
+
+    bool BlockTool::on_use() {
+        glm::ivec3 hit;
+        if(!this->ply.local_player || this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit) == Face::INVALID) {
+            return false;
+        }
+        this->ply.color = glm::u8vec3(unpack_argb(this->ply.scene.map.get_color(hit.x, hit.y, hit.z, true)));
+        this->next_primary = this->ply.scene.time + this->use_rate();
         return true;
     }
 
@@ -211,7 +235,7 @@ namespace ace {
             this->mdl.position = this->ply.mdl_arms.position + ang2dir(90 - this->ply.mdl_arms.rotation.y, -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
             this->mdl.rotation = this->ply.mdl_arms.rotation;
         } else {
-            this->mdl.rotation.y = 1;
+            this->mdl.rotation = { 0, 1, 0 };
             this->mdl.scale = glm::vec3(0.05f);
 
             if (transform < 0) {
@@ -232,6 +256,8 @@ namespace ace {
 
     GrenadeTool::GrenadeTool(world::DrawPlayer& ply) : Tool(ply), mdl(ply.scene.models.get("grenade.kv6"), 0.05f) {
         this->deploy();
+        this->fuse = MAX_FUSE;
+        this->last_primary = false;
     }
 
     void GrenadeTool::update(double dt) {
@@ -241,10 +267,10 @@ namespace ace {
             this->on_primary();
             this->fuse = MAX_FUSE;
         }
-        if (this->ply.primary_fire && !last_primary) {
+        if (this->ply.primary_fire && !this->last_primary) {
             this->ply.play_sound("pin.wav");
         }
-        last_primary = this->ply.primary_fire;
+        this->last_primary = this->ply.primary_fire;
         if (this->ply.primary_fire) {
             fuse -= dt;
         }
