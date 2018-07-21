@@ -190,6 +190,11 @@ namespace ace { namespace scene {
                 }
             }
         }
+
+        for(auto &m : this->killfeed) {
+            m.time -= dt;
+        }
+
         this->hit_indicator.rotation = angle2d(this->last_hit - this->scene.ply->p, this->scene.ply->f);
         this->hit_indicator.tint.a = std::max(0.0, this->hit_indicator.tint.a - dt);
     }
@@ -257,6 +262,7 @@ namespace ace { namespace scene {
         }
 
         this->draw_chat();
+        this->draw_killfeed();
 
         if (this->scene.client.keyboard.keys[this->scene.client.config.get_key("scoreboard")]) {
             this->draw_scoreboard();
@@ -289,6 +295,12 @@ namespace ace { namespace scene {
             this->state = State::ChangeTeam;
         } else if (scancode == this->scene.client.config.get_key("change_weapon", SDL_SCANCODE_PERIOD)) {
             this->state = State::ChangeWeapon;
+        } else if (scancode == SDL_SCANCODE_ESCAPE) {
+            this->state = this->state == State::None ? State::Exit : State::None;
+        } else if (scancode == SDL_SCANCODE_EQUALS) {
+            this->scene.client.config.json["volume"] = glm::clamp(this->scene.client.config.json.value("volume", 0.5f) + 0.1f, 0.0f, 1.0f);
+        } else if (scancode == SDL_SCANCODE_MINUS) {
+            this->scene.client.config.json["volume"] = glm::clamp(this->scene.client.config.json.value("volume", 0.5f) - 0.1f, 0.0f, 1.0f);
         }
 
         if(this->state == State::Exit) {
@@ -298,8 +310,6 @@ namespace ace { namespace scene {
                 this->state = State::None;
         }
 
-        if(scancode == SDL_SCANCODE_ESCAPE)
-            this->state = this->state == State::None ? State::Exit : State::None;
 
         if (scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_3) {
             if(this->state == State::ChangeWeapon) {
@@ -376,7 +386,14 @@ namespace ace { namespace scene {
             color = this->scene.get_team(killer.team).float_color;
         }
 
-        this->add_chat_message(message.str(),  color);
+        this->add_killfeed_message(message.str(),  color);
+    }
+    
+    void HUD::add_killfeed_message(std::string message, glm::vec3 color) {
+        this->killfeed.push_front({ std::move(message), color });
+        while (this->killfeed.size() > 6) {
+            this->killfeed.pop_back();
+        }
     }
 
     void HUD::set_big_message(std::string message) {
@@ -439,9 +456,20 @@ namespace ace { namespace scene {
         }
     }
 
+    void HUD::draw_killfeed() {
+        for (auto i = this->killfeed.begin(); i != this->killfeed.end(); ++i) {
+            if (i->time <= 0.0) return;
+
+            int index = i - this->killfeed.begin() + 1;
+            glm::vec2 pos;
+            pos.x = 25;
+            pos.y = 15 * index + 20;
+            this->sys13->draw(i->message, pos, i->color);
+        }
+    }
+
     inline void draw_scoreboard_players(Team &team, glm::vec2 offset, draw::Align alignment, draw::Font *f) {
-        for (auto i = team.players.begin(); i != team.players.end(); ++i) {
-            auto *ply = *i;
+        for (auto ply : team.players) {
             f->draw(fmt::format("{:>15} #{:<2d} {:<3d}", ply->name, ply->pid, ply->kills), offset, { 1, 1, 1 }, { 1, 1 }, alignment);
             offset.y += f->size();
         }

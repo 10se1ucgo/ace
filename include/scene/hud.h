@@ -10,6 +10,7 @@ namespace ace { namespace scene {
     struct Message {
         std::string message;
         glm::vec3 color;
+        float time{10.f};
     };
 
     struct HUD;
@@ -75,9 +76,12 @@ namespace ace { namespace scene {
             Exit
         } state{ State::None };
 
+        void add_killfeed_message(std::string message, glm::vec3 color);
+
         void update_color(SDL_Scancode key);
 
         void draw_chat();
+        void draw_killfeed();
         void draw_scoreboard();
 
         net::CHAT cur_chat_type{ net::CHAT::INVALID };
