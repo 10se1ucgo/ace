@@ -82,11 +82,32 @@ namespace ace {
     }
 
     void SpadeTool::spade(bool secondary) {
+        if(!secondary) {
+            for(auto &kv : this->ply.scene.players) {
+                if (!kv.second->alive || kv.second.get() == &this->ply) continue;
+
+                if (glm::dot(this->ply.f, glm::normalize(kv.second->p - this->ply.p)) < .55f) continue;
+
+                auto distance = glm::distance(this->ply.p, kv.second->p);
+                if (distance >= 2) continue;
+
+                kv.second->play_sound("whack.wav");
+                this->ply.scene.create_object<world::DebrisGroup>(kv.second->e, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
+                if (this->ply.local_player) {
+                    net::HitPacket hp;
+                    hp.pid = kv.second->pid;
+                    hp.value = net::HIT::MELEE;
+                    this->ply.scene.client.net.send_packet(hp);
+                }
+                return;
+            }
+        }
+
         glm::ivec3 hit;
         Face f = this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit);
 
         if (f == Face::INVALID || any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
-            return this->ply.play_sound("woosh.wav");;
+            return this->ply.play_sound("woosh.wav");
         }
 
         if (secondary) {
@@ -99,7 +120,6 @@ namespace ace {
 
     void SpadeTool::transform() {
         float transform = this->ply.scene.time - this->next_primary;
-
 
         if (!this->ply.local_player || this->ply.scene.thirdperson) {
             if (transform < 0)
