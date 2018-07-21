@@ -141,13 +141,10 @@ namespace ace { namespace world {
 
     void AcePlayer::boxclipmove(double dt) {
         float offset, m;
-        if (this->crouch)
-        {
+        if (this->crouch) {
             offset = 0.45f;
             m = 0.9f;
-        }
-        else
-        {
+        } else {
             offset = 0.9f;
             m = 1.35f;
         }
@@ -158,60 +155,74 @@ namespace ace { namespace world {
         float nz = this->p.z + offset;
 
         bool climb = false;
-        if (this->v.x < 0) f = -0.45f;
-        else f = 0.45f;
+        f = this->v.x < 0 ? -0.45f : 0.45f;
         float z = m;
-        while (z >= -1.36f && !this->scene.map.clipbox(nx + f, this->p.y - 0.45f, nz + z) && !this->scene.map.clipbox(nx + f, this->p.y + 0.45f, nz + z))
+
+        while (z >= -1.36f &&
+               !this->scene.map.clipbox(nx + f, this->p.y - 0.45f, nz + z) &&
+               !this->scene.map.clipbox(nx + f, this->p.y + 0.45f, nz + z)) {
             z -= 0.9f;
-        if (z<-1.36f) this->p.x = nx;
-        else if (!this->crouch && this->f.z<0.5f && !this->sprint)
-        {
+        }
+
+        if (z < -1.36f) {
+            this->p.x = nx;
+        } else if (!this->crouch && this->f.z < 0.5f && !this->sprint) {
+
             z = 0.35f;
-            while (z >= -2.36f && !this->scene.map.clipbox(nx + f, this->p.y - 0.45f, nz + z) && !this->scene.map.clipbox(nx + f, this->p.y + 0.45f, nz + z))
+            while (z >= -2.36f &&
+                   !this->scene.map.clipbox(nx + f, this->p.y - 0.45f, nz + z) &&
+                   !this->scene.map.clipbox(nx + f, this->p.y + 0.45f, nz + z))
                 z -= 0.9f;
-            if (z<-2.36f)
-            {
+
+            if (z < -2.36f) {
                 this->p.x = nx;
                 climb = true;
+            } else {
+                this->v.x = 0;
             }
-            else this->v.x = 0;
+        } else {
+            this->v.x = 0;
         }
-        else this->v.x = 0;
 
-        if (this->v.y < 0) f = -0.45f;
-        else f = 0.45f;
+        f = this->v.y < 0 ? -0.45f : 0.45f;
         z = m;
-        while (z >= -1.36f && !this->scene.map.clipbox(this->p.x - 0.45f, ny + f, nz + z) && !this->scene.map.clipbox(this->p.x + 0.45f, ny + f, nz + z))
+
+        while (z >= -1.36f &&
+               !this->scene.map.clipbox(this->p.x - 0.45f, ny + f, nz + z) &&
+               !this->scene.map.clipbox(this->p.x + 0.45f, ny + f, nz + z)) {
             z -= 0.9f;
-        if (z<-1.36f) this->p.y = ny;
-        else if (!this->crouch && this->f.z<0.5f && !this->sprint && !climb)
-        {
+        }
+
+        if (z < -1.36f) {
+            this->p.y = ny;
+        } else if (!this->crouch && this->f.z < 0.5f && !this->sprint && !climb) {
             z = 0.35f;
-            while (z >= -2.36f && !this->scene.map.clipbox(this->p.x - 0.45f, ny + f, nz + z) && !this->scene.map.clipbox(this->p.x + 0.45f, ny + f, nz + z))
+            while (z >= -2.36f &&
+                   !this->scene.map.clipbox(this->p.x - 0.45f, ny + f, nz + z) &&
+                   !this->scene.map.clipbox(this->p.x + 0.45f, ny + f, nz + z)) {
                 z -= 0.9f;
-            if (z<-2.36f)
-            {
+            }
+
+            if (z < -2.36f) {
                 this->p.y = ny;
                 climb = true;
+            } else {
+                this->v.y = 0;
             }
-            else this->v.y = 0;
-        }
-        else if (!climb)
+        } else if (!climb) {
             this->v.y = 0;
+        }
 
-        if (climb)
-        {
+        if (climb) {
             this->v.x *= 0.5f;
             this->v.y *= 0.5f;
             this->lastclimb = this->scene.fixed_time;
             nz--;
             m = -1.35f;
-        }
-        else
-        {
+        } else {
             if (this->v.z < 0)
                 m = -m;
-            nz += this->v.z*dt*32.f;
+            nz += this->v.z * dt * 32.f;
         }
 
         this->airborne = true;
@@ -219,17 +230,15 @@ namespace ace { namespace world {
         if (this->scene.map.clipbox(this->p.x - 0.45f, this->p.y - 0.45f, nz + m) ||
             this->scene.map.clipbox(this->p.x - 0.45f, this->p.y + 0.45f, nz + m) ||
             this->scene.map.clipbox(this->p.x + 0.45f, this->p.y - 0.45f, nz + m) ||
-            this->scene.map.clipbox(this->p.x + 0.45f, this->p.y + 0.45f, nz + m))
-        {
-            if (this->v.z >= 0)
-            {
+            this->scene.map.clipbox(this->p.x + 0.45f, this->p.y + 0.45f, nz + m)) {
+            if (this->v.z >= 0) {
                 this->wade = this->p.z > 61;
                 this->airborne = false;
             }
             this->v.z = 0;
-        }
-        else
+        } else {
             this->p.z = nz - offset;
+        }
 
         this->reposition(dt);
     }
