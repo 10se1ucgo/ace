@@ -227,7 +227,7 @@ namespace ace { namespace scene {
 
         switch(type) {
         case net::PACKET::CreatePlayer: {
-            net::CreatePlayer *pkt = static_cast<net::CreatePlayer *>(loader);
+            auto *pkt = static_cast<net::CreatePlayer *>(loader);
             auto *ply = this->get_ply(pkt->pid, true, pkt->pid == this->state_data.pid);
             if (ply->local_player) this->ply = ply; // this->ply() should be a function tbh
             ply->pid = pkt->pid;
@@ -239,7 +239,7 @@ namespace ace { namespace scene {
             ply->set_alive(true);
         } break;
         case net::PACKET::ExistingPlayer: {
-            net::ExistingPlayer *pkt = static_cast<net::ExistingPlayer *>(loader);
+            auto *pkt = static_cast<net::ExistingPlayer *>(loader);
             auto *ply = this->get_ply(pkt->pid);
             ply->pid = pkt->pid;
             ply->team = pkt->team;
@@ -250,7 +250,7 @@ namespace ace { namespace scene {
             ply->kills = pkt->kills;
         } break;
         case net::PACKET::WorldUpdate: {
-            net::WorldUpdate *pkt = static_cast<net::WorldUpdate *>(loader);
+            auto *pkt = static_cast<net::WorldUpdate *>(loader);
             for(int i = 0; i < 32; i++) {
                 if (i == this->state_data.pid) continue;
                 auto *p = this->get_ply(i, false);
@@ -262,19 +262,20 @@ namespace ace { namespace scene {
             }
         } break;
         case net::PACKET::BlockAction: {
-            net::BlockAction *pkt = static_cast<net::BlockAction *>(loader);
+            auto *pkt = static_cast<net::BlockAction *>(loader);
             auto *ply = this->get_ply(pkt->pid);
             if(pkt->value == net::ACTION::BUILD) {
                 this->build_point(pkt->position.x, pkt->position.y, pkt->position.z, ply ? ply->color : this->block_colors[pkt->pid], true);
-                ply->get_tool(net::TOOL::BLOCK)->primary_ammo--;
+                ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - 1);
             } else {
                 this->destroy_point(pkt->position.x, pkt->position.y, pkt->position.z, pkt->value, true);
-                if(pkt->value == net::ACTION::DESTROY)
-                    ply->get_tool(net::TOOL::BLOCK)->primary_ammo++;
+                if(pkt->value == net::ACTION::DESTROY) {
+                    ply->blocks.primary_ammo = std::min(ply->blocks.max_primary(), ply->blocks.primary_ammo + 1);
+                }
             }
         } break;
         case net::PACKET::BlockLine: {
-            net::BlockLine *pkt = static_cast<net::BlockLine *>(loader);
+            auto *pkt = static_cast<net::BlockLine *>(loader);
             auto *ply = this->get_ply(pkt->pid);
             std::vector<glm::ivec3> blocks = this->map.block_line(pkt->start, pkt->end);
             ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
@@ -283,7 +284,7 @@ namespace ace { namespace scene {
             }
         } break;
         case net::PACKET::InputData: {
-            net::InputData *pkt = static_cast<net::InputData *>(loader);
+            auto *pkt = static_cast<net::InputData *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
             if (ply == nullptr) break;
             ply->mf = pkt->up; ply->mb = pkt->down; ply->ml = pkt->left; ply->mr = pkt->right;
@@ -291,7 +292,7 @@ namespace ace { namespace scene {
             ply->set_crouch(pkt->crouch);
         } break;
         case net::PACKET::KillAction: {
-            net::KillAction *pkt = static_cast<net::KillAction *>(loader);
+            auto *pkt = static_cast<net::KillAction *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
             auto *killer = this->get_ply(pkt->killer, false);
             if (ply == nullptr || killer == nullptr) break;
@@ -314,14 +315,14 @@ namespace ace { namespace scene {
             }
         } break;
         case net::PACKET::WeaponInput: {
-            net::WeaponInput *pkt = static_cast<net::WeaponInput *>(loader);
+            auto *pkt = static_cast<net::WeaponInput *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
             if (ply == nullptr) break;
             ply->primary_fire = pkt->primary;
             ply->secondary_fire = pkt->secondary;
         } break;
         case net::PACKET::SetHP: {
-            net::SetHP *pkt = static_cast<net::SetHP *>(loader);
+            auto *pkt = static_cast<net::SetHP *>(loader);
             if (!this->ply) return;
 
             this->ply->health = pkt->hp;
@@ -332,17 +333,17 @@ namespace ace { namespace scene {
             }
         }  break;
         case net::PACKET::GrenadePacket: {
-            net::GrenadePacket *pkt = static_cast<net::GrenadePacket *>(loader);
+            auto *pkt = static_cast<net::GrenadePacket *>(loader);
             this->create_object<world::Grenade>(pkt->position, pkt->velocity, pkt->fuse);
         } break;
         case net::PACKET::SetTool: {
-            net::SetTool *pkt = static_cast<net::SetTool *>(loader);
+            auto *pkt = static_cast<net::SetTool *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
             if (ply == nullptr) break;
             ply->set_tool(pkt->tool);
         } break;
         case net::PACKET::SetColor: {
-            net::SetColor *pkt = static_cast<net::SetColor *>(loader);
+            auto *pkt = static_cast<net::SetColor *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
             if (ply == nullptr) {
                 this->block_colors[pkt->pid] = pkt->color;
@@ -351,7 +352,7 @@ namespace ace { namespace scene {
             }
         } break;
         case net::PACKET::ChatMessage: {
-            net::ChatMessage *pkt = static_cast<net::ChatMessage *>(loader);
+            auto *pkt = static_cast<net::ChatMessage *>(loader);
             if(pkt->pid >= 32 || pkt->type == net::CHAT::SYSTEM) {
                 this->hud.add_chat_message(fmt::format("[*]: {}", pkt->message), {1, 0, 0});
                 return;
@@ -377,20 +378,20 @@ namespace ace { namespace scene {
             fmt::print(msg + "\n");
         } break;
         case net::PACKET::MoveObject: {
-            net::MoveObject *pkt = static_cast<net::MoveObject *>(loader);
+            auto *pkt = static_cast<net::MoveObject *>(loader);
             auto *ent = this->get_ent(uint8_t(pkt->type));
             if (ent == nullptr) return; // ??? prob wrong gamemode
             ent->set_team(pkt->state);
             ent->set_position(pkt->position);
         } break;
         case net::PACKET::PlayerLeft: {
-            net::PlayerLeft *pkt = static_cast<net::PlayerLeft *>(loader);
+            auto *pkt = static_cast<net::PlayerLeft *>(loader);
             this->players.erase(pkt->pid);
         } break;
         case net::PACKET::TerritoryCapture: break;
         case net::PACKET::ProgressBar: break;
         case net::PACKET::IntelCapture: {
-            net::IntelCapture *pkt = static_cast<net::IntelCapture *>(loader);
+            auto *pkt = static_cast<net::IntelCapture *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
 
             if (!pkt->winning) {
@@ -408,7 +409,7 @@ namespace ace { namespace scene {
             this->client.sound.play_local(pkt->winning ? "horn.wav" : "pickup.wav");
         } break;
         case net::PACKET::IntelPickup: {
-            net::IntelPickup *pkt = static_cast<net::IntelPickup *>(loader);
+            auto *pkt = static_cast<net::IntelPickup *>(loader);
 
             auto *ply = this->get_ply(pkt->pid, false);
             if (ply != nullptr) {
@@ -421,7 +422,7 @@ namespace ace { namespace scene {
                 ent->set_carrier(ply->pid);
         } break;
         case net::PACKET::IntelDrop: {
-            net::IntelDrop *pkt = static_cast<net::IntelDrop *>(loader);
+            auto *pkt = static_cast<net::IntelDrop *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
             if (ply != nullptr) {
                 auto msg = fmt::format("{} has dropped the {} Intel", ply->name, this->get_team(ply->team, true).name);
@@ -444,7 +445,7 @@ namespace ace { namespace scene {
             this->set_fog_color(glm::vec3(static_cast<net::FogColor *>(loader)->color) / 255.f);
         } break;
         case net::PACKET::WeaponReload: {
-            net::WeaponReload *pkt = static_cast<net::WeaponReload *>(loader);
+            auto *pkt = static_cast<net::WeaponReload *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
             if (!ply || !ply->weapon_obj) break;
             ply->weapon_obj->on_reload(pkt);
