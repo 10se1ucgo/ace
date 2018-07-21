@@ -464,7 +464,7 @@ namespace ace {
         h->x = p.x;
         h->y = p.y;
         h->z = p.z;
-        if(!is_valid_pos(h->x, h->y, h->z)) {
+        if(!is_valid_pos(h->x, h->y, h->z) && (h->z > MAP_Z + 3 || h->z < -3)) {
             return Face::INVALID;
         }
 
@@ -505,12 +505,12 @@ namespace ace {
                     h->y += iyi; dy += dyi; dir = Face(3 - (iyi>0));
                 }
             }
-            if (!is_valid_pos(h->x, h->y, h->z)) return Face::INVALID;
+            if (!is_valid_pos(h->x, h->y, h->z) && (h->z > MAP_Z + 3 || h->z < -3)) return Face::INVALID;
             if (this->get_solid(h->x, h->y, h->z)) return dir;
         }
     }
 
-    bool AceMap::clipworld(long x, long y, long z) const {
+    bool AceMap::clipworld(int x, int y, int z) const {
         if (x < 0 || x >= MAP_X || y < 0 || y >= MAP_Y)
             return false;
         if (z < 0)
@@ -518,15 +518,15 @@ namespace ace {
 
         int sz = z;
         if (sz == MAP_Z - 1)
-            sz = MAP_Z - 2;
-        else if (sz >= MAP_Z - 1)
+            sz--;
+        else if (sz >= MAP_Z)
             return true;
         else if (sz < 0)
             return false;
         return this->get_solid(x, y, sz);
     }
 
-    bool AceMap::clipbox(long x, long y, long z) const {
+    bool AceMap::clipbox(int x, int y, int z) const {
         if (x < 0 || x >= MAP_X || y < 0 || y >= MAP_Y)
             return true;
         if (z < 0)
@@ -534,7 +534,7 @@ namespace ace {
 
         int sz = z;
         if (sz == MAP_Z - 1)
-            sz -= 1;
+            sz--;
         else if (sz >= MAP_Z)
             return true;
         return this->get_solid(x, y, sz);

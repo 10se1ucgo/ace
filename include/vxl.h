@@ -15,9 +15,9 @@
 //    int x, y, z;
 //};
 namespace ace {
-    constexpr size_t MAP_X = 512;
-    constexpr size_t MAP_Y = 512;
-    constexpr size_t MAP_Z = 64;
+    constexpr int MAP_X = 512;
+    constexpr int MAP_Y = 512;
+    constexpr int MAP_Z = 64;
     constexpr uint32_t DEFAULT_COLOR = 0xFF674028;
 
     constexpr size_t get_pos(const int x, const int y, const int z) {
@@ -82,8 +82,14 @@ namespace ace {
         bool can_see(const glm::vec3 &position, const glm::vec3 &direction, long *x, long *y, long *z, float length = 32, bool isdirection=true) const;
         Face hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const;
 
-        bool clipworld(long x, long y, long z) const;
-        bool clipbox(long x, long y, long z) const;
+        bool clipworld(int x, int y, int z) const;
+        bool clipworld(float x, float y, float z) const {
+            return this->clipworld(int(glm::floor(x)), int(glm::floor(y)), int(glm::floor(z)));
+        }
+        bool clipbox(int x, int y, int z) const;
+        bool clipbox(float x, float y, float z) const {
+            return this->clipbox(int(glm::floor(x)), int(glm::floor(y)), int(glm::floor(z)));
+        }
 
         void add_neighbors(std::vector<glm::ivec3> &v, const int x, const int y, const int z) const {
             this->add_node(v, x, y, z - 1);

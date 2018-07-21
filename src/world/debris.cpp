@@ -17,7 +17,7 @@ namespace ace { namespace world {
         this->v.z += dt;
         this->p += this->v * (float(dt) * 32);
 
-        glm::ivec3 lp(floor(this->p.x), floor(this->p.y), floor(this->p.z));
+        glm::ivec3 lp(glm::floor(this->p));
         if (this->group.scene.map.clipworld(lp.x, lp.y, lp.z)) {
             glm::ivec3 lp2(floor(fpos.x), floor(fpos.y), floor(fpos.z));
             if (lp.z != lp2.z && ((lp.x == lp2.x && lp.y == lp2.y) || !this->group.scene.map.clipworld(lp.x, lp.y, lp2.z)))
