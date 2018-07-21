@@ -415,16 +415,20 @@ namespace ace {
                 glm::vec3 h;
                 net::HIT type;
 
-                if (kv.second->mdl_head.sprhitscan(this->ply.e, dir, &h))
+                if (kv.second->mdl_head.sprhitscan(this->ply.e, dir, &h)) {
                     type = net::HIT::HEAD;
-                else if (kv.second->mdl_torso.sprhitscan(this->ply.e, dir, &h))
+                    this->ply.scene.client.sound.play("whack.wav", vox2draw(h), 125);
+                } else if (kv.second->mdl_torso.sprhitscan(this->ply.e, dir, &h)) {
                     type = net::HIT::TORSO;
-                else if (kv.second->mdl_legl.sprhitscan(this->ply.e, dir, &h))
+                } else if (kv.second->mdl_legl.sprhitscan(this->ply.e, dir, &h)) {
                     type = net::HIT::LEGS;
-                else if (kv.second->mdl_legr.sprhitscan(this->ply.e, dir, &h))
+                } else if (kv.second->mdl_legr.sprhitscan(this->ply.e, dir, &h)) {
                     type = net::HIT::LEGS;
-                else
+                } else {
                     continue;
+                }
+
+                this->ply.scene.client.sound.play("hitplayer.wav", vox2draw(h), 125);
 
                 // TODO: prevent being able to shoot through blocks
 
