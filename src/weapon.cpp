@@ -86,10 +86,8 @@ namespace ace {
             for(auto &kv : this->ply.scene.players) {
                 if (!kv.second->alive || kv.second.get() == &this->ply) continue;
 
+                if (glm::distance2(this->ply.p, kv.second->p) >= 2 * 2) continue;
                 if (glm::dot(this->ply.f, glm::normalize(kv.second->p - this->ply.p)) < .55f) continue;
-
-                auto distance = glm::distance(this->ply.p, kv.second->p);
-                if (distance >= 2) continue;
 
                 kv.second->play_sound("whack.wav");
                 this->ply.scene.create_object<world::DebrisGroup>(kv.second->e, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
@@ -228,7 +226,7 @@ namespace ace {
         if(!this->ply.local_player || this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit) == Face::INVALID) {
             return false;
         }
-        this->ply.color = glm::u8vec3(unpack_argb(this->ply.scene.map.get_color(hit.x, hit.y, hit.z, true)));
+        this->ply.set_color(glm::u8vec3(unpack_argb(this->ply.scene.map.get_color(hit.x, hit.y, hit.z, true))));
         this->next_primary = this->ply.scene.time + this->use_rate();
         return true;
     }
@@ -431,6 +429,7 @@ namespace ace {
 
             for (auto &kv : this->ply.scene.players) {
                 if (!kv.second->alive || kv.second.get() == &this->ply) continue;
+                if (glm::dot(this->ply.f, kv.second->e - this->ply.e) < 0) continue;
 
                 glm::vec3 h;
                 net::HIT type;
