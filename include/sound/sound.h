@@ -11,7 +11,11 @@
 #include "gl/gl_util.h"
 
 
-namespace ace { namespace sound {
+
+namespace ace {
+    class GameClient;
+
+    namespace sound {
     // is this cheating
     using abo = gl::GLObj<alGenBuffers, alDeleteBuffers, ALuint>;
     using aso = gl::GLObj<alGenSources, alDeleteSources, ALuint>;
@@ -40,7 +44,7 @@ namespace ace { namespace sound {
     };
 
     struct SoundManager {
-        SoundManager();
+        SoundManager(ace::GameClient &client);
         ~SoundManager();
         ACE_NO_COPY_MOVE(SoundManager)
 
@@ -66,5 +70,6 @@ namespace ace { namespace sound {
         std::vector<Sound> sources;
         std::unique_ptr<Sound> music;
         bool fading_out{false};
+        ace::GameClient &client;
     };
 }}

@@ -4,6 +4,7 @@
 #include "alext.h"
 #include "glm/gtc/type_ptr.hpp"
 
+#include "game_client.h"
 #include "util/except.h"
 
 namespace ace { namespace sound {
@@ -80,10 +81,9 @@ namespace ace { namespace sound {
         CHECK_AL_ERROR();
     }
 
-    SoundManager::SoundManager() {
+    SoundManager::SoundManager(ace::GameClient &client) : client(client) {
         alureInitDevice(nullptr, nullptr);
         alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
-        this->set_listener({ 0, 0, 0 }, { 0, 0, 1 }, {0, 1, 0});
         this->music = std::make_unique<Sound>(nullptr);
     }
 
@@ -126,7 +126,7 @@ namespace ace { namespace sound {
         if(this->fading_out) {
             this->music->volume -= 25 * dt;
             if(this->music->volume <= 0.0) {
-                this->music->stop();
+                this->stop_music(false);
             } else {
                 this->music->update();
             }
@@ -149,6 +149,8 @@ namespace ace { namespace sound {
         alListenerfv(AL_ORIENTATION, ori);
         CHECK_AL_ERROR();
         alListenerfv(AL_VELOCITY, glm::value_ptr(velocity));
+        CHECK_AL_ERROR();
+        alListenerf(AL_GAIN, this->client.config.json.value("volume", 0.5f));
         CHECK_AL_ERROR();
     }
 

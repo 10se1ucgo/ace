@@ -70,7 +70,7 @@ namespace ace {
     constexpr double FIXED_DELTA_TIMESTEP = 1.0 / 60.0;
 
     GameClient::GameClient(std::string caption /*, int w, int h, WINDOW_STYLE style */):
-        net(*this), tasks(*this), window_title(std::move(caption)) {
+        net(*this), sound(*this), tasks(*this), window_title(std::move(caption)) {
 
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
             SDL_ERROR("SDL_Init");
