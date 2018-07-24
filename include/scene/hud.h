@@ -29,11 +29,34 @@ namespace ace { namespace scene {
         void draw_map_grid(glm::vec2 offset) const;
     };
 
+    struct WeaponChangeMenu {
+        // Eventually, this will become an actual UI menu with widgets, similar to retail Ace of Spades.
+        WeaponChangeMenu(HUD &hud);
+
+        void update(double dt);
+        void draw_3d();
+
+        HUD &hud;
+        KV6 semi, smg, shotgun;
+    };
+
+    struct TeamChangeMenu {
+        TeamChangeMenu(HUD &hud);
+
+        void update(double dt);
+        void draw_3d();
+
+        HUD &hud;
+        world::PlayerModel p1, p2;
+    };
+
     struct HUD {
         HUD(GameScene &s);
 
         void update(double dt);
         void draw();
+        void draw_3d();
+
 
         void on_key(SDL_Scancode scancode, int modifiers, bool pressed);
         void on_mouse_button(int button, bool pressed);
@@ -61,6 +84,8 @@ namespace ace { namespace scene {
         glm::mat4 projection;
 
         MapDisplay map_display;
+        WeaponChangeMenu wep_change_menu;
+        TeamChangeMenu team_change_menu;
         
         world::DrawPlayer ply;
 
@@ -69,15 +94,25 @@ namespace ace { namespace scene {
 
         glm::vec3 last_hit;
     private:
-        enum class State {
+        enum class Change {
             None,
-            ChangeTeam,
-            ChangeWeapon,
-            Exit
-        } state{ State::None };
+            Team,
+            Weapon,
+        } change_state = Change::Team;
+
+        enum class FirstJoin {
+            No,
+            Yes,
+            YesTeam1,
+            YesTeam2
+        } first_join = FirstJoin::Yes;
+
+        bool is_exitting = false;
 
         void add_killfeed_message(std::string message, glm::vec3 color);
 
+        void change_team(SDL_Scancode scancode);
+        void change_weapon(SDL_Scancode scancode);
         void update_color(SDL_Scancode key);
 
         void draw_chat();
@@ -90,5 +125,7 @@ namespace ace { namespace scene {
         std::string big_message;
 
         friend MapDisplay;
+        friend WeaponChangeMenu;
+        friend TeamChangeMenu;
     };
 }}

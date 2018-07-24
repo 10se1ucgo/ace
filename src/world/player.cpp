@@ -9,7 +9,7 @@ constexpr float FALL_DAMAGE_VELOCITY = 0.58f;
 constexpr int FALL_DAMAGE_SCALAR = 4096;
 
 namespace ace { namespace world {
-    AcePlayer::AcePlayer(scene::GameScene& scene): scene(scene), f(1, 0, 0), s(0, 1, 0), h(0, 0, 1) {
+    AcePlayer::AcePlayer(scene::GameScene& scene): scene(scene), p(0), e(0), v(0), f(1, 0, 0), s(0, 1, 0), h(0, 0, 1) {
         this->mf = this->mb = this->ml = this->mr = false;
         this->jump = this->crouch = this->sneak = this->sprint = false;
         this->primary_fire = this->secondary_fire = this->weapon_equipped = false;
@@ -278,11 +278,11 @@ namespace ace { namespace world {
     };
 
     void DrawPlayer::update(double dt) {
-        if(this->local_player && !this->get_tool()->available()) {
+        if (!this->alive || this->team == net::TEAM::SPECTATOR) return;
+
+        if (this->local_player && !this->get_tool()->available()) {
             this->set_tool(net::TOOL(uint8_t(this->held_tool) - 1));
         }
-
-        if (!this->alive) return;
 
         if (this->local_player) {
             double old_switch = this->switch_time;
@@ -324,7 +324,6 @@ namespace ace { namespace world {
 
                 int step = this->scene.ms_time & 3;
                 this->play_sound(STEPS[step + int(this->wade) * 4]);
-                //                this->scene.client.sound.play(sound, vox2draw(this->p) + 0.5f, 100, this->local_player && !this->scene.thirdperson);
                 this->next_footstep = scene.time + (this->sprint ? 0.386f : 0.512f);
             }
         }
@@ -333,6 +332,8 @@ namespace ace { namespace world {
     }
 
     long DrawPlayer::fixed_update(double dt) {
+        if (this->team == net::TEAM::SPECTATOR) return -2;
+
         if (this->jump && !this->airborne && this->alive) {
             this->play_sound(this->wade ? "waterjump.wav" : "jump.wav");
         }
@@ -352,9 +353,9 @@ namespace ace { namespace world {
         return ret;
     }
 
-    void DrawPlayer::set_orientation(float x, float y, float z) {
-        AcePlayer::set_orientation(x, y, z);
-        this->draw_forward = vox2draw(this->f); //  { this->f.x, -this->f.z, this->f.y };
+    void DrawPlayer::set_orientation(glm::vec3 orientation) {
+        AcePlayer::set_orientation(orientation.x, orientation.y, orientation.z);
+        this->draw_forward = vox2draw(this->f);
         this->draw_right = glm::normalize(cross(this->scene.cam.world_up, this->draw_forward));
     }
 
@@ -430,6 +431,8 @@ namespace ace { namespace world {
 
         if(this->local_player) {
             this->scene.hud.update_weapon(this->weapon_obj->sight());
+            if (this->held_tool == net::TOOL::WEAPON)
+                this->scene.hud.update_tool(this->weapon_obj->ammo_icon());
         }
     }
 
@@ -442,32 +445,38 @@ namespace ace { namespace world {
         }
     }
 
-    void DrawPlayer::set_alive(bool value) {
-        this->alive = value;
+    void DrawPlayer::set_team(net::TEAM team) {
+        this->team = team;
+    }
 
-        if (this->alive) {
+    void DrawPlayer::set_alive(bool value) {
+        if (value) {
             this->restock(true);
         } else {
-            if(this->local_player) {
+            if(this->local_player && this->alive) {
                 this->play_sound("death.wav");
                 this->play_sound("hitplayer.wav");
             }
             this->health = 0;
         }
+
+        this->alive = value;
     }
 
     void DrawPlayer::draw() {
+        if (this->team == net::TEAM::SPECTATOR) return;
+
         this->transform();
         auto tool = this->get_tool();
         tool->transform();
 
-        scene.shaders.model.uniform("replacement_color", this->scene.teams[this->team].float_color * 0.5f);
+        this->scene.shaders.model.uniform("replacement_color", this->scene.teams[this->team].float_color * 0.5f);
         if(!this->alive) {
-            if(!local_player) this->mdl_dead.draw(this->scene.shaders.model);
+            if(!this->local_player) this->mdl_dead.draw(this->scene.shaders.model);
             return;
         }
 
-        if(!local_player || scene.thirdperson) {
+        if(!this->local_player || this->scene.thirdperson) {
             this->mdl_head.draw(this->scene.shaders.model);
             this->mdl_torso.draw(this->scene.shaders.model);
             this->mdl_legl.draw(this->scene.shaders.model);
@@ -479,10 +488,6 @@ namespace ace { namespace world {
             tool->draw();
         }
     }
-
-    void DrawPlayer::set_position(float x, float y, float z) {
-        this->p = this->e = { x, y, z };
-;    }
 
     Tool *DrawPlayer::get_tool(net::TOOL tool) {
         if (tool == net::TOOL::INVALID) tool = this->held_tool;
@@ -531,10 +536,6 @@ namespace ace { namespace world {
                 rot1 *= this->f.x * this->v.x + this->f.y * this->v.y * 0.028f * 30;
                 rot2 *= this->s.x * this->v.x + this->s.y * this->v.y * 0.028f * 30;
 
-                //            rot1 *= 0.028;
-                //            rot2 *= 0.028;
-                //            rot1 *= 30;
-                //            rot2 *= 30;
                 if ((this->scene.ms_time & 1023) > 511) {
                     this->mdl_legl.rotation.x = -rot1;
                     this->mdl_legl.rotation.z = -rot2;
@@ -571,6 +572,50 @@ namespace ace { namespace world {
     }
 
     void DrawPlayer::play_sound(const std::string &name, int volume) const {
-        this->scene.client.sound.play(name, vox2draw(this->p), 100, this->local_player && !this->scene.thirdperson);
+        this->scene.client.sound.play(name, vox2draw(this->p), volume, this->local_player && !this->scene.thirdperson);
     }
+
+    PlayerModel::PlayerModel(scene::GameScene &scene) :
+        scene(scene),
+        mdl_head(scene.models.get("playerhead.kv6")),
+        mdl_torso(scene.models.get("playertorso.kv6")),
+        mdl_legr(scene.models.get("playerleg.kv6")),
+        mdl_legl(scene.models.get("playerleg.kv6")),
+        mdl_arms(scene.models.get("playerarms.kv6")),
+        mdl_dead(scene.models.get("playerdead.kv6")) {
+    }
+
+    void PlayerModel::draw(glm::vec3 color, bool local) {
+        this->scene.shaders.model.uniform("replacement_color", color);
+
+        if (!local) {
+            this->mdl_head.draw(this->scene.shaders.model);
+            this->mdl_torso.draw(this->scene.shaders.model);
+            this->mdl_legl.draw(this->scene.shaders.model);
+            this->mdl_legr.draw(this->scene.shaders.model);
+            this->mdl_arms.draw(this->scene.shaders.model);
+        } else {
+            this->mdl_head.draw_local(this->scene.shaders.model);
+            this->mdl_torso.draw_local(this->scene.shaders.model);
+            this->mdl_legl.draw_local(this->scene.shaders.model);
+            this->mdl_legr.draw_local(this->scene.shaders.model);
+            this->mdl_arms.draw_local(this->scene.shaders.model);
+        }
+    }
+
+    void PlayerModel::transform(glm::vec3 pos, float yaw, float pitch, bool crouch) {
+        float c = cos(glm::radians(-yaw + 90));
+        float s = sin(glm::radians(-yaw + 90));
+
+        this->mdl_head.position = this->mdl_torso.position = { pos.x, pos.y - 0.3f, pos.z };
+        this->mdl_arms.position = { pos.x, pos.y - (crouch ? 0.4f : 0.5f), pos.z };
+        //            this->mdl_arms.position += draw_forward * bob + scene.cam.up * (airborne ? v.z * 0.2f : 0);
+        float legxy_mod = crouch ? -0.3f : 0.f;
+        this->mdl_legr.position = { pos.x + c * 0.25f + legxy_mod * s, pos.y - (crouch ? 0.7f : 1.1f), pos.z - s * 0.25f + legxy_mod * c };
+        this->mdl_legl.position = { pos.x - c * 0.25f + legxy_mod * s, pos.y - (crouch ? 0.7f : 1.1f), pos.z + s * 0.25f + legxy_mod * c };
+
+        this->mdl_head.rotation = this->mdl_arms.rotation = glm::vec3(-pitch, -yaw + 90, 0);
+        this->mdl_torso.rotation = this->mdl_legl.rotation = this->mdl_legr.rotation = { 0, -yaw + 90, 0 };
+    }
+
 }}

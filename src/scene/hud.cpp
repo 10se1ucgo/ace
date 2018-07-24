@@ -38,7 +38,8 @@ namespace ace { namespace scene {
 
         draw::SpriteGroup *gen_palette(draw::SpriteManager &manager) {
             const auto colors = sizeof(color_palette) / sizeof(color_palette[0]);
-            glm::u8vec4 pixels[colors * colors];
+            // glm::u8vec4 pixels[colors * colors]{};
+            auto pixels = std::make_unique<glm::u8vec4[]>(colors * colors);
             for (int i = 0; i < 8; i++) {
                 for (int j = 0; j < 8; j++) {
                     auto color = color_palette[i * 8 + j];
@@ -49,21 +50,21 @@ namespace ace { namespace scene {
                     }
                 }
             }
-            auto spr = manager.get("palette", SDL_CreateRGBSurfaceFrom(pixels, colors, colors, 32, 4 * colors, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
+            auto spr = manager.get("palette", SDL_CreateRGBSurfaceFrom(pixels.get(), colors, colors, 32, 4 * colors, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
             spr->set_antialias(false);
             return spr;
         }
 
         draw::SpriteGroup *gen_palret(draw::SpriteManager &manager) {
             const auto siz = 8u;
-            glm::u8vec4 pixels[siz * siz]{};
+            auto pixels = std::make_unique<glm::u8vec4[]>(siz * siz);
             for (int i = 0; i < 7; i++) {
                 pixels[0 * siz + i] = { 255, 255, 255, 255 };
                 pixels[(7 - i) * siz + 0] = { 255, 255, 255, 255 };
                 pixels[i * siz + 7] = { 255, 255, 255, 255 };
                 pixels[7 * siz + (7 - i)] = { 255, 255, 255, 255 };
             }
-            auto spr = manager.get("paletteret", SDL_CreateRGBSurfaceFrom(pixels, siz, siz, 32, 4 * siz, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
+            auto spr = manager.get("paletteret", SDL_CreateRGBSurfaceFrom(pixels.get(), siz, siz, 32, 4 * siz, 0xFF, 0xFF << 8, 0xFF << 16, 0xFF << 24));
             spr->set_antialias(false);
             return spr;
         }
@@ -147,12 +148,61 @@ namespace ace { namespace scene {
         }
     }
 
+    WeaponChangeMenu::WeaponChangeMenu(HUD &hud) :
+        hud(hud),
+        semi(hud.scene.models.get("semi.kv6"), 0.05f),
+        smg(hud.scene.models.get("smg.kv6"), 0.05f),
+        shotgun(hud.scene.models.get("shotgun.kv6"), 0.05f) {
+
+        this->semi.rotation.y = this->smg.rotation.y = this->shotgun.rotation.y = 270;
+        this->semi.position = { -1.85f, -1.5f, -3.f };
+        this->smg.position = { 0.15f, -1.5f, -3.f };
+        this->shotgun.position = { 1.85f, -1.5f, -3.f };
+    }
+
+    void WeaponChangeMenu::update(double dt) {
+        this->semi.rotation.y = this->smg.rotation.y = this->shotgun.rotation.y += 60 * dt;
+    }
+
+    void WeaponChangeMenu::draw_3d() {
+        auto &s = this->hud.scene.shaders.model;
+        s.bind();
+
+        int i = 0;
+        for (auto mdl : { &this->semi, &this->smg, &this->shotgun }) {
+            mdl->draw_local(s);
+            this->hud.sys13->draw(fmt::format("Press {} to select", ++i), this->hud.scene.cam.local_to_screen(mdl->position), { 1, 0, 0 }, { 1, 1 }, draw::Align::CENTER);
+        }
+    }
+
+    TeamChangeMenu::TeamChangeMenu(HUD &hud) : hud(hud), p1(hud.scene), p2(hud.scene) {
+        this->p1.transform({ -1.5f, -0.95f, -3.f }, -120, -10, false);
+        this->p2.transform({ 1.9f, -0.95f, -3.f }, -60, -10, false);
+    }
+
+    void TeamChangeMenu::update(double dt) {
+    }
+
+    void TeamChangeMenu::draw_3d() {
+        auto &t1 = this->hud.scene.get_team(net::TEAM::TEAM1);
+        auto &t2 = this->hud.scene.get_team(net::TEAM::TEAM2);
+
+        this->hud.scene.shaders.model.bind();
+        this->p1.draw(t1.float_color, true);
+        this->p2.draw(t2.float_color, true);
+
+        this->hud.sys13->draw(fmt::format("Press 1 to join {}", t1.name), this->hud.scene.cam.local_to_screen(this->p1.mdl_torso.position) + glm::vec2(0, 75), { 1, 0, 0 }, { 1, 1 }, draw::Align::CENTER);
+        this->hud.sys13->draw(fmt::format("Press 2 to join {}", t2.name), this->hud.scene.cam.local_to_screen(this->p2.mdl_torso.position) + glm::vec2(0, 75), { 1, 0, 0 }, { 1, 1 }, draw::Align::CENTER);
+    }
+
     HUD::HUD(GameScene& s) :
         scene(s),
         sprites(scene.client.sprites), reticle(sprites.get("target.png")), pal(gen_palette(sprites)), palret(gen_palret(sprites)),
         hit_indicator(sprites.get("indicator.bmp")), weapon_sight(sprites.get("semi.png")),
         ammo_icon(sprites.get("semi.bmp")),
         map_display(*this),
+        wep_change_menu(*this),
+        team_change_menu(*this),
         ply(scene, false),
         sys48(scene.client.fonts.get("fixedsys.ttf", 48, false)),
         sys13(scene.client.fonts.get("fixedsys.ttf", 13, false)),
@@ -173,6 +223,8 @@ namespace ace { namespace scene {
         if (this->scene.client.keyboard.keys[SDL_SCANCODE_F6]) return;
 
         this->map_display.update(dt);
+        this->wep_change_menu.update(dt);
+        this->team_change_menu.update(dt);
 
         this->big_message_time = std::max(0.0, this->big_message_time - dt);
 
@@ -184,9 +236,9 @@ namespace ace { namespace scene {
             int rt = int(this->respawn_time);
             if (int(old_rt) != rt) {
                 if (rt == 3 || rt == 2) {
-                    this->scene.client.sound.play("beep2.wav", {}, 100, true);
+                    this->scene.client.sound.play_local("beep2.wav");
                 } else if (rt == 1) {
-                    this->scene.client.sound.play("beep1.wav", {}, 100, true);
+                    this->scene.client.sound.play_local("beep1.wav");
                 }
             }
         }
@@ -199,7 +251,23 @@ namespace ace { namespace scene {
         this->hit_indicator.tint.a = std::max(0.0, this->hit_indicator.tint.a - dt);
     }
 
+
+    void HUD::draw_3d() {
+        glClear(GL_DEPTH_BUFFER_BIT);
+
+        if (change_state == Change::Weapon) {
+            this->wep_change_menu.draw_3d();
+        } else if (change_state == Change::Team) {
+            this->team_change_menu.draw_3d();
+        } else if (this->scene.ply) {
+            this->scene.shaders.model.bind();
+            this->scene.ply->draw();
+        }
+    }
+
     void HUD::draw() {
+        this->draw_3d();
+
         glEnable(GL_BLEND);
         glDisable(GL_CULL_FACE);
         glDisable(GL_DEPTH_TEST);
@@ -207,69 +275,56 @@ namespace ace { namespace scene {
 
         if (this->scene.client.keyboard.keys[SDL_SCANCODE_F6]) return;
 
-        if (this->scene.ply && !this->scene.ply->alive) {
-            this->sys48->draw_shadowed(fmt::format("INSERT COIN:{}", int(this->respawn_time)), { scene.client.width() / 2.f, scene.client.height() - 20 }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
-        } else if(this->scene.ply) {
-            this->sys48->draw_shadowed(std::to_string(this->scene.ply->health), { scene.client.width() / 2.f, scene.client.height() - 20 }, scene.ply->health <= 20 ? glm::vec3{ 1, 0, 0 } : glm::vec3{ 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+        if(this->scene.ply && this->scene.ply->team != net::TEAM::SPECTATOR) {
+            if(this->scene.ply->alive) {
+                this->sys48->draw_shadowed(std::to_string(this->scene.ply->health), { scene.client.width() / 2.f, scene.client.height() - 20 }, scene.ply->health <= 20 ? glm::vec3{ 1, 0, 0 } : glm::vec3{ 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
 
-            this->ammo_icon.position = { scene.client.width(), scene.client.height() - 20 };
-            if (this->scene.ply->held_tool == net::TOOL::BLOCK) {
-                this->pal.draw();
-                this->palret.tint = glm::vec4{ float(int(scene.time * 2) % 2) };
-                this->palret.tint.a = 1.0f;
-                this->palret.draw();
+                this->ammo_icon.position = { scene.client.width(), scene.client.height() - 20 };
+                if (this->scene.ply->held_tool == net::TOOL::BLOCK) {
+                    this->pal.draw();
+                    this->palret.tint = glm::vec4{ float(int(scene.time * 2) % 2) };
+                    this->palret.tint.a = 1.0f;
+                    this->palret.draw();
 
-                this->ammo_icon.position.x -= pal.w();
+                    this->ammo_icon.position.x -= pal.w();
+                }
+
+                auto pos = glm::vec2(ammo_icon.position.x - ammo_icon.w(), ammo_icon.position.y);
+                this->sys48->draw_shadowed(this->scene.ply->get_tool()->display_ammo(), pos, { 1, 1, 0 }, { 1, 1 }, draw::Align::BOTTOM_RIGHT);
+
+
+                this->hit_indicator.draw();
+
+                this->ammo_icon.draw();
+
+                if (this->scene.ply->secondary_fire && this->scene.ply->weapon_equipped && !this->scene.ply->weapon_obj->reloading)
+                    this->weapon_sight.draw();
+                else
+                    this->reticle.draw();
+            } else {
+                this->sys48->draw_shadowed(fmt::format("INSERT COIN:{}", int(this->respawn_time)), { scene.client.width() / 2.f, scene.client.height() - 20 }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
             }
-
-            auto pos = glm::vec2(ammo_icon.position.x - ammo_icon.w(), ammo_icon.position.y);
-            this->sys48->draw_shadowed(this->scene.ply->get_tool()->display_ammo(), pos, { 1, 1, 0 }, { 1, 1 }, draw::Align::BOTTOM_RIGHT);
-
-            
-
-
-            this->hit_indicator.draw();
-
-            this->ammo_icon.draw();
-
-            if(this->scene.ply->secondary_fire && this->scene.ply->weapon_equipped)
-                this->weapon_sight.draw();
-            else
-                this->reticle.draw();
         }
 
-
-        std::string str;
-        switch(state) {
-        case State::Exit:
-            str = "LEAVE GAME? Y/N";
-            break;
-        case State::ChangeTeam:
-            str = fmt::format("TEAM: 1 - {}/2 - {}/3 - Spectator", this->scene.teams[net::TEAM::TEAM1].name, this->scene.teams[net::TEAM::TEAM2].name);
-            break;
-        case State::ChangeWeapon:
-            str = "WEAPON: 1 - Rifle/2 - SMG/3 - Shotgun";
-            break;
-        default:
-            break;
-        }
-        if(!str.empty()) {
-            this->sys48->draw(str, { this->scene.client.width() / 2.f, this->scene.client.height() / 2.5f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+        if(this->is_exitting) {
+            this->sys48->draw("LEAVE GAME? Y/N", { this->scene.client.width() / 2.f, this->scene.client.height() / 2.5f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         }
 
-        if(big_message_time > 0.f) {
+        if(this->big_message_time > 0.f) {
             this->sys48->draw(big_message, { this->scene.client.width() / 2.f, this->scene.client.height() / 1.75f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         }
 
-        this->draw_chat();
-        this->draw_killfeed();
+        if (this->first_join == FirstJoin::No) {
+            if (change_state != Change::Team && change_state != Change::Weapon)
+                this->draw_chat();
+            this->draw_killfeed();
 
-        if (this->scene.client.keyboard.keys[this->scene.client.config.get_key("scoreboard")]) {
+            this->map_display.draw();
+        }
+
+        if (this->first_join != FirstJoin::No || this->scene.client.keyboard.keys[this->scene.client.config.get_key("scoreboard")]) {
             this->draw_scoreboard();
         }
-        
-        
-        this->map_display.draw();
 
         this->scene.shaders.sprite.bind();
         this->scene.shaders.sprite.uniform("projection", projection);
@@ -291,37 +346,57 @@ namespace ace { namespace scene {
             this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
         } else if(scancode == this->scene.client.config.get_key("map", SDL_SCANCODE_M)) {
             this->map_display.big_open = !this->map_display.big_open;
-        } else if (scancode == this->scene.client.config.get_key("change_team", SDL_SCANCODE_COMMA)) {
-            this->state = State::ChangeTeam;
-        } else if (scancode == this->scene.client.config.get_key("change_weapon", SDL_SCANCODE_PERIOD)) {
-            this->state = State::ChangeWeapon;
+        } else if (scancode == this->scene.client.config.get_key("change_team", SDL_SCANCODE_COMMA) && this->first_join == FirstJoin::No) {
+            this->change_state = Change::Team;
+        } else if (scancode == this->scene.client.config.get_key("change_weapon", SDL_SCANCODE_PERIOD) && this->first_join == FirstJoin::No) {
+            this->change_state = Change::Weapon;
         } else if (scancode == SDL_SCANCODE_ESCAPE) {
-            this->state = this->state == State::None ? State::Exit : State::None;
-        } else if (scancode == SDL_SCANCODE_EQUALS) {
-            this->scene.client.config.json["volume"] = glm::clamp(this->scene.client.config.json.value("volume", 0.5f) + 0.1f, 0.0f, 1.0f);
-        } else if (scancode == SDL_SCANCODE_MINUS) {
-            this->scene.client.config.json["volume"] = glm::clamp(this->scene.client.config.json.value("volume", 0.5f) - 0.1f, 0.0f, 1.0f);
-        }
-
-        if(this->state == State::Exit) {
-            if(scancode == SDL_SCANCODE_Y)
-                return this->scene.client.net.disconnect();
-            else if(scancode == SDL_SCANCODE_N)
-                this->state = State::None;
-        }
-
-
-        if (scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_3) {
-            if(this->state == State::ChangeWeapon) {
-                this->scene.send_weapon_change(net::WEAPON(scancode - SDL_SCANCODE_1));
-            } else if(this->state == State::ChangeTeam) {
-                auto team = scancode == SDL_SCANCODE_3 ? net::TEAM::SPECTATOR : net::TEAM(scancode - SDL_SCANCODE_1);
-                this->scene.send_team_change(team);
+            if (this->change_state != Change::None && this->first_join == FirstJoin::No) {
+                this->change_state = Change::None;
             } else {
-                return;
+                this->is_exitting = !this->is_exitting;
             }
-            this->state = State::None;
         }
+        // } else if (scancode == SDL_SCANCODE_EQUALS) {
+        //     this->scene.client.config.json["volume"] = glm::clamp(this->scene.client.config.json.value("volume", 0.5f) + 0.1f, 0.0f, 1.0f);
+        // } else if (scancode == SDL_SCANCODE_MINUS) {
+        //     this->scene.client.config.json["volume"] = glm::clamp(this->scene.client.config.json.value("volume", 0.5f) - 0.1f, 0.0f, 1.0f);
+        // }
+
+        if(this->is_exitting) {
+            if (scancode == SDL_SCANCODE_Y)
+                return this->scene.client.net.disconnect();
+            else if (scancode == SDL_SCANCODE_N)
+                this->is_exitting = false;
+        }
+
+        if(this->change_state == Change::Team) {
+            this->change_team(scancode);
+        } else if(change_state == Change::Weapon) {
+            this->change_weapon(scancode);
+        }
+
+
+        // if (scancode >= SDL_SCANCODE_1 && scancode <= SDL_SCANCODE_3) {
+        //     // if (this->state == State::ChangeTeam) {
+        //     //     auto team = scancode == SDL_SCANCODE_3 ? net::TEAM::SPECTATOR : net::TEAM(scancode - SDL_SCANCODE_1);
+        //     //     if (this->first_join == FirstJoin::No) {
+        //     //         this->scene.send_team_change(team);
+        //     //         this->state = State::None;
+        //     //     } else {
+        //     //         this->first_join = team == net::TEAM::TEAM1 ? FirstJoin::PickedBlue : FirstJoin::PickedGreen;
+        //     //     }
+        //     // } else if(this->state == State::ChangeWeapon) {
+        //     //     auto wep = net::WEAPON(scancode - SDL_SCANCODE_1);
+        //     //     if (this->first_join == FirstJoin::No) {
+        //     //         this->scene.send_weapon_change(wep);
+        //     //     } else {
+        //     //         this->scene.send_this_player(first_join == FirstJoin::PickedBlue ? net::TEAM::TEAM1 : net::TEAM::TEAM2, wep);
+        //     //         this->first_join = FirstJoin::No;
+        //     //     }
+        //     //     this->state = State::None;
+        //     // }
+        // }
     }
 
     void HUD::on_mouse_button(int button, bool pressed) {
@@ -352,8 +427,8 @@ namespace ace { namespace scene {
         this->weapon_sight.position = this->hit_indicator.position = this->reticle.position = size / 2.f;
         this->pal.position = size;
 
-        this->weapon_sight.scale = { size.y / this->weapon_sight.group->h(), size.y / this->weapon_sight.group->h() };
-        this->hit_indicator.scale = { size.y / this->hit_indicator.group->h(), size.y / this->hit_indicator.group->h() };
+        this->weapon_sight.scale = glm::vec2{ size.y / this->weapon_sight.group->h() };
+        this->hit_indicator.scale = glm::vec2{ size.y / this->hit_indicator.group->h() };
     }
 
     void HUD::add_chat_message(std::string message, glm::vec3 color) {
@@ -412,6 +487,42 @@ namespace ace { namespace scene {
 
     void HUD::update_tool(const std::string &ammo_icon) {
         this->ammo_icon.group = this->sprites.get(ammo_icon);
+    }
+
+    void HUD::change_team(SDL_Scancode scancode) {
+        net::TEAM team;
+        switch (scancode) {
+        case SDL_SCANCODE_1: team = net::TEAM::TEAM1; break;
+        case SDL_SCANCODE_2: team = net::TEAM::TEAM2; break;
+        case SDL_SCANCODE_3: team = net::TEAM::SPECTATOR; break;
+        default: return;
+        }
+
+        if (this->first_join == FirstJoin::No) {
+            this->scene.send_team_change(team);
+            this->change_state = Change::None;
+        } else {
+            this->first_join = team == net::TEAM::TEAM1 ? FirstJoin::YesTeam1 : FirstJoin::YesTeam2;
+            this->change_state = Change::Weapon;
+        }
+    }
+
+    void HUD::change_weapon(SDL_Scancode scancode) {
+        net::WEAPON weapon;
+        switch (scancode) {
+        case SDL_SCANCODE_1: weapon = net::WEAPON::SEMI; break;
+        case SDL_SCANCODE_2: weapon = net::WEAPON::SMG; break;
+        case SDL_SCANCODE_3: weapon = net::WEAPON::SHOTGUN; break;
+        default: return;
+        }
+
+        if (this->first_join == FirstJoin::No) {
+            this->scene.send_weapon_change(weapon);
+        } else {
+            this->scene.send_this_player(this->first_join == FirstJoin::YesTeam1 ? net::TEAM::TEAM1 : net::TEAM::TEAM2, weapon);
+            this->first_join = FirstJoin::No;
+        }
+        this->change_state = Change::None;
     }
 
     void HUD::update_color(SDL_Scancode key) {

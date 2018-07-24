@@ -107,20 +107,18 @@ namespace ace { namespace scene {
         this->shaders.line.bind();
         this->debug.flush(this->cam.matrix(), this->shaders.line);
 
-        if(this->ply) {
-            if (!this->thirdperson)
-                glClear(GL_DEPTH_BUFFER_BIT);
-            this->shaders.model.bind();
-            this->ply->draw();
-        }
-
         hud.draw();
     }
 
     void GameScene::update(double dt) {
         Scene::update(dt);
 
-        this->thirdperson = !this->ply || !this->ply->alive;
+#ifdef NDEBUG
+        this->thirdperson = !this->ply || !this->ply->alive || this->ply->team == net::TEAM::SPECTATOR;
+#else
+        this->thirdperson |= !this->ply || !this->ply->alive || this->ply->team == net::TEAM::SPECTATOR;
+#endif
+
 
         for (auto &kv : this->teams) {
             kv.second.update_players(*this);
@@ -231,18 +229,18 @@ namespace ace { namespace scene {
             auto *ply = this->get_ply(pkt->pid, true, pkt->pid == this->state_data.pid);
             if (ply->local_player) this->ply = ply; // this->ply() should be a function tbh
             ply->pid = pkt->pid;
-            ply->team = pkt->team;
+            ply->set_team(pkt->team);
             ply->name = pkt->name;
             ply->set_weapon(pkt->weapon);
             ply->set_tool(net::TOOL::WEAPON);
-            ply->set_position(pkt->position.x, pkt->position.y, pkt->position.z);
-            ply->set_alive(true);
+            ply->set_position(pkt->position);
+            ply->set_alive(ply->team != net::TEAM::SPECTATOR);
         } break;
         case net::PACKET::ExistingPlayer: {
             auto *pkt = static_cast<net::ExistingPlayer *>(loader);
             auto *ply = this->get_ply(pkt->pid);
             ply->pid = pkt->pid;
-            ply->team = pkt->team;
+            ply->set_team(pkt->team);
             ply->name = pkt->name;
             ply->set_weapon(pkt->weapon);
             ply->set_tool(pkt->tool);
@@ -257,8 +255,8 @@ namespace ace { namespace scene {
                 if (p == nullptr || !p->alive || p == this->ply) continue;
 
                 const auto &wud = pkt->items.at(i);
-                p->set_position(wud.first.x, wud.first.y, wud.first.z);
-                p->set_orientation(wud.second.x, wud.second.y, wud.second.z);
+                p->set_position(wud.first);
+                p->set_orientation(wud.second);
             }
         } break;
         case net::PACKET::BlockAction: {
@@ -310,8 +308,7 @@ namespace ace { namespace scene {
         } break;
         case net::PACKET::PositionData: {
             if (this->ply) {
-                auto pos = static_cast<net::PositionData *>(loader)->position;
-                this->ply->set_position(pos.x, pos.y, pos.z);
+                this->ply->set_position(static_cast<net::PositionData *>(loader)->position);
             }
         } break;
         case net::PACKET::WeaponInput: {

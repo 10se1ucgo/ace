@@ -14,17 +14,24 @@
 
 Camera::Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, glm::vec3 world_up):
     position(position),
-    forward(forward), right(normalize(cross(world_up, forward))), up(cross(forward, right)),
+    forward(forward),
+    right(normalize(cross(world_up, forward))),
+    up(cross(forward, right)),
     world_up(world_up),
-    scene(s) {
+    scene(s),
+    planes{} {
 
     this->normal_sensitivity = this->scene.client.config.json["controls"].value("mouse_sensitivity", 0.3f);
-    this->zoom_sensitivity = this->scene.client.config.json["controls"].value("ads_sensitivity", this->normal_sensitivity);
+    this->zoom_sensitivity = this->scene.client.config.json["controls"].value(
+        "ads_sensitivity", this->normal_sensitivity);
 
     this->sensitivity = this->normal_sensitivity;
 
     auto ang(ace::dir2ang(this->forward));
-    this->yaw = ang.x; this->pitch = ang.y;
+    this->yaw = ang.x;
+    this->pitch = ang.y;
+
+    this->update_view();
 }
 
 void Camera::update(double dt) {
@@ -43,7 +50,7 @@ void Camera::update_view() {
     up = cross(forward, right);
 
     if (!this->scene.thirdperson && this->scene.ply)
-        this->scene.ply->set_orientation(this->forward.x, this->forward.z, -this->forward.y);
+        this->scene.ply->set_orientation(ace::draw2vox(this->forward));
     this->scene.client.sound.set_listener(this->position, this->forward, this->up);
 
     this->scene.uniforms->view = this->view();
@@ -74,6 +81,13 @@ void Camera::set_projection(float fov, float w, float h, float nearc, float farc
         this->_projection = glm::perspective(glm::radians(fov), w / h, nearc, farc);
     // }
     
+}
+
+glm::vec2 Camera::local_to_screen(glm::vec3 position) const {
+    glm::vec4 clip = projection() * glm::vec4(position, 1.0f);
+    if (clip.w == 0) clip.w = 0.001f;
+    glm::vec3 ndc = glm::vec3(clip) / clip.w;
+    return glm::round(glm::vec2(ndc.x + 1, 1 - ndc.y) / 2.0f * this->scene.client.size());
 }
 
 void Camera::mouse(double dt) {

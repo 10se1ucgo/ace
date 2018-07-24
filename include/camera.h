@@ -52,6 +52,8 @@ public:
         }
         return true;
     }
+
+    glm::vec2 local_to_screen(glm::vec3 position) const;
 private:
     glm::mat4 _projection, _view, pv;
     float nearc{ 0.1f }, farc{ 256.f };
