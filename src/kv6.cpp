@@ -34,12 +34,12 @@ namespace {
         const float zmulk = 2.0f / N;
         const float zaddk = zmulk * 0.5f - 1.0f;
 
-        std::array<glm::vec3, N> table{};
+        std::array<glm::vec3, N> table;
 
-//        table[table.size() - 1] = { 0, 0, 0 };
         for (long i = N - 2; i >= 0; --i) {
             table[i] = equiind2vec(i, zmulk, zaddk);
         }
+        table[N - 1] = glm::vec3{ 0, 0, 0 };
         return table;
     }
 
@@ -176,7 +176,7 @@ KV6Mesh::KV6Mesh(const std::string &name) {
 // ray_direction -> direction of ray
 // *h -> set to the (world) position of the hit (unchanged if not hit)
 // Adapted from https://gamedev.stackexchange.com/questions/18436/most-efficient-aabb-vs-ray-collision-algorithms/18459#18459
-bool KV6::sprhitscan(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 *h) {
+bool KV6::sprhitscan(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 *h) const {
     auto piv = glm::vec3{ this->mesh->xpiv, this->mesh->ypiv, this->mesh->zpiv };
     auto siz = glm::vec3{ this->mesh->xsiz, this->mesh->ysiz, this->mesh->zsiz };
 
@@ -189,7 +189,14 @@ bool KV6::sprhitscan(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 *h
     glm::vec3 r_origin = inverse * glm::vec4(ace::vox2draw(ray_origin), 1.0);
     glm::vec3 r_direction = glm::normalize(inverse * glm::vec4(ace::vox2draw(ray_direction), 0.0));
 
+    for (int i = 0; i < decltype(r_direction)::length(); i++) {
+        if(r_direction[i] == 0.0f) {
+            r_direction[i] = 0.0001f;
+        }
+    }
     glm::vec3 dirfrac = 1.0f / r_direction;
+
+    if (std::isnan(dirfrac.x)) dirfrac.x = 0;
     float t1 = (min.x - r_origin.x) * dirfrac.x;
     float t2 = (max.x - r_origin.x) * dirfrac.x;
     float t3 = (min.y - r_origin.y) * dirfrac.y;
@@ -203,6 +210,9 @@ bool KV6::sprhitscan(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 *h
     if (tmax < 0 || tmin > tmax) {
         return false;
     }
+
+    assert(!glm::any(glm::isnan(r_origin)));
+    assert(!glm::any(glm::isnan(r_direction)));
 
     *h = ace::draw2vox(glm::vec3(mm * glm::vec4(r_origin + r_direction * tmin, 1.0)));
     return true;

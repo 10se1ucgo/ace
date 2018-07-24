@@ -238,7 +238,7 @@ namespace ace {
         return MAP_Z;
     }
 
-    void AceMap::get_random_point(int *x, int *y, int *z, const int x1, const int y1, const int x2, const int y2) {
+    void AceMap::get_random_point(int *x, int *y, int *z, const int x1, const int y1, const int x2, const int y2) const {
         int rx = 0, ry = 0, rz = 0;
         for (int i = 0; i < 16; i++) {
             rx = ace::random::random(x1, x2 - 1); ry = ace::random::random(y1, y2 - 1); rz = this->get_z(rx, ry);
@@ -249,7 +249,7 @@ namespace ace {
         *x = rx; *y = ry; *z = rz;
     }
 
-    glm::ivec3 AceMap::get_random_point(glm::ivec2 p1, glm::ivec2 p2) {
+    glm::ivec3 AceMap::get_random_point(glm::ivec2 p1, glm::ivec2 p2) const {
         glm::ivec3 p;
         this->get_random_point(&p.x, &p.y, &p.z, p1.x, p1.y, p2.x, p2.y);
         return p;

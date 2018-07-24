@@ -4,10 +4,6 @@
 #include "kv6.h"
 #include "draw/map.h"
 
-namespace net {
-    struct WeaponReload;
-}
-
 namespace ace {
     namespace world { struct DrawPlayer; }
 

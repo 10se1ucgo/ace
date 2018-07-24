@@ -10,8 +10,8 @@ namespace ace { namespace scene {
     LoadingFrame::LoadingFrame(scene::Scene &scene) : GUIPanel(scene),
         frame(scene, "LOADING...", scene.client.size() / 2.f, scene.client.height() * 0.9),
         content(scene.client.sprites.get("ui/game_loading/game_loading_content_frames.png")),
-        progress_bar(this->add<draw::ProgressBar>(glm::vec2{}, glm::vec2{})),
-        start_button(this->add<draw::Button>("START", glm::vec2{}, glm::vec2{}, 40)),
+        progress_bar(this->add<draw::ProgressBar>(glm::vec2(0), glm::vec2(0))),
+        start_button(this->add<draw::Button>("START", glm::vec2(0), glm::vec2(0), 40)),
         status_text(scene.client.fonts.get("nevis.ttf", 16), "", glm::vec3(1), glm::vec2(1), draw::Align::CENTER),
         nav_bar(this->add<draw::NavBar>()) {
 

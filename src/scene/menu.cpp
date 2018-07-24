@@ -101,11 +101,11 @@ namespace ace { namespace scene {
     MainMenu::MainMenu(scene::MainMenuScene &scene) : Menu(scene),
         background(scene.client.sprites.get("main.png")), splash(scene.client.sprites.get("splash.png")),
         menu_frame(scene.client.sprites.get("ui/main_menu/frame_main_menu.png")),
-        play_button(this->add<draw::Button>("Play Online", glm::vec2{}, glm::vec2{}, 36)),
-        settings_button(this->add<draw::Button>("Settings", glm::vec2{}, glm::vec2{}, 36)),
-        button3(this->add<draw::IconButton>(glm::vec2{0, 0}, glm::vec2(0))),
-        pb(this->add<draw::ProgressBar>(glm::vec2{0, 0}, glm::vec2{0, 0})),
-        nav_quit(this->add<draw::TextButton>(glm::vec2{}, glm::vec2{40}, "QUIT", "ui/common_elements/nav_bar/quit_icon.png")) {
+        play_button(this->add<draw::Button>("Play Online", glm::vec2(), glm::vec2(), 36)),
+        settings_button(this->add<draw::Button>("Settings", glm::vec2(), glm::vec2(), 36)),
+        button3(this->add<draw::IconButton>(glm::vec2(), glm::vec2())),
+        pb(this->add<draw::ProgressBar>(glm::vec2(), glm::vec2())),
+        nav_quit(this->add<draw::TextButton>(glm::vec2(), glm::vec2(40), "QUIT", "ui/common_elements/nav_bar/quit_icon.png")) {
 
         this->background->order = draw::Layer::BACKGROUND;
 

@@ -67,8 +67,8 @@ namespace ace {
         bool get_solid(int x, int y, int z, bool wrapped = false) const;
         uint32_t get_color(int x, int y, int z, bool wrapped = false);
         int get_z(int x, int y, int start = 0) const;
-        void get_random_point(int *x, int *y, int *z, int x1, int y1, int x2, int y2);
-        glm::ivec3 get_random_point(glm::ivec2 p1 = { 0, 0 }, glm::ivec2 p2 = { MAP_X, MAP_Y });
+        void get_random_point(int *x, int *y, int *z, int x1, int y1, int x2, int y2) const;
+        glm::ivec3 get_random_point(glm::ivec2 p1 = { 0, 0 }, glm::ivec2 p2 = { MAP_X, MAP_Y }) const;
 
         std::vector<glm::ivec3> block_line(const glm::ivec3 start, const glm::ivec3 end) const {
             return this->block_line(start.x, start.y, start.z, end.x, end.y, end.z);

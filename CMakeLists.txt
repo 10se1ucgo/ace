@@ -14,6 +14,7 @@ if (MSVC)
     set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
     set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
     add_definitions(-DCURL_STATICLIB)
+    add_definitions(-DGLM_FORCE_NO_CTOR_INIT)
 else (MSVC) #Just assume everyone on windows uses msvc for now
     set(LIBDL_LIBRARY dl)
 endif (MSVC)

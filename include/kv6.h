@@ -38,7 +38,7 @@ struct KV6 {
                                           lighting_rotation(0), mesh(mesh) {
     }
 
-    bool sprhitscan(glm::vec3 p0, glm::vec3 v0, glm::vec3 *h);
+    bool sprhitscan(glm::vec3 p0, glm::vec3 v0, glm::vec3 *h) const;
 
     glm::mat4 get_model() const {
         return ace::model_matrix(position, rotation, scale);
