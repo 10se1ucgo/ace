@@ -372,7 +372,7 @@ namespace ace { namespace scene {
                 color = teams[ply->team].float_color;
             }
             this->hud.add_chat_message(msg, color);
-            fmt::print(msg + "\n");
+            fmt::print("{}\n", msg);
         } break;
         case net::PACKET::MoveObject: {
             auto *pkt = static_cast<net::MoveObject *>(loader);
