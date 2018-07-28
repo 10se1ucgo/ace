@@ -12,7 +12,7 @@ namespace ace { namespace net {
 
         uint8_t *read(size_t num) {
             if (this->pos + num > this->end) {
-                THROW_ERROR("NO DATA LEFT READING PKT {}\n", start);
+                THROW_ERROR("NO DATA LEFT READING PKT {}\n", std::string(this->start, this->end));
             }
 
             uint8_t *pos = this->pos;
@@ -30,14 +30,14 @@ namespace ace { namespace net {
             return *reinterpret_cast<T *>(this->read(sizeof(T)));
         }
 
-        std::string read_bytes(size_t length = 0) {
+        std::string read_str(size_t length = 0, bool strip_null = false) {
             uint8_t *str;
             if (length == 0) {
                 length = strnlen(reinterpret_cast<char *>(this->pos), this->end - this->pos);
                 str = this->read(length + 1); // read past null terminator
-            }
-            else {
+            } else {
                 str = this->read(length);
+                if (strip_null) length = strnlen(reinterpret_cast<const char *>(str), length);
             }
             return std::string(str, str + length);
         }
@@ -461,7 +461,7 @@ namespace ace { namespace net {
             this->tool = reader.read<TOOL>();
             this->kills = reader.read<uint32_t>();
             this->color = reader.read_color();
-            this->name = reader.read_bytes();
+            this->name = reader.read_str();
         }
         void write(ByteWriter &writer) const override {
             writer.write(this->pid);
@@ -525,7 +525,7 @@ namespace ace { namespace net {
             this->weapon = reader.read<WEAPON>();
             this->team = reader.read<TEAM>();
             this->position = reader.read_vec3<float>();
-            this->name = reader.read_bytes();
+            this->name = reader.read_str();
         }
         void write(ByteWriter &writer) const override {
             writer.write(this->pid);
@@ -593,7 +593,6 @@ namespace ace { namespace net {
                 this->team1_carrier = r.read<uint8_t>();
                 this->team1_flag = { -1, -1, -1 };
                 r.read(11);
-                
             } else {
                 this->team1_carrier = 255;
                 this->team1_flag = r.read_vec3<float>();
@@ -633,21 +632,19 @@ namespace ace { namespace net {
         } state;
 
         void read(ByteReader &reader) override {
-            
             this->pid = reader.read<uint8_t>();
             this->fog_color = reader.read_color();
             this->team1_color = reader.read_color();
             this->team2_color = reader.read_color();
-            this->team1_name = reader.read_bytes(10);
-            this->team2_name = reader.read_bytes(10);
-            this->team1_name = this->team1_name.substr(0, strnlen(this->team1_name.c_str(), this->team1_name.size()));
-            this->team2_name = this->team2_name.substr(0, strnlen(this->team2_name.c_str(), this->team2_name.size()));
+            this->team1_name = reader.read_str(10, true);
+            this->team2_name = reader.read_str(10, true);
 
             this->mode = reader.read<uint8_t>();
             memset(&this->state, 0, sizeof(this->state));
             if(mode == 0) {
                 this->state.ctf.read(reader);
             } else {
+                THROW_ERROR("Territory Control gamemode not supported!");
                 this->state = ModeState();
                 // TODO: territory control state
             }
@@ -695,7 +692,7 @@ namespace ace { namespace net {
         void read(ByteReader &reader) override {
             this->pid = reader.read<uint8_t>();
             this->type = reader.read<CHAT>();
-            this->message = reader.read_bytes();
+            this->message = reader.read_str();
         }
         void write(ByteWriter &writer) const override {
             writer.write(this->pid);
