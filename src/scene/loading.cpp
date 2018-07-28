@@ -94,15 +94,6 @@ namespace ace { namespace scene {
                                this->client.size() / glm::vec2(this->background->w(), this->background->h()));
         
         this->frame.draw();
-        
-        if(this->client.net.state == net::NetState::UNCONNECTED || this->client.net.state == net::NetState::DISCONNECTED) {
-            std::string str;
-            if (this->client.text_input_active())
-                str = fmt::format("ENTER NAME: {}_", this->client.input_buffer);
-            else
-                str = "DISCONNECTED";
-            font->draw(str, { client.width() / 2.f, client.height() / 2.f }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
-        }
 
         this->client.shaders->sprite.bind();
         this->client.shaders->sprite.uniform("projection", this->projection);
