@@ -17,11 +17,14 @@ namespace ace {
     struct AcePlayer {
         explicit AcePlayer(scene::GameScene &scene);
 
-
         scene::GameScene &scene;
-        bool mf, mb, ml, mr, jump, crouch, sneak, sprint, primary_fire, secondary_fire, airborne, wade, alive, weapon_equipped;
-        double lastclimb;
-        glm::vec3 p, e, v, f, s, h;
+        bool mf = false, mb = false, ml = false, mr = false;
+        bool jump = false, crouch = false, sneak = false, sprint = false;
+        bool primary_fire = false, secondary_fire = false, weapon_equipped = false;
+        bool airborne = false, wade = false;
+        bool alive = true;
+        double lastclimb = 0.0;
+        glm::vec3 p{ 0 }, e{ 0 }, v{ 0 }, f{ 1, 0, 0 }, s{ 0, 1, 0 }, h{ 0, 0, 1 };
 
     protected:
         long fixed_update(double dt);
@@ -72,7 +75,7 @@ namespace ace {
         KV6 mdl_head, mdl_torso, mdl_legr, mdl_legl, mdl_arms, mdl_dead;
         bool local_player{false};
 
-        glm::vec3 draw_forward, draw_right;
+        glm::vec3 draw_forward{1, 0, 0}, draw_right{0, 0, 1};
 
         BlockTool blocks;
         SpadeTool spade;
@@ -83,7 +86,7 @@ namespace ace {
 
         Tool *get_tool(net::TOOL tool = net::TOOL::INVALID);
 
-        double switch_time, next_footstep{};
+        double switch_time{}, next_footstep{};
     private:
         void transform();
     };

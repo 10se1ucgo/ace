@@ -190,13 +190,12 @@ bool KV6::sprhitscan(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 *h
     glm::vec3 r_direction = glm::normalize(inverse * glm::vec4(ace::vox2draw(ray_direction), 0.0));
 
     for (int i = 0; i < decltype(r_direction)::length(); i++) {
-        if(r_direction[i] == 0.0f) {
+        if(r_direction[i] == 0.0f || std::isnan(r_direction[i])) {
             r_direction[i] = 0.0001f;
         }
     }
     glm::vec3 dirfrac = 1.0f / r_direction;
 
-    if (std::isnan(dirfrac.x)) dirfrac.x = 0;
     float t1 = (min.x - r_origin.x) * dirfrac.x;
     float t2 = (max.x - r_origin.x) * dirfrac.x;
     float t3 = (min.y - r_origin.y) * dirfrac.y;

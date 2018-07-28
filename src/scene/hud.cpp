@@ -170,7 +170,7 @@ namespace ace { namespace scene {
 
         int i = 0;
         for (auto mdl : { &this->semi, &this->smg, &this->shotgun }) {
-            mdl->draw_local(s);
+            mdl->draw_local(s, false);
             this->hud.sys13->draw(fmt::format("Press {} to select", ++i), this->hud.scene.cam.local_to_screen(mdl->position), { 1, 0, 0 }, { 1, 1 }, draw::Align::CENTER);
         }
     }
@@ -188,8 +188,8 @@ namespace ace { namespace scene {
         auto &t2 = this->hud.scene.get_team(net::TEAM::TEAM2);
 
         this->hud.scene.shaders.model.bind();
-        this->p1.draw(t1.float_color, true);
-        this->p2.draw(t2.float_color, true);
+        this->p1.draw(t1.desaturated_color, true);
+        this->p2.draw(t2.desaturated_color, true);
 
         this->hud.sys13->draw(fmt::format("Press 1 to join {}", t1.name), this->hud.scene.cam.local_to_screen(this->p1.mdl_torso.position) + glm::vec2(0, 75), { 1, 0, 0 }, { 1, 1 }, draw::Align::CENTER);
         this->hud.sys13->draw(fmt::format("Press 2 to join {}", t2.name), this->hud.scene.cam.local_to_screen(this->p2.mdl_torso.position) + glm::vec2(0, 75), { 1, 0, 0 }, { 1, 1 }, draw::Align::CENTER);

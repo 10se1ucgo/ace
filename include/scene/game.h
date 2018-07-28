@@ -28,6 +28,7 @@ namespace ace { namespace scene {
             name(std::move(name)),
             color(color),
             float_color(glm::vec3(color) / 255.f),
+            desaturated_color(float_color * .5f),
             id(id) {
             
         }
@@ -35,7 +36,7 @@ namespace ace { namespace scene {
 
         std::string name;
         glm::ivec3 color;
-        glm::vec3 float_color;
+        glm::vec3 float_color, desaturated_color;
         net::TEAM id;
         int score{}, max_score{};
 

@@ -9,13 +9,7 @@ constexpr float FALL_DAMAGE_VELOCITY = 0.58f;
 constexpr int FALL_DAMAGE_SCALAR = 4096;
 
 namespace ace { namespace world {
-    AcePlayer::AcePlayer(scene::GameScene& scene): scene(scene), p(0), e(0), v(0), f(1, 0, 0), s(0, 1, 0), h(0, 0, 1) {
-        this->mf = this->mb = this->ml = this->mr = false;
-        this->jump = this->crouch = this->sneak = this->sprint = false;
-        this->primary_fire = this->secondary_fire = this->weapon_equipped = false;
-        this->airborne = this->wade = false;
-        this->alive = true;
-        this->lastclimb = 0.0;
+    AcePlayer::AcePlayer(scene::GameScene& scene): scene(scene) {
     }
 
     long AcePlayer::fixed_update(double dt) {
@@ -266,7 +260,7 @@ namespace ace { namespace world {
         mdl_arms(scene.models.get("playerarms.kv6")),
         mdl_dead(scene.models.get("playerdead.kv6")),
         local_player(local_player),
-        blocks(*this), spade(*this), grenades(*this), switch_time(0.0) {
+        blocks(*this), spade(*this), grenades(*this) {
         this->set_weapon(net::WEAPON::SEMI);
         this->set_tool(net::TOOL::WEAPON);
         this->restock(true);
@@ -470,7 +464,7 @@ namespace ace { namespace world {
         auto tool = this->get_tool();
         tool->transform();
 
-        this->scene.shaders.model.uniform("replacement_color", this->scene.teams[this->team].float_color * 0.5f);
+        this->scene.shaders.model.uniform("replacement_color", this->scene.teams[this->team].desaturated_color);
         if(!this->alive) {
             if(!this->local_player) this->mdl_dead.draw(this->scene.shaders.model);
             return;
@@ -595,11 +589,11 @@ namespace ace { namespace world {
             this->mdl_legr.draw(this->scene.shaders.model);
             this->mdl_arms.draw(this->scene.shaders.model);
         } else {
-            this->mdl_head.draw_local(this->scene.shaders.model);
-            this->mdl_torso.draw_local(this->scene.shaders.model);
-            this->mdl_legl.draw_local(this->scene.shaders.model);
-            this->mdl_legr.draw_local(this->scene.shaders.model);
-            this->mdl_arms.draw_local(this->scene.shaders.model);
+            this->mdl_head.draw_local(this->scene.shaders.model, false);
+            this->mdl_torso.draw_local(this->scene.shaders.model, false);
+            this->mdl_legl.draw_local(this->scene.shaders.model, false);
+            this->mdl_legr.draw_local(this->scene.shaders.model, false);
+            this->mdl_arms.draw_local(this->scene.shaders.model, false);
         }
     }
 
