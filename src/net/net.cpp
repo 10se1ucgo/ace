@@ -177,6 +177,21 @@ namespace ace { namespace net {
             uint8_t *data = br.get(&len);
             this->map_writer.write(data, len);
         } break;
+        case PACKET::HandShakeInit: {
+            auto data = br.read<uint32_t>();
+            ByteWriter bw;
+            bw.write(static_cast<uint8_t>(PACKET::HandShakeReturn));
+            bw.write(data);
+            this->send_packet(bw);
+        } break;
+        case PACKET::VersionRequest: {
+            // TODO clean this up and define these constants elsewhere.
+            net::VersionResponse response;
+            response.client = 'a';
+            response.version = { 0, 2, 3 }; // MAJOR.MINOR.PATCH
+            response.os_info = SDL_GetPlatform();
+            this->send_packet(response);
+        } break;
         default: {
             auto packet = get_loader(packet_id);
             if (packet == nullptr) {
@@ -189,10 +204,7 @@ namespace ace { namespace net {
         }
     }
 
-    void NetworkClient::send_packet(PACKET id, const Loader &pkt, enet_uint32 flags) const {
-        ByteWriter writer;
-        writer.write(static_cast<uint8_t>(id));
-        pkt.write(writer);
+    void NetworkClient::send_packet(const ByteWriter &writer, enet_uint32 flags) const {
 //        if(id != PACKET::PositionData && id != PACKET::OrientationData && id != PACKET::InputData && id != PACKET::WeaponInput)
 //            fmt::print("SENDING PACKET WITH ID {}\n", id);
         this->send(writer.vec.data(), writer.vec.size(), flags);

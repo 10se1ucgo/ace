@@ -89,10 +89,14 @@ namespace ace { namespace net {
         void on_disconnect(const ENetEvent& event) final;
         void on_receive(const ENetEvent& event) final;
 
-        void send_packet(PACKET id, const Loader &pkt, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
+        void send_packet(const ByteWriter &data, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
         void send_packet(const Loader &pkt, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const {
-            this->send_packet(pkt.packet_id(), pkt, flags);
+            ByteWriter writer;
+            writer.write(static_cast<uint8_t>(pkt.packet_id()));
+            pkt.write(writer);
+            this->send_packet(writer, flags);
         }
+
         // template<typename TLoader, typename = std::enable_if<!std::is_same_v<TLoader, Loader>>>
         // void send_packet(const TLoader &pkt, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const {
         //     ByteWriter writer;

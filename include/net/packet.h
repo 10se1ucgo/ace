@@ -163,6 +163,10 @@ namespace ace { namespace net {
         WeaponReload,
         ChangeTeam,
         ChangeWeapon,
+        HandShakeInit,
+        HandShakeReturn,
+        VersionRequest,
+        VersionResponse
     };
 
     enum class WEAPON : uint8_t {
@@ -256,7 +260,7 @@ namespace ace { namespace net {
 
 // BADMACROBADMACROBADMACRO
 #define _PACKET_ID(PacketName) \
-    PACKET packet_id() const final { return PACKET::PacketName; } \
+    PACKET packet_id() const final { return PACKET::PacketName; }
 //    static constexpr PACKET packet_id2 = PACKET::PacketName;
 // BADMACROBADMACROBADMACRO
 
@@ -304,7 +308,7 @@ namespace ace { namespace net {
         _PACKET_ID(WorldUpdate)
     };
 
-    struct InputData : Loader {
+    struct InputData final : Loader {
         uint8_t pid;
         bool up : 1, down : 1, left : 1, right : 1, jump : 1, crouch : 1, sneak : 1, sprint : 1;
 
@@ -821,7 +825,7 @@ namespace ace { namespace net {
             this->color = glm::u8vec4(reader.read_color(), reader.read<uint8_t>()); // read BGR into RGB, then read A to form RGBA
         }
         void write(ByteWriter &writer) const override {
-            writer.write(glm::u8vec3(this->color)); // write RGB as BGR, then write A to form BGRA.
+            writer.write_color(glm::u8vec3(this->color)); // write RGB as BGR, then write A to form BGRA.
             writer.write(this->color.a);
         }
 
@@ -875,6 +879,26 @@ namespace ace { namespace net {
         }
 
         _PACKET_ID(ChangeWeapon)
+    };
+
+    struct VersionResponse : Loader {
+        char client;
+        // MAJOR.MINOR.PATCH
+        glm::u8vec3 version;
+        std::string os_info;
+
+        void read(ByteReader &reader) override {
+            this->client = static_cast<char>(reader.read<uint8_t>());
+            this->version = reader.read_vec3<uint8_t>();
+            this->os_info = reader.read_str();
+        }
+        void write(ByteWriter &writer) const override {
+            writer.write(static_cast<uint8_t>(this->client));
+            writer.write(this->version);
+            writer.write(this->os_info);
+        }
+
+        _PACKET_ID(VersionResponse)
     };
 
 #undef _PACKET_ID
