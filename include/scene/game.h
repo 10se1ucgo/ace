@@ -61,7 +61,7 @@ namespace ace { namespace scene {
         // GameScene(GameClient& client, const std::string& map_name);
         ~GameScene();
 
-        void start();
+        void start() override;
         void draw() override;
         void update(double dt) override;
         void fixed_update(double dt) override;

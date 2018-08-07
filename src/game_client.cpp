@@ -67,8 +67,6 @@ namespace ace {
     // void GameConfig::write() {
     // }
 
-    constexpr double FIXED_DELTA_TIMESTEP = 1.0 / 60.0;
-
     GameClient::GameClient(std::string caption /*, int w, int h, WINDOW_STYLE style */):
         net(*this), sound(*this), tasks(*this), window_title(std::move(caption)) {
 
@@ -152,21 +150,22 @@ namespace ace {
         SDL_Quit();
     }
 
+    constexpr double FIXED_DELTA_TIMESTEP = 1.0 / 60.0;
+    // One slow frame means physics has to run more, which makes next frame even slower, which means physics has to run even more
+    // This caps the fixed timestep accumulator to lower the number of fixed update calls when lagging to prevent cascading lag effect 
+    constexpr double MAX_FIXED_STEPS = 1.0 / 3.0;
+
+    // TODO: Decide if I want to do this more like Unreal than Unity, just run physics in sync with frame with a cap
+    // i.e.: this->scene->fixed_update(std::min(dt, MAX_PHYSICS_TIMESTEP))
+    //       this->scene->update(dt);
+
     void GameClient::run() {
         Uint64 last = SDL_GetPerformanceCounter();
-        double fixed_accum = 0;
         while (!this->_quit) {
             Uint64 now = SDL_GetPerformanceCounter();
             double dt = (now - last) / double(SDL_GetPerformanceFrequency());
             this->time += dt;
             last = now;
-
-            fixed_accum += dt;
-            while(fixed_accum >= FIXED_DELTA_TIMESTEP) {
-                // this->fixed_update(FIXED_DELTA_TIMESTEP);
-                this->scene->fixed_update(FIXED_DELTA_TIMESTEP);
-                fixed_accum -= FIXED_DELTA_TIMESTEP;
-            }
 
             this->update(dt);
         }
@@ -174,12 +173,34 @@ namespace ace {
 
 
     void GameClient::update(double dt) {
+        if (this->new_scene != nullptr) {
+            this->scene.reset();
+            this->scene = std::move(this->new_scene);
+            this->scene->start();
+        }
+
         this->poll_events();
         this->update_fps();
         this->tasks.update(dt);
         this->net.update(dt);
         this->url.update(dt);
         this->sound.update(dt);
+
+#if USE_PHYSICS_SUBSTEP
+        this->fixed_update_accumulator = std::min(MAX_FIXED_STEPS, this->fixed_update_accumulator + dt);
+        while (this->fixed_update_accumulator >= FIXED_DELTA_TIMESTEP) {
+            // this->fixed_update(FIXED_DELTA_TIMESTEP);
+            this->scene->fixed_update(FIXED_DELTA_TIMESTEP);
+            // fmt::print("FIXED UPDATE: {}/{}\n", FIXED_DELTA_TIMESTEP, fixed_accum);
+            this->fixed_update_accumulator -= FIXED_DELTA_TIMESTEP;
+
+        }
+#else
+        // in this case fixed_update isnt exactly a good name :P
+        // maybe ill call it `physics_update` or something stupid
+        this->scene->fixed_update(std::min(dt, FIXED_DELTA_TIMESTEP));
+#endif
+
         this->scene->update(dt);
         this->draw();
     }

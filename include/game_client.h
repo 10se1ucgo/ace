@@ -12,6 +12,10 @@
 #include "draw/sprite.h"
 #include "scene/scene.h"
 
+#ifndef USE_PHYSICS_SUBSTEP
+# define USE_PHYSICS_SUBSTEP 0
+#endif
+
 namespace ace {
     namespace scene {
         struct Scene;
@@ -77,16 +81,15 @@ namespace ace {
 
         template<typename TScene, typename... TArgs, typename = std::enable_if_t<std::is_base_of<scene::Scene, TScene>::value>>
         void set_scene(TArgs&&... args) {
-            this->scene.reset();
-            this->scene = std::make_unique<TScene>(*this, std::forward<TArgs>(args)...);
+            this->new_scene.reset();
+            this->new_scene = std::make_unique<TScene>(*this, std::forward<TArgs>(args)...);
         }
 
         void set_scene(std::unique_ptr<scene::Scene> scene) {
-            this->scene.reset();
-            this->scene = std::move(scene);
+            this->new_scene.reset();
+            this->new_scene = std::move(scene);
         }
         
-        friend net::NetworkClient;
         net::NetworkClient net;
         net::URLClient url;
         std::unique_ptr<gl::ShaderManager> shaders; 
@@ -129,9 +132,13 @@ namespace ace {
             int frames = 0;
         } fps_counter;
 
+        double fixed_update_accumulator = 0.0;
+
         SDL_Window *window;
         SDL_GLContext context;
         std::string window_title;
+
+        std::unique_ptr<scene::Scene> new_scene;
 
         bool _quit{ false };
     };

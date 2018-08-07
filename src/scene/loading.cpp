@@ -32,16 +32,7 @@ namespace ace { namespace scene {
 
         this->frame.position_navbar(*this->nav_bar, glm::vec2{40});
 
-        this->nav_bar->on_quit(&GameClient::quit, &this->scene.client);
-        this->nav_bar->on_menu([&client = this->scene.client]() {
-            client.net.disconnect();
-        });
-        this->nav_bar->on_back([&client = this->scene.client]() {
-            client.net.disconnect();
-            auto scene = std::make_unique<MainMenuScene>(client);
-            client.set_scene(std::move(scene));
-//            scene->set_menu<>()
-        });
+
     }
 
     void LoadingFrame::draw() {
@@ -62,25 +53,30 @@ namespace ace { namespace scene {
         this->background->order = draw::Layer::BACKGROUND;
 
         this->on_window_resize(0, 0);
-
-        if (this->client.net.state == net::NetState::DISCONNECTED || this->client.net.state == net::NetState::UNCONNECTED) {
-            // im starting to think the constructor/destructor should *not* signal when the scene starts/stops
-            // if net.connect() was called directly, the net client would try to send a net state change to the current scene
-            // (this scene) while it's still being constructed and cause very bad errors (and annoying to diagnose)
-            this->client.tasks.call_later(0.0, [this] { this->client.net.connect(this->server); });
-        }
-
-        this->frame.start_button->enable(false);
-        this->frame.start_button->on("press_end", &LoadingScene::start_game, this);
-
-        glEnable(GL_BLEND);
-        glDisable(GL_CULL_FACE);
-        glDisable(GL_DEPTH_TEST);
-        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
     }
 
     LoadingScene::~LoadingScene() {
         printf("bye\n");
+    }
+
+    void LoadingScene::start() {
+        if (this->client.net.state == net::NetState::DISCONNECTED || this->client.net.state == net::NetState::UNCONNECTED) {
+           this->client.net.connect(this->server);
+        }
+
+        this->frame.nav_bar->on_quit(&GameClient::quit, &this->client);
+        this->frame.nav_bar->on_menu([&client = this->client]() {
+            client.net.disconnect();
+        });
+        this->frame.nav_bar->on_back([&client = this->client]() {
+            client.net.disconnect();
+            auto scene = std::make_unique<MainMenuScene>(client);
+            // scene->set_menu<>()
+            client.set_scene(std::move(scene));
+        });
+
+        this->frame.start_button->enable(false);
+        this->frame.start_button->on("press_end", &LoadingScene::start_game, this);
     }
 
     void LoadingScene::draw() {
@@ -89,6 +85,11 @@ namespace ace { namespace scene {
         } else {
             glClear(GL_DEPTH_BUFFER_BIT | GL_COLOR_BUFFER_BIT);
         }
+
+        glEnable(GL_BLEND);
+        glDisable(GL_CULL_FACE);
+        glDisable(GL_DEPTH_TEST);
+        glBlendFunc(GL_SRC_ALPHA, GL_ONE_MINUS_SRC_ALPHA);
 
         this->background->draw({ 1, 1, 1, this->background_alpha }, { 0, 0 }, 0,
                                this->client.size() / glm::vec2(this->background->w(), this->background->h()));
@@ -153,7 +154,6 @@ namespace ace { namespace scene {
         for (auto &pkt : saved_loaders) {
             scene->on_packet(pkt.first, std::move(pkt.second));
         }
-        scene->start();
     }
 
     void LoadingScene::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {

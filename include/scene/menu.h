@@ -32,6 +32,7 @@ namespace ace { namespace scene {
         MainMenuScene(GameClient &client);
         ~MainMenuScene();
 
+        void start() override;
         void draw() override;
         void update(double dt) override;
        

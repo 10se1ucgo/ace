@@ -163,7 +163,13 @@ namespace ace { namespace scene {
             SDL_SetCursor(SDL_CreateColorCursor(cursor, 0, 0));
         } catch (ace::RuntimeException &err) {
         }
+    }
 
+    MainMenuScene::~MainMenuScene() {
+//        this->client.sound.stop_music();
+    }
+
+    void MainMenuScene::start() {
         this->set_menu<MainMenu>();
 
         try {
@@ -172,10 +178,6 @@ namespace ace { namespace scene {
         }
 
         this->client.net.disconnect();
-    }
-
-    MainMenuScene::~MainMenuScene() {
-//        this->client.sound.stop_music();
     }
 
     void MainMenuScene::draw() {

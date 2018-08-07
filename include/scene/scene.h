@@ -11,6 +11,8 @@ namespace ace {
         }
         virtual ~Scene() = default;
 
+        virtual void start() { }
+
         virtual void update(double dt) {
             this->time += dt;
             this->ms_time = this->time * 1000;
