@@ -51,9 +51,9 @@ namespace ace {
         this->last_secondary = this->ply.secondary_fire;
     }
 
-    std::string SpadeTool::display_ammo() { return this->ply.blocks.display_ammo(); }
+    std::string SpadeTool::display_ammo() const { return this->ply.blocks.display_ammo(); }
 
-    std::string SpadeTool::ammo_icon() { return this->ply.blocks.ammo_icon(); }
+    std::string SpadeTool::ammo_icon() const { return this->ply.blocks.ammo_icon(); }
 
     void SpadeTool::update(double dt) {
         if (this->ply.secondary_fire && !this->last_secondary) {

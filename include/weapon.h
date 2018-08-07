@@ -11,17 +11,17 @@ namespace ace {
         Tool(world::DrawPlayer &ply);
         virtual ~Tool() = default;
 
-        virtual std::string name() = 0;
+        virtual std::string name() const = 0;
 
-        virtual std::string display_ammo() { return std::to_string(this->primary_ammo) + "-" +  std::to_string(this->secondary_ammo); }
-        virtual std::string ammo_icon() = 0;
+        virtual std::string display_ammo() const { return std::to_string(this->primary_ammo) + "-" +  std::to_string(this->secondary_ammo); }
+        virtual std::string ammo_icon() const = 0;
 
-        virtual int max_primary() = 0;
-        virtual int max_secondary() = 0;
+        virtual int max_primary() const = 0;
+        virtual int max_secondary() const = 0;
 
-        virtual float primary_rate() = 0;
-        virtual float secondary_rate() = 0;
-        virtual float use_rate() { return 0.0f; }
+        virtual float primary_rate() const = 0;
+        virtual float secondary_rate() const = 0;
+        virtual float use_rate() const { return 0.0f; }
 
         virtual bool on_primary() { return true; }
         virtual bool on_secondary() { return true; }
@@ -60,16 +60,16 @@ namespace ace {
     struct SpadeTool final : Tool {
         SpadeTool(world::DrawPlayer& ply);
 
-        std::string name() final { return "Spade"; }
+        std::string name() const final { return "Spade"; }
 
-        std::string display_ammo() final;
-        std::string ammo_icon() final;
+        std::string display_ammo() const final;
+        std::string ammo_icon() const final;
 
-        int max_primary() final { return -1; }
-        int max_secondary() final { return -1; }
+        int max_primary() const final { return -1; }
+        int max_secondary() const final { return -1; }
 
-        float primary_rate() final { return 0.2f; }
-        float secondary_rate() final { return 1.0f; }
+        float primary_rate() const final { return 0.2f; }
+        float secondary_rate() const final { return 1.0f; }
 
         void restock(bool primary = false) final {}
 
@@ -91,17 +91,17 @@ namespace ace {
     struct BlockTool final : Tool {
         BlockTool(world::DrawPlayer& ply);
 
-        std::string name() final { return "Block"; }
+        std::string name() const final { return "Block"; }
 
-        std::string display_ammo() final { return std::to_string(this->primary_ammo); };
-        std::string ammo_icon() final { return "block.bmp"; }
+        std::string display_ammo() const final { return std::to_string(this->primary_ammo); };
+        std::string ammo_icon() const final { return "block.bmp"; }
 
-        int max_primary() final { return 50; }
-        int max_secondary() final { return 1; }
+        int max_primary() const final { return 50; }
+        int max_secondary() const final { return 1; }
 
-        float primary_rate() final { return 0.5f; }
-        float secondary_rate() final { return -1; }
-        float use_rate() final { return 0.5f; }
+        float primary_rate() const final { return 0.5f; }
+        float secondary_rate() const final { return -1; }
+        float use_rate() const final { return 0.5f; }
 
         void restock(bool primary = false) final { Tool::restock(true); }
 
@@ -126,16 +126,16 @@ namespace ace {
     struct GrenadeTool final : Tool {
         GrenadeTool(world::DrawPlayer& ply);
 
-        std::string name() final { return "Grenade"; }
+        std::string name() const final { return "Grenade"; }
 
-        std::string display_ammo() final { return std::to_string(this->primary_ammo); };
-        std::string ammo_icon() final { return "grenade.bmp"; }
+        std::string display_ammo() const final { return std::to_string(this->primary_ammo); };
+        std::string ammo_icon() const final { return "grenade.bmp"; }
 
-        int max_primary() final { return 3; }
-        int max_secondary() final { return 0; }
+        int max_primary() const final { return 3; }
+        int max_secondary() const final { return 0; }
 
-        float primary_rate() final { return -1; }
-        float secondary_rate() final { return -1; }
+        float primary_rate() const final { return -1; }
+        float secondary_rate() const final { return -1; }
 
         void restock(bool primary = false) final { Tool::restock(true); }
 
@@ -160,15 +160,15 @@ namespace ace {
         void draw() final;
         void transform() final;
 
-        virtual std::string sight() = 0;
+        virtual std::string sight() const = 0;
 
-        virtual std::string model() = 0;
-        virtual std::string tracer() = 0;
+        virtual std::string model() const = 0;
+        virtual std::string tracer() const = 0;
 
-        virtual std::string shoot_sound() = 0;
-        virtual std::string reload_sound() = 0;
+        virtual std::string shoot_sound() const = 0;
+        virtual std::string reload_sound() const = 0;
 
-        float secondary_rate() final { return 0.0f; }
+        float secondary_rate() const final { return 0.0f; }
 
         virtual float reload_time() = 0;
 
@@ -197,20 +197,20 @@ namespace ace {
         explicit SemiWeapon(world::DrawPlayer& ply) : Weapon(ply, this->model()) {
         }
 
-        std::string name() final { return "Rifle"; }
-        std::string sight() final { return "semi.png"; }
-        std::string ammo_icon() final { return "semi.bmp"; }
+        std::string name() const final { return "Rifle"; }
+        std::string sight() const final { return "semi.png"; }
+        std::string ammo_icon() const final { return "semi.bmp"; }
 
-        std::string model() final { return "semi.kv6"; }
-        std::string tracer() final { return "semitracer.kv6"; }
+        std::string model() const final { return "semi.kv6"; }
+        std::string tracer() const final { return "semitracer.kv6"; }
 
-        std::string shoot_sound() final { return "semishoot.wav"; }
-        std::string reload_sound() final { return "semireload.wav"; }
+        std::string shoot_sound() const final { return "semishoot.wav"; }
+        std::string reload_sound() const final { return "semireload.wav"; }
 
-        int max_primary() final { return 10; }
-        int max_secondary() final { return 50; }
+        int max_primary() const final { return 10; }
+        int max_secondary() const final { return 50; }
 
-        float primary_rate() final { return 0.5f; }
+        float primary_rate() const final { return 0.5f; }
 
         float reload_time() final { return 2.5f; }
 
@@ -223,20 +223,20 @@ namespace ace {
         explicit SMGWeapon(world::DrawPlayer& ply) : Weapon(ply, this->model()) {
         }
 
-        std::string name() final { return "SMG"; }
-        std::string sight() final { return "smg.png"; }
-        std::string ammo_icon() final { return "smg.bmp"; }
+        std::string name() const final { return "SMG"; }
+        std::string sight() const final { return "smg.png"; }
+        std::string ammo_icon() const final { return "smg.bmp"; }
 
-        std::string model() final { return "smg.kv6"; }
-        std::string tracer() final { return "smgtracer.kv6"; }
+        std::string model() const final { return "smg.kv6"; }
+        std::string tracer() const final { return "smgtracer.kv6"; }
 
-        std::string shoot_sound() final { return "smgshoot.wav"; }
-        std::string reload_sound() final { return "smgreload.wav"; }
+        std::string shoot_sound() const final { return "smgshoot.wav"; }
+        std::string reload_sound() const final { return "smgreload.wav"; }
 
-        int max_primary() final { return 30; }
-        int max_secondary() final { return 120; }
+        int max_primary() const final { return 30; }
+        int max_secondary() const final { return 120; }
 
-        float primary_rate() final { return 0.115f; }
+        float primary_rate() const final { return 0.115f; }
 
         uint8_t block_damage() final { return 48; }
 
@@ -254,20 +254,20 @@ namespace ace {
         bool one_by_one() final { return true; }
         int pellets() final { return 8; }
 
-        std::string name() final { return "Shotgun"; }
-        std::string sight() final { return "shotgun.png"; }
-        std::string ammo_icon() final { return "shotgun.bmp"; }
+        std::string name() const final { return "Shotgun"; }
+        std::string sight() const final { return "shotgun.png"; }
+        std::string ammo_icon() const final { return "shotgun.bmp"; }
 
-        std::string model() final { return "shotgun.kv6"; }
-        std::string tracer() final { return "shotguntracer.kv6"; }
+        std::string model() const final { return "shotgun.kv6"; }
+        std::string tracer() const final { return "shotguntracer.kv6"; }
 
-        std::string shoot_sound() final { return "shotgunshoot.wav"; }
-        std::string reload_sound() final { return "shotgunreload.wav"; }
+        std::string shoot_sound() const final { return "shotgunshoot.wav"; }
+        std::string reload_sound() const final { return "shotgunreload.wav"; }
 
-        int max_primary() final { return 6; }
-        int max_secondary() final { return 48; }
+        int max_primary() const final { return 6; }
+        int max_secondary() const final { return 48; }
 
-        float primary_rate() final { return 1.0f; }
+        float primary_rate() const final { return 1.0f; }
 
         uint8_t block_damage() final { return 48; }
 
