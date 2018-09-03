@@ -90,6 +90,7 @@ namespace ace { namespace draw {
 
         gl::experimental::vao vao;
         gl::experimental::streaming_vbo<detail::GlyphVertex> vbo;
+        // gl::experimental::mesh<detail::GlyphVertex> mesh{ "2f,2f,3f", GL_STREAM_DRAW };
         gl::texture tex;
 
         unsigned int width, height;

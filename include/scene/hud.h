@@ -86,8 +86,6 @@ namespace ace { namespace scene {
         MapDisplay map_display;
         WeaponChangeMenu wep_change_menu;
         TeamChangeMenu team_change_menu;
-        
-        world::DrawPlayer ply;
 
         int color_index = 0;
         float respawn_time = 0.0f, big_message_time = 0.0f;
@@ -120,7 +118,7 @@ namespace ace { namespace scene {
         void draw_scoreboard();
 
         net::CHAT cur_chat_type{ net::CHAT::INVALID };
-        draw::Font *sys48, *sys13, *sys15, *sys18;
+        draw::Font *sys48, *sys13, *sys15, *sys16;
         std::deque<Message> chat_messages, killfeed;
         std::string big_message;
 

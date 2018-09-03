@@ -14,6 +14,7 @@ layout (std140) uniform SceneUniforms {
     mat4 view;
     mat4 proj;
     mat4 pv;
+    vec3 cam_pos;
     vec3 cam_forward;
     vec3 cam_right;
     vec3 cam_up;

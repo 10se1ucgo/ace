@@ -9,12 +9,14 @@ namespace ace { namespace scene {
 
     struct Menu : draw::GUIPanel {
         Menu(scene::MainMenuScene &scene);
+        virtual void start() = 0;
 
         scene::MainMenuScene &scene;
     };
 
     struct MainMenu : Menu {
         explicit MainMenu(scene::MainMenuScene &scene);
+        void start() override;
         void update(double dt) override;
         void draw() override;
 
@@ -30,7 +32,7 @@ namespace ace { namespace scene {
     class MainMenuScene final : public Scene {
     public:
         MainMenuScene(GameClient &client);
-        ~MainMenuScene();
+        // ~MainMenuScene();
 
         void start() override;
         void draw() override;
@@ -42,12 +44,12 @@ namespace ace { namespace scene {
 
         template<typename TMenu, typename... TArgs, typename = std::enable_if_t<std::is_base_of<draw::GUIPanel, TMenu>::value>>
         void set_menu(TArgs&&... args) {
-            this->menu.reset();
-            this->menu = std::make_unique<TMenu>(*this, std::forward<TArgs>(args)...);
+            this->new_menu.reset();
+            this->new_menu = std::make_unique<TMenu>(*this, std::forward<TArgs>(args)...);
         }
 
         glm::mat4 projection;
     private:
-        std::unique_ptr<draw::GUIPanel> menu;
+        std::unique_ptr<Menu> new_menu, menu;
     };
 }}

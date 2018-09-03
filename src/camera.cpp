@@ -56,6 +56,7 @@ void Camera::update_view() {
     this->scene.uniforms->view = this->view();
     this->scene.uniforms->proj = this->projection();
     this->scene.uniforms->pv = this->matrix();
+    this->scene.uniforms->cam_pos = this->position;
     this->scene.uniforms->cam_forward = this->forward;
     this->scene.uniforms->cam_right = this->right;
     this->scene.uniforms->cam_up = this->up;

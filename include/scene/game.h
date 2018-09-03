@@ -47,6 +47,7 @@ namespace ace { namespace scene {
 #pragma pack(push, 1)
     struct SceneUniforms {
         glm::mat4 view, proj, pv;
+        glm::vec3 cam_pos; float ___pad0;
         glm::vec3 cam_forward; float ___pad1;
         glm::vec3 cam_right; float ___pad2;
         glm::vec3 cam_up; float ___pad3;
@@ -54,6 +55,12 @@ namespace ace { namespace scene {
         glm::vec3 light_pos; float ___pad5;
     };
 #pragma pack(pop)
+
+    struct RaycastResult {
+        world::DrawPlayer *ply;
+        net::HIT type;
+        glm::vec3 hit;
+    };
 
     class GameScene final : public Scene {
     public:
@@ -93,6 +100,8 @@ namespace ace { namespace scene {
         void send_team_change(net::TEAM new_team) const;
         void send_weapon_change(net::WEAPON new_weapon) const;
         void send_this_player(net::TEAM team, net::WEAPON weapon) const;
+
+        RaycastResult cast_ray(glm::vec3 origin, glm::vec3 dir, world::DrawPlayer *exclude = nullptr);
 
         void respawn_entities();
 
@@ -151,7 +160,7 @@ namespace ace { namespace scene {
             return this->teams[id];
         }
 
-        util::TaskScheduler::loop_type pd_upd, od_upd;
+        // util::TaskScheduler::loop_type pd_upd, od_upd;
         std::string ply_name;
     };
 

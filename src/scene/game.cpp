@@ -34,8 +34,6 @@ namespace ace { namespace scene {
         state_data(state_data),
         teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color, net::TEAM::TEAM1)},
                 {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }),
-        pd_upd(this->client.tasks.call_every(1.0, false, &GameScene::send_position_update, this)),
-        od_upd(this->client.tasks.call_every(1.0 / 30, false, &GameScene::send_orientation_update, this)),
         ply_name(std::move(ply_name)) {
         // pyspades has a dumb system where sending more
         // than one PositionData packet every 0.7 seconds will cause you to rubberband
@@ -57,9 +55,13 @@ namespace ace { namespace scene {
     void GameScene::start() {
         this->client.sound.play_local("intro.wav");
         this->client.set_exclusive_mouse(true);
-#ifdef NDEBUG
-        this->client.tasks.call_later(1.0, [this] { this->send_this_player(random::choice_range(net::TEAM::TEAM1, net::TEAM::TEAM2), random::choice_range(net::WEAPON::SEMI, net::WEAPON::SHOTGUN)); });
-#endif
+
+        this->client.tasks.schedule(1.0, [this](util::Task &t) {
+            this->send_position_update(); t.keep_going();
+        });
+        this->client.tasks.schedule(1.0 / 30, [this](util::Task &t) {
+            this->send_orientation_update(); t.keep_going();
+        });
     }
 
     void GameScene::draw() {
@@ -598,6 +600,25 @@ namespace ace { namespace scene {
         ep.team = team;
         ep.weapon = weapon;
         this->client.net.send_packet(ep);
+    }
+
+    RaycastResult GameScene::cast_ray(glm::vec3 origin, glm::vec3 dir, world::DrawPlayer *exclude) {
+        RaycastResult r;
+
+        for (auto &kv : this->players) {
+            if (!kv.second->alive || kv.second.get() == exclude) continue;
+            if (glm::dot(dir, kv.second->e - origin) < 0) continue;
+
+            
+            r.type = kv.second->test_ray(origin, dir, &r.hit);
+
+            if (r.type != net::HIT::INVALID) {
+                r.ply = kv.second.get();
+                return r;
+            }
+        }
+
+        return { nullptr, net::HIT::INVALID, glm::vec3(-1) };
     }
 
     void GameScene::respawn_entities() {

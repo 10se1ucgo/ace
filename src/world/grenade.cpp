@@ -16,15 +16,15 @@ namespace ace { namespace world {
     }
 
     bool Grenade::update(double dt) {
-        fuse -= dt;
+        this->fuse -= dt;
         this->move(dt);
 
         this->mesh.position = vox2draw(this->p);
-        this->mesh.rotation += float(-dt * 480) * vox2draw(this->v);
+
+        float f = -dt * 480;
+        this->mesh.rotation += glm::vec3{this->v.x * f, 0.0f, -this->v.y * f};
         
         if(fuse <= 0) {
-//            this->scene.destroy_point(this->p.x, this->p.y, this->p.z, net::ACTION::GRENADE);
-
             bool water = this->p.z >= 63;
 
             for(int i = 1; i <= 3; i++) {

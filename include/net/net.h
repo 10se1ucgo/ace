@@ -104,13 +104,11 @@ namespace ace { namespace net {
         //     pkt.write(writer);
         //     this->send(writer.vec.data(), writer.vec.size(), flags);
         // }
-        
-        ByteWriter map_writer;
-        std::vector<net::ExistingPlayer> players;
 
         ace::GameClient &client;
 
-//        bool connected;
+        ByteWriter map_writer;
+
         DISCONNECT disconnect_reason;
         NetState state;
     private:

@@ -165,25 +165,26 @@ namespace ace { namespace net {
         switch (packet_id) {
         case PACKET::MapStart: {
             this->map_writer.clear();
-            uint32_t siz = br.read<uint32_t>();
-            this->map_writer.vec.reserve(siz);
-            fmt::print("MAP START {}\n", siz);
+            this->map_writer.vec.reserve(br.read<uint32_t>());
             this->set_state(NetState::MAP_TRANSFER);
-        } break;
+            break;
+        } 
         case PACKET::MapChunk: {
             if (this->state != NetState::MAP_TRANSFER)
                 fmt::print(stderr, "Receiving map chunks before map start???");
             size_t len;
             uint8_t *data = br.get(&len);
             this->map_writer.write(data, len);
-        } break;
+            break;
+        } 
         case PACKET::HandShakeInit: {
             auto data = br.read<uint32_t>();
             ByteWriter bw;
             bw.write(static_cast<uint8_t>(PACKET::HandShakeReturn));
             bw.write(data);
             this->send_packet(bw);
-        } break;
+            break;
+        } 
         case PACKET::VersionRequest: {
             // TODO clean this up and define these constants elsewhere.
             net::VersionResponse response;
@@ -191,16 +192,18 @@ namespace ace { namespace net {
             response.version = { 0, 2, 3 }; // MAJOR.MINOR.PATCH
             response.os_info = SDL_GetPlatform();
             this->send_packet(response);
-        } break;
+            break;
+        } 
         default: {
             auto packet = get_loader(packet_id);
             if (packet == nullptr) {
                 fmt::print("CRITICAL: UNHANDLED PACKET WITH ID {}\n", packet_id);
                 break;
-            };
+            }
             packet->read(br);
             this->client.scene->on_packet(packet_id, std::move(packet));
-        } break;
+            break;
+        }
         }
     }
 

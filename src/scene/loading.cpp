@@ -55,10 +55,6 @@ namespace ace { namespace scene {
         this->on_window_resize(0, 0);
     }
 
-    LoadingScene::~LoadingScene() {
-        printf("bye\n");
-    }
-
     void LoadingScene::start() {
         if (this->client.net.state == net::NetState::DISCONNECTED || this->client.net.state == net::NetState::UNCONNECTED) {
            this->client.net.connect(this->server);
@@ -144,14 +140,10 @@ namespace ace { namespace scene {
     void LoadingScene::start_game() {
         if (this->game_scene == nullptr) return;
 
-        // hey so im pretty sure calling client.set_scene invalidates this object (client.set_scene() destroys the current scene)
-        // so im gonna quickly copy/move all of the important stuff out of the class before we destroy it
-        // is this bad design? absolutely. i think.
-        auto saved_loaders(std::move(this->saved_loaders));
         auto *scene = this->game_scene.get();
         this->client.set_scene(std::move(this->game_scene));
 
-        for (auto &pkt : saved_loaders) {
+        for (auto &pkt : this->saved_loaders) {
             scene->on_packet(pkt.first, std::move(pkt.second));
         }
     }

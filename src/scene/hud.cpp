@@ -203,11 +203,10 @@ namespace ace { namespace scene {
         map_display(*this),
         wep_change_menu(*this),
         team_change_menu(*this),
-        ply(scene, false),
         sys48(scene.client.fonts.get("fixedsys.ttf", 48, false)),
         sys13(scene.client.fonts.get("fixedsys.ttf", 13, false)),
         sys15(scene.client.fonts.get("fixedsys.ttf", 15, false)),
-        sys18(scene.client.fonts.get("fixedsys.ttf", 16, false)) {
+        sys16(scene.client.fonts.get("fixedsys.ttf", 16, false)) {
        
         this->reticle.alignment = draw::Align::CENTER;
         this->hit_indicator.alignment = draw::Align::CENTER;
@@ -340,10 +339,10 @@ namespace ace { namespace scene {
 
         if(scancode == this->scene.client.config.get_key("all_chat", SDL_SCANCODE_T)) {
             this->cur_chat_type = net::CHAT::ALL;
-            this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
+            this->scene.client.tasks.schedule(0, [this](util::Task &t) { this->scene.client.toggle_text_input(); });
         } else if(scancode == this->scene.client.config.get_key("team_chat", SDL_SCANCODE_Y)) {
             this->cur_chat_type = net::CHAT::TEAM;
-            this->scene.client.tasks.call_later(0, [this] { this->scene.client.toggle_text_input(); });
+            this->scene.client.tasks.schedule(0, [this](util::Task &t) { this->scene.client.toggle_text_input(); });
         } else if(scancode == this->scene.client.config.get_key("map", SDL_SCANCODE_M)) {
             this->map_display.big_open = !this->map_display.big_open;
         } else if (scancode == this->scene.client.config.get_key("change_team", SDL_SCANCODE_COMMA) && this->first_join == FirstJoin::No) {
@@ -592,8 +591,7 @@ namespace ace { namespace scene {
         float w = this->scene.client.width();
         this->sys48->draw(fmt::format("{}-{}", t1.score, t1.max_score), { w / 4, 150 }, t1.float_color, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         this->sys48->draw(fmt::format("{}-{}", t2.score, t2.max_score), { w - w / 4, 150 }, t2.float_color, { 1, 1 }, draw::Align::BOTTOM_CENTER);
-        draw_scoreboard_players(t1, { w * .1, 175 }, draw::Align::BOTTOM_LEFT, this->sys18);
-        draw_scoreboard_players(t2, { w - w * .1, 175 }, draw::Align::BOTTOM_RIGHT, this->sys18);
+        draw_scoreboard_players(t1, { w * .1, 175 }, draw::Align::BOTTOM_LEFT, this->sys16);
+        draw_scoreboard_players(t2, { w - w * .1, 175 }, draw::Align::BOTTOM_RIGHT, this->sys16);
     }
-
 }}

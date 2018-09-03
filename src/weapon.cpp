@@ -426,38 +426,21 @@ namespace ace {
                 block_destroyed |= this->ply.scene.damage_point(hit.x, hit.y, hit.z, this->ply.local_player ? this->block_damage() : 0, f, !block_destroyed);
             }
 
-
-            for (auto &kv : this->ply.scene.players) {
-                if (!kv.second->alive || kv.second.get() == &this->ply) continue;
-                if (glm::dot(this->ply.f, kv.second->e - this->ply.e) < 0) continue;
-
-                glm::vec3 h;
-                net::HIT type;
-
-                if (kv.second->mdl_head.sprhitscan(this->ply.e, dir, &h)) {
-                    type = net::HIT::HEAD;
-                    this->ply.scene.client.sound.play("whack.wav", vox2draw(h), 125);
-                } else if (kv.second->mdl_torso.sprhitscan(this->ply.e, dir, &h)) {
-                    type = net::HIT::TORSO;
-                } else if (kv.second->mdl_legl.sprhitscan(this->ply.e, dir, &h)) {
-                    type = net::HIT::LEGS;
-                } else if (kv.second->mdl_legr.sprhitscan(this->ply.e, dir, &h)) {
-                    type = net::HIT::LEGS;
-                } else {
-                    continue;
+            scene::RaycastResult result = this->ply.scene.cast_ray(this->ply.e, dir, &this->ply);
+            if (result.ply != nullptr) {
+                if (result.type == net::HIT::HEAD) {
+                    this->ply.scene.client.sound.play("whack.wav", vox2draw(result.hit), 125);
                 }
-
-                this->ply.scene.client.sound.play("hitplayer.wav", vox2draw(h), 125);
+                this->ply.scene.client.sound.play("hitplayer.wav", vox2draw(result.hit), 125);
 
                 // TODO: prevent being able to shoot through blocks
 
-                this->ply.scene.create_object<world::DebrisGroup>(h, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
+                this->ply.scene.create_object<world::DebrisGroup>(result.hit, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
                 if (this->ply.local_player) {
                     net::HitPacket hp;
-                    hp.pid = kv.second->pid;
-                    hp.value = type;
+                    hp.pid = result.ply->pid;
+                    hp.value = result.type;
                     this->ply.scene.client.net.send_packet(hp);
-                    break;
                 }
             }
         }

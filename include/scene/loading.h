@@ -24,7 +24,6 @@ namespace ace { namespace scene {
 //        using Scene::Scene;
 //        LoadingScene(GameClient &client, const char *host, int port);
         LoadingScene(GameClient &client, const std::string &address);
-        ~LoadingScene();
 
         void start() override;
         void draw() override;

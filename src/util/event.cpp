@@ -1,31 +1,31 @@
 #include "util/event.h"
 
 #include <algorithm>
+#include <utility>
 
 #include "game_client.h"
 
 namespace ace { namespace util {
-    void TaskScheduler::update(double dt) {
-        while(!this->tasks.empty() && this->client.time >= this->tasks.begin()->first) {
-            this->tasks.begin()->second();
-            tasks.erase(this->tasks.begin());
-        }
-
-        for (auto i = loops.begin(); i != loops.end();) {
-            auto loop(i->lock());
-            if (loop) {
-                if (this->client.time >= loop->next_call) {
-                    loop->func();
-                    loop->next_call += loop->interval;
-                }
-                ++i;
-            } else {
-                i = loops.erase(i);
-            }
-        }
+    double TaskScheduler::get_time() {
+        return this->client.time;
     }
 
-    double TaskScheduler::get_time(double seconds) {
-        return seconds + this->client.time;
+    void Task::call_in(double seconds) {
+        this->_interval = seconds;
+        this->_next_call = seconds + this->manager->get_time();
+        this->_done = false;
+    }
+
+    double Task::dt() const {
+        if (this->call_count() == 0) return 0;
+        return this->manager->get_time() - this->_last_call;
+    }
+
+    bool Task::call() {
+        this->_done = true;
+        this->function(std::ref(*this));
+        this->_num_calls++;
+        this->_last_call = this->manager->get_time();
+        return this->_done;
     }
 }}

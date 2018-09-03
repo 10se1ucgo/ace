@@ -1,67 +1,99 @@
 #pragma once
-#include <map>
+#include "common.h"
+
 #include <functional>
 #include <utility>
 #include <vector>
-#include <memory>
 #include <chrono>
+
 
 namespace ace { 
 class GameClient;
 
 namespace util {
-    namespace detail {
-        struct LoopingCall {
-            LoopingCall(double interval, std::function<void()> func, double next_call):
-                interval(interval),
-                func(std::move(func)),
-                next_call(next_call) {
-            }
+    struct TaskScheduler;
 
-            double interval;
-            std::function<void()> func;
-            double next_call;
-        };
-    }
+    struct Task {
+        TaskScheduler *manager;
 
-    // wow im bad at designing anything
-    class TaskScheduler {
-        std::multimap<double, std::function<void()>> tasks;
-        std::vector<std::weak_ptr<detail::LoopingCall>> loops;
+        explicit Task(TaskScheduler *manager, std::function<void(Task &)> func) :
+            manager(manager),
+            function(std::move(func)) {
+        }
+
+        void keep_going() {
+            this->call_in(this->_interval);
+        }
+
+        template<typename TTime>
+        void keep_going(TTime time) {
+            this->call_in(time);
+        }
+
+        void call_in(double seconds);
+
+        template<typename TRep, typename TPeriod>
+        void call_in(std::chrono::duration<TRep, TPeriod> duration) {
+            this->call_in(std::chrono::duration_cast<std::chrono::duration<double>>(duration).count());
+        }
+
+        uint64_t call_count() const { return this->_num_calls; }
+
+        double dt() const;
+    private:
+        std::function<void(Task&)> function;
+        double _interval = 0.0, _next_call = 0.0, _last_call = 0.0;
+        uint64_t _num_calls = 0;
+        bool _done = false;
+
+        bool call();
+
+        friend TaskScheduler;
+    };
+
+    struct TaskScheduler {
         GameClient &client;
 
-    public:
-        using task_type = decltype(tasks)::iterator;
-        using loop_type = std::shared_ptr<decltype(loops)::value_type::element_type>;
+        std::vector<Task> tasks;
+        std::vector<Task> persistent_tasks;
 
-        explicit TaskScheduler(GameClient& client): client(client) {}
 
-        void update(double dt);
+        explicit TaskScheduler(GameClient& client) : client(client) { }
 
-        template<typename TFunc, typename... TArgs>
-        task_type call_later(double seconds, TFunc&& func, TArgs&&... args) {
-            return tasks.emplace(this->get_time(seconds), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        void update(double dt) {
+            for (auto i = this->persistent_tasks.begin(); i != this->persistent_tasks.end();) {
+                if (this->get_time() >= i->_next_call && i->call()) {
+                    i = this->persistent_tasks.erase(i);
+                } else {
+                    ++i;
+                }
+            }
+
+            for (auto i = this->tasks.begin(); i != this->tasks.end();) {
+                if (this->get_time() >= i->_next_call && i->call()) {
+                    i = this->tasks.erase(i);
+                } else {
+                    ++i;
+                }
+            }
         }
 
-        template<typename Rep, typename Period, typename TFunc, typename... TArgs>
-        task_type call_later(std::chrono::duration<Rep, Period> time, TFunc&& func, TArgs&&... args) {
-            return tasks.emplace(this->get_time(std::chrono::duration_cast<std::chrono::duration<double>>(time).count()), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        template<typename TTime, typename TFunc, typename... TArgs>
+        Task &schedule(TTime time, TFunc&& func, TArgs&&... args) {
+            this->tasks.emplace_back(this, std::bind(std::forward<TFunc>(func), std::placeholders::_1, std::forward<TArgs>(args)...));
+            auto &task = this->tasks.back();
+            task.call_in(time);
+            return task;
         }
 
-        template<typename TFunc, typename... TArgs>
-        loop_type call_every(double interval, bool now, TFunc&& func, TArgs&&... args) {
-            loop_type ptr(std::make_shared<detail::LoopingCall>(interval, std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...), now ? 0.0 : this->get_time(interval)));
-            this->loops.emplace_back(ptr);
-            return ptr;
+        template<typename TTime, typename TFunc, typename... TArgs>
+        Task &schedule_persistent(TTime time, TFunc&& func, TArgs&&... args) {
+            this->persistent_tasks.emplace_back(this, std::bind(std::forward<TFunc>(func), std::placeholders::_1, std::forward<TArgs>(args)...));
+            auto &task = this->persistent_tasks.back();
+            task.call_in(time);
+            return task;
         }
 
-        template<typename Rep, typename Period, typename TFunc, typename... TArgs>
-        loop_type call_every(std::chrono::duration<Rep, Period> time, bool now, TFunc&& func, TArgs&&... args) {
-            loop_type ptr(std::make_shared<detail::LoopingCall>(std::chrono::duration_cast<std::chrono::duration<double>>(time).count(), std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...), now ? 0.0 : this->get_time(interval)));
-            this->loops.emplace_back(ptr);
-            return ptr;
-        }
-
-        double get_time(double seconds);
+        double get_time();
     };
 }}

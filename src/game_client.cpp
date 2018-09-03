@@ -174,6 +174,7 @@ namespace ace {
 
     void GameClient::update(double dt) {
         if (this->new_scene != nullptr) {
+            this->tasks.tasks.clear();
             this->scene.reset();
             this->scene = std::move(this->new_scene);
             this->scene->start();

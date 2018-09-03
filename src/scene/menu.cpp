@@ -10,6 +10,8 @@
 using json = nlohmann::json;
 
 namespace ace { namespace scene {
+    Menu::Menu(scene::MainMenuScene &scene) : GUIPanel(scene), scene(scene) {
+    }
 
     struct ServerListMenu : Menu {
         draw::SpriteGroup *background;
@@ -44,6 +46,9 @@ namespace ace { namespace scene {
 
             this->frame.position_navbar(*this->nav_bar, glm::vec2{40});
 
+        }
+
+        void start() override {
             this->nav_bar->on_quit(&GameClient::quit, &this->scene.client);
             this->nav_bar->on_menu([&scene = this->scene]() {
                 scene.set_menu<MainMenu>();
@@ -54,12 +59,12 @@ namespace ace { namespace scene {
 
             this->connect_button->on("press_end", [this]() {
                 auto selected(this->list->selected());
-                if(selected) {
+                if (selected) {
                     auto identifier(selected->identifier);
                     this->scene.client.set_scene<ace::scene::LoadingScene>(identifier);
                 }
             });
-                
+
             this->refresh_button->on("press_end", &ServerListMenu::refresh, this);
 
             this->refresh();
@@ -126,12 +131,15 @@ namespace ace { namespace scene {
         this->settings_button->set_size(this->play_button->size());
         this->settings_button->enable(false);
 
+        this->nav_quit->set_position(p + glm::vec2(280, 340) * this->menu_frame.scale);
+        this->nav_quit->set_size(glm::vec2{ 40, 40 } *this->menu_frame.scale);
+    }
+
+    void MainMenu::start() {
         this->play_button->on("press_end", [this]() {
             this->scene.set_menu<ServerListMenu>();
         });
 
-        this->nav_quit->set_position(p + glm::vec2(280, 340) * this->menu_frame.scale);
-        this->nav_quit->set_size(glm::vec2{ 40, 40 } * this->menu_frame.scale);
         this->nav_quit->on("press_start", &GameClient::quit, &this->scene.client);
     }
 
@@ -151,9 +159,6 @@ namespace ace { namespace scene {
         this->menu_frame.draw();
     }
 
-    Menu::Menu(scene::MainMenuScene &scene): GUIPanel(scene), scene(scene) {
-    }
-
     MainMenuScene::MainMenuScene(GameClient &client) : Scene(client),
         projection(glm::ortho(0.f, float(this->client.width()), float(this->client.height()), 0.0f)) {
 
@@ -165,9 +170,9 @@ namespace ace { namespace scene {
         }
     }
 
-    MainMenuScene::~MainMenuScene() {
-//        this->client.sound.stop_music();
-    }
+//     MainMenuScene::~MainMenuScene() {
+// //        this->client.sound.stop_music();
+//     }
 
     void MainMenuScene::start() {
         this->set_menu<MainMenu>();
@@ -200,18 +205,28 @@ namespace ace { namespace scene {
 
     void MainMenuScene::update(double dt) {
         Scene::update(dt);
+
+        if (this->new_menu != nullptr) {
+            this->menu.reset();
+            this->menu = std::move(this->new_menu);
+            this->menu->start();
+        }
+
         this->menu->update(dt);
     }
 
+    // TODO: Find a way to ensure menu is created before input handlers.
+    // Perhaps a new `virtual void Scene::frame_start()` event or something.
+
     void MainMenuScene::on_mouse_motion(int x, int y, int dx, int dy) {
-        this->menu->on_mouse_motion(x, y, dx, dy);
+        if(this->menu) this->menu->on_mouse_motion(x, y, dx, dy);
     }
 
     void MainMenuScene::on_mouse_button(int button, bool pressed) {
-        this->menu->on_mouse_button(button, pressed);
+        if (this->menu) this->menu->on_mouse_button(button, pressed);
     }
 
     void MainMenuScene::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
-        this->menu->on_key(scancode, modifiers, pressed);
+        if (this->menu) this->menu->on_key(scancode, modifiers, pressed);
     }
 }}

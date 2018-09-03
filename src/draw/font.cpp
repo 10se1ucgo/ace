@@ -202,7 +202,7 @@ namespace ace { namespace draw {
         glm::vec2 opos(pos);
         for (unsigned char c : str) {
             if(c == '\n') {
-                // this doesnt work at all for aligned text lol
+                // this doesn't work at all for aligned text lol
                 // i really should ditch this and use a third party library, its more of a headache than its worth
                 opos.y += this->_line_height;
                 pos = opos;

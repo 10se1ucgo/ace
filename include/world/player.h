@@ -64,6 +64,22 @@ namespace ace {
 
         void play_sound(const std::string &name, int volume = 100) const;
 
+        net::HIT test_ray(glm::vec3 origin, glm::vec3 dir, glm::vec3 *hit) const {
+            if (this->mdl_head.sprhitscan(origin, dir, hit)) {
+                return net::HIT::HEAD;
+            }
+            if (this->mdl_torso.sprhitscan(origin, dir, hit)) {
+                return net::HIT::TORSO;
+            }
+            if (this->mdl_legl.sprhitscan(origin, dir, hit)) {
+                return net::HIT::LEGS;
+            }
+            if (this->mdl_legr.sprhitscan(origin, dir, hit)) {
+                return net::HIT::LEGS;
+            }
+            return net::HIT::INVALID;
+        }
+
         uint8_t pid{}, health{};
         net::WEAPON equipped_weapon{net::WEAPON::INVALID};
         net::TOOL held_tool{net::TOOL::INVALID};

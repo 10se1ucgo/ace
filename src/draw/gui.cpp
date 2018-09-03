@@ -12,10 +12,7 @@ namespace ace { namespace draw {
         
         const auto handler(this->handlers.find(event));
         if (handler != this->handlers.end()) {
-            // if this isnt the pinnacle of terrible design then i dont know what is
-            // also im doing this so that if the event handler destroys the current panel/scene it doesnt segfault
-            this->scene.client.tasks.call_later(0, handler->second);
-//            handler->second();
+            handler->second();
         }
     }
 

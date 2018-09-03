@@ -116,7 +116,7 @@ namespace ace {
         
         double time = 0.0;
 
-        std::unique_ptr<scene::Scene> scene; // very bad idea??
+        std::unique_ptr<scene::Scene> scene{ nullptr }; // very bad idea??
     private:
         void draw() const;
         void update(double dt);
@@ -138,7 +138,7 @@ namespace ace {
         SDL_GLContext context;
         std::string window_title;
 
-        std::unique_ptr<scene::Scene> new_scene;
+        std::unique_ptr<scene::Scene> new_scene{ nullptr };
 
         bool _quit{ false };
     };
