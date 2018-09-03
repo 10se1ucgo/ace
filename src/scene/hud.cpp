@@ -305,6 +305,11 @@ namespace ace { namespace scene {
             }
         }
 
+        scene::RaycastResult result = this->scene.cast_ray(draw2vox(this->scene.cam.position), draw2vox(this->scene.cam.forward), this->scene.ply);
+        if(result.ply) {
+            this->sys16->draw(result.ply->name, { scene.client.width() / 2.f, scene.client.height() / 2.f + 20 }, glm::vec3(result.ply->color) / 255.f, { 1, 1 }, draw::Align::CENTER);
+        }
+
         if(this->is_exitting) {
             this->sys48->draw("LEAVE GAME? Y/N", { this->scene.client.width() / 2.f, this->scene.client.height() / 2.5f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         }

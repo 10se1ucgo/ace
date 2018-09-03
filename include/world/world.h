@@ -5,7 +5,7 @@
 
 namespace ace { namespace world {
     struct WorldObject {
-        WorldObject(scene::GameScene& scene) : scene(scene) {}
+        WorldObject(scene::GameScene &scene) : scene(scene) {}
         virtual ~WorldObject() = default;
 
         virtual void draw() = 0;
