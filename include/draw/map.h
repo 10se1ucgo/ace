@@ -45,15 +45,12 @@ namespace ace { namespace draw {
 
         gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B" };
         glm::vec3 scale, rotation, position, centroid;
-
-    private:
-        static uint8_t get_vis(std::unordered_set<glm::ivec3> &set, glm::ivec3 pos);
     };
 
     struct DrawMap;
 
     struct Pillar {
-        Pillar(DrawMap &map, size_t x, size_t y);
+        Pillar(scene::GameScene &map, size_t x, size_t y);
 
         void update();
         void draw();
@@ -62,61 +59,82 @@ namespace ace { namespace draw {
             return this->x <= pos.x && pos.x <= this->x + PILLAR_SIZE && this->y <= pos.y && pos.y <= this->y + PILLAR_SIZE;
         }
 
+        int sunblock(int x, int y, int z) const;
+
         bool dirty;
-        DrawMap &map;
+        scene::GameScene &scene;
         size_t x, y;
         gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B", GL_DYNAMIC_DRAW };
     };
 
-    struct DrawMap : AceMap {
-        DrawMap(scene::GameScene &s, const std::string &file_path);
-        DrawMap(scene::GameScene &s, uint8_t *buf = nullptr);
+    struct MapRenderer {
+        MapRenderer(scene::GameScene &s);
 
-        void update(double dt);
         void draw(gl::ShaderProgram &shader);
 
-        bool set_point(int x, int y, int z, bool solid, uint32_t color) override;
-        bool build_point(int x, int y, int z, glm::u8vec3 color, bool force=false);
-        bool destroy_point(int x, int y, int z, std::vector<VXLBlock> &destroyed);
-        bool damage_point(int x, int y, int z, uint8_t damage);
-
-        static glm::ivec3 next_block(int x, int y, int z, Face face) {
-            glm::ivec3 pos;
-            switch(face) {
-                case Face::LEFT: pos = { x - 1, y, z }; break;
-                case Face::RIGHT: pos = { x + 1, y, z }; break;
-                case Face::BACK: pos = { x, y - 1, z }; break;
-                case Face::FRONT: pos = { x, y + 1, z }; break;
-                case Face::TOP: pos = { x, y, z - 1 }; break;
-                case Face::BOTTOM: pos = { x, y, z + 1 }; break;
-                default: return { -1, -1, -1 };
-            }
-            if(is_valid_pos(pos.x, pos.y, pos.z)) {
-                return pos;
-            }
-            return { -1, -1, -1 };
+        void block_updated(int x, int y, int z);
+    private:
+        Pillar &get_pillar(const int x, const int y, const int z) {
+            int xp = (x & MAP_X - 1) / PILLAR_SIZE;
+            int yp = (y & MAP_Y - 1) / PILLAR_SIZE;
+            return this->pillars[xp * (MAP_Y / PILLAR_SIZE) + yp];
         }
 
-        static glm::vec3 get_face(int x, int y, int z, Face face) {
-            switch (face) {
-            case Face::LEFT: return { x - 0.1, y + 0.5, z + 0.5 };
-            case Face::RIGHT: return { x + 1.1, y + 0.5, z + 0.5 };
-            case Face::BACK: return { x + 0.5, y - 0.1, z + 0.5 };
-            case Face::FRONT: return { x + 0.5, y + 1.1, z + 0.5 };
-            case Face::TOP: return { x + 0.5, y + 0.5, z - 0.1 };
-            case Face::BOTTOM: return { x + 0.5, y + 0.5, z + 1.1 };
-            default: return { -1, -1, -1 };
-            }
-        }
-
-        Pillar &get_pillar(int x, int y, int z = 0);
-
-        draw::SpriteGroup *get_overview();
+        void gen_pillars();
 
         scene::GameScene &scene;
         std::vector<Pillar> pillars;
-        std::vector<std::pair<double, glm::ivec3>> damage_queue;
-    private:
-        void gen_pillars();
     };
+
+    // struct DrawMap : AceMap {
+    //     DrawMap(scene::GameScene &s, const std::string &file_path);
+    //     DrawMap(scene::GameScene &s, uint8_t *buf = nullptr);
+    //
+    //     void update(double dt);
+    //     void draw(gl::ShaderProgram &shader);
+    //
+    //     bool set_point(int x, int y, int z, bool solid, uint32_t color) override;
+    //     bool build_point(int x, int y, int z, glm::u8vec3 color, bool force=false);
+    //     bool destroy_point(int x, int y, int z, std::vector<VXLBlock> &destroyed);
+    //     bool damage_point(int x, int y, int z, uint8_t damage);
+    //
+    //     static glm::ivec3 next_block(int x, int y, int z, Face face) {
+    //         glm::ivec3 pos;
+    //         switch(face) {
+    //             case Face::LEFT: pos = { x - 1, y, z }; break;
+    //             case Face::RIGHT: pos = { x + 1, y, z }; break;
+    //             case Face::BACK: pos = { x, y - 1, z }; break;
+    //             case Face::FRONT: pos = { x, y + 1, z }; break;
+    //             case Face::TOP: pos = { x, y, z - 1 }; break;
+    //             case Face::BOTTOM: pos = { x, y, z + 1 }; break;
+    //             default: return { -1, -1, -1 };
+    //         }
+    //         if(is_valid_pos(pos.x, pos.y, pos.z)) {
+    //             return pos;
+    //         }
+    //         return { -1, -1, -1 };
+    //     }
+    //
+    //     static glm::vec3 get_face(int x, int y, int z, Face face) {
+    //         switch (face) {
+    //         case Face::LEFT: return { x - 0.1, y + 0.5, z + 0.5 };
+    //         case Face::RIGHT: return { x + 1.1, y + 0.5, z + 0.5 };
+    //         case Face::BACK: return { x + 0.5, y - 0.1, z + 0.5 };
+    //         case Face::FRONT: return { x + 0.5, y + 1.1, z + 0.5 };
+    //         case Face::TOP: return { x + 0.5, y + 0.5, z - 0.1 };
+    //         case Face::BOTTOM: return { x + 0.5, y + 0.5, z + 1.1 };
+    //         default: return { -1, -1, -1 };
+    //         }
+    //     }
+    //
+    //     Pillar &get_pillar(int x, int y, int z = 0);
+    //
+    //     draw::SpriteGroup *get_overview();
+    //
+    //     scene::GameScene &scene;
+    //     std::vector<Pillar> pillars;
+    //     std::vector<std::pair<double, glm::ivec3>> damage_queue;
+    // private:
+    //     void gen_pillars();
+    // };
 }}

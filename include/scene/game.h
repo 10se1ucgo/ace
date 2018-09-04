@@ -117,7 +117,9 @@ namespace ace { namespace scene {
         draw::DebugDraw debug;
         KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
         Camera cam;
+
         draw::DrawMap map;
+
         HUD hud;
         world::DrawPlayer *ply{nullptr};
         net::StateData state_data;
