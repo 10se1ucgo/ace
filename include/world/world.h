@@ -17,7 +17,7 @@ namespace ace { namespace world {
     };
 
     struct World {
-        World(scene::GameScene &scene);
+        World(scene::GameScene &scene, uint8_t *buf);
 
         void update(double dt);
         void draw();
@@ -29,6 +29,19 @@ namespace ace { namespace world {
         // Damage a block, subtracting `damage` from its health. If health <= 0 after, optionally destroy. -> success
         bool damage_block(int x, int y, int z, int damage, bool allow_destroy);
 
+        bool clipworld(int x, int y, int z) const;
+        bool clipworld(float x, float y, float z) const {
+            return this->clipworld(int(std::floor(x)), int(std::floor(y)), int(std::floor(z)));
+        }
+
+        bool clipbox(int x, int y, int z) const;
+        bool clipbox(float x, float y, float z) const {
+            return this->clipbox(int(std::floor(x)), int(std::floor(y)), int(std::floor(z)));
+        }
+
+        Face hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const {
+            return this->map.hitscan(p, d, h);
+        }
     private:
         // Destroy block AND check for floating structures, adding any removed floating blocks to the `destroyed` vector. -> success
         bool destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed);
@@ -47,7 +60,7 @@ namespace ace { namespace world {
             this->add_node(v, x, y, z + 1);
         }
 
-        void check_floating(int x, int y, int z, std::vector<VXLBlock> &destroyed);
+        void check_floating(int x, int y, int z, std::vector<VXLBlock> &floating, bool destroy = true);
 
         // Floating block detection
         std::vector<glm::ivec3> nodes;

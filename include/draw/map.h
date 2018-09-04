@@ -47,10 +47,8 @@ namespace ace { namespace draw {
         glm::vec3 scale, rotation, position, centroid;
     };
 
-    struct DrawMap;
-
     struct Pillar {
-        Pillar(scene::GameScene &map, size_t x, size_t y);
+        Pillar(AceMap &map, size_t x, size_t y);
 
         void update();
         void draw();
@@ -62,17 +60,17 @@ namespace ace { namespace draw {
         int sunblock(int x, int y, int z) const;
 
         bool dirty;
-        scene::GameScene &scene;
+        AceMap &map;
         size_t x, y;
         gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B", GL_DYNAMIC_DRAW };
     };
 
     struct MapRenderer {
-        MapRenderer(scene::GameScene &s);
+        MapRenderer(AceMap &map);
 
         void draw(gl::ShaderProgram &shader);
 
-        void block_updated(int x, int y, int z);
+        void maybe_block_updated(int x, int y, int z, bool yes);
     private:
         Pillar &get_pillar(const int x, const int y, const int z) {
             int xp = (x & MAP_X - 1) / PILLAR_SIZE;
@@ -82,7 +80,7 @@ namespace ace { namespace draw {
 
         void gen_pillars();
 
-        scene::GameScene &scene;
+        AceMap &map;
         std::vector<Pillar> pillars;
     };
 
@@ -98,22 +96,22 @@ namespace ace { namespace draw {
     //     bool destroy_point(int x, int y, int z, std::vector<VXLBlock> &destroyed);
     //     bool damage_point(int x, int y, int z, uint8_t damage);
     //
-    //     static glm::ivec3 next_block(int x, int y, int z, Face face) {
-    //         glm::ivec3 pos;
-    //         switch(face) {
-    //             case Face::LEFT: pos = { x - 1, y, z }; break;
-    //             case Face::RIGHT: pos = { x + 1, y, z }; break;
-    //             case Face::BACK: pos = { x, y - 1, z }; break;
-    //             case Face::FRONT: pos = { x, y + 1, z }; break;
-    //             case Face::TOP: pos = { x, y, z - 1 }; break;
-    //             case Face::BOTTOM: pos = { x, y, z + 1 }; break;
-    //             default: return { -1, -1, -1 };
-    //         }
-    //         if(is_valid_pos(pos.x, pos.y, pos.z)) {
-    //             return pos;
-    //         }
-    //         return { -1, -1, -1 };
-    //     }
+    inline glm::ivec3 next_block(int x, int y, int z, Face face) {
+        glm::ivec3 pos;
+        switch(face) {
+            case Face::LEFT: pos = { x - 1, y, z }; break;
+            case Face::RIGHT: pos = { x + 1, y, z }; break;
+            case Face::BACK: pos = { x, y - 1, z }; break;
+            case Face::FRONT: pos = { x, y + 1, z }; break;
+            case Face::TOP: pos = { x, y, z - 1 }; break;
+            case Face::BOTTOM: pos = { x, y, z + 1 }; break;
+            default: return { -1, -1, -1 };
+        }
+        if(is_valid_pos(pos.x, pos.y, pos.z)) {
+            return pos;
+        }
+        return { -1, -1, -1 };
+    }
     //
     //     static glm::vec3 get_face(int x, int y, int z, Face face) {
     //         switch (face) {

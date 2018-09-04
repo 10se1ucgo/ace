@@ -29,7 +29,7 @@ namespace ace { namespace scene {
         shaders(*client.shaders),
         uniforms(this->shaders.create_ubo<SceneUniforms>("SceneUniforms")),
         cam(*this, { 256, 0, 256 }, { 0, -1, 0 }),
-        map(*this, buf),
+        world(*this, buf),
         hud(*this),
         state_data(state_data),
         teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color, net::TEAM::TEAM1)},
@@ -80,7 +80,7 @@ namespace ace { namespace scene {
 
         this->shaders.map.bind();
         this->shaders.map.uniform("model"_u = glm::mat4(1.0), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
-        this->map.draw(this->shaders.map);
+        this->world.draw();
 
         this->shaders.model.bind();
         for (auto &kv : this->players) {
@@ -126,7 +126,7 @@ namespace ace { namespace scene {
             kv.second.update_players(*this);
         }
 
-        this->map.update(dt);
+        this->world.update(dt);
 
         this->cam.update(dt);
         for (auto &kv : this->players) {
@@ -275,13 +275,13 @@ namespace ace { namespace scene {
             }
         } break;
         case net::PACKET::BlockLine: {
-            auto *pkt = static_cast<net::BlockLine *>(loader);
-            auto *ply = this->get_ply(pkt->pid);
-            std::vector<glm::ivec3> blocks = this->map.block_line(pkt->start, pkt->end);
-            ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
-            for(auto &block : blocks) {
-                this->build_point(block.x, block.y, block.z, ply ? ply->color : this->block_colors[pkt->pid], true);
-            }
+            // auto *pkt = static_cast<net::BlockLine *>(loader);
+            // auto *ply = this->get_ply(pkt->pid);
+            // std::vector<glm::ivec3> blocks = this->map.block_line(pkt->start, pkt->end);
+            // ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
+            // for(auto &block : blocks) {
+            //     this->build_point(block.x, block.y, block.z, ply ? ply->color : this->block_colors[pkt->pid], true);
+            // }
         } break;
         case net::PACKET::InputData: {
             auto *pkt = static_cast<net::InputData *>(loader);
@@ -464,7 +464,7 @@ namespace ace { namespace scene {
     bool GameScene::build_point(int x, int y, int z, glm::u8vec3 color, bool s2c) {
         if (s2c) {
             this->client.sound.play("build.wav", vox2draw(glm::vec3{ x, y, z } + 0.5f), 50);
-            return map.build_point(x, y, z, color, s2c);
+            return this->world.build_block(x, y, z, color, s2c);
         }
         this->send_block_action(x, y, z, net::ACTION::BUILD);
         return false;
@@ -476,38 +476,15 @@ namespace ace { namespace scene {
             return false;
         }
 
-        std::vector<VXLBlock> v;
-        bool ok = map.destroy_point(x, y, z, v);
-        switch(type) {
-        case net::ACTION::SPADE:
-            ok |= map.destroy_point(x, y, z + 1, v);
-            ok |= map.destroy_point(x, y, z - 1, v);
-            break;
-        case net::ACTION::GRENADE:
-            for (int i = x - 1; i < x + 2; i++) {
-                for (int j = y - 1; j < y + 2; j++) {
-                    for(int k = z - 1; k < z + 2; k++) {
-                        ok |= map.destroy_point(i, j, k, v);
-                    }
-                }
-            }
-            break;
-        default:
-            break;
-        }
-        if (!v.empty()) {
-            this->create_object<world::FallingBlocks>(v);
-//            objects.emplace_back(std::make_unique<world::FallingBlocks>(*this, v));
-        }
-        return ok;
+        return this->world.destroy_block(x, y, z, type);
     }
 
     bool GameScene::damage_point(int x, int y, int z, uint8_t damage, Face f, bool allow_destroy) {
-        if(f != Face::INVALID) {
-            this->create_object<world::DebrisGroup>(draw::DrawMap::get_face(x, y, z, f), glm::vec3(unpack_argb(this->map.get_color(x, y, z))), 0.25f, 4);
-        }
-
-        if (damage && this->map.damage_point(x, y, z, damage) && allow_destroy) {
+        // if(f != Face::INVALID) {
+        //     this->create_object<world::DebrisGroup>(draw::DrawMap::get_face(x, y, z, f), glm::vec3(unpack_argb(this->map.get_color(x, y, z))), 0.25f, 4);
+        // }
+        
+        if (damage && this->world.damage_block(x, y, z, damage, true) && allow_destroy) {
             this->destroy_point(x, y, z);
             return true;
         }

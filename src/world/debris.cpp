@@ -18,13 +18,13 @@ namespace ace { namespace world {
         this->p += this->v * (float(dt) * 32);
 
         glm::ivec3 lp(glm::floor(this->p));
-        if (this->group.scene.map.clipworld(lp.x, lp.y, lp.z)) {
+        if (this->group.scene.world.clipworld(lp.x, lp.y, lp.z)) {
             glm::ivec3 lp2(floor(fpos.x), floor(fpos.y), floor(fpos.z));
-            if (lp.z != lp2.z && ((lp.x == lp2.x && lp.y == lp2.y) || !this->group.scene.map.clipworld(lp.x, lp.y, lp2.z)))
+            if (lp.z != lp2.z && ((lp.x == lp2.x && lp.y == lp2.y) || !this->group.scene.world.clipworld(lp.x, lp.y, lp2.z)))
                 this->v.z = -this->v.z;
-            else if (lp.x != lp2.x && ((lp.y == lp2.y && lp.z == lp2.z) || !this->group.scene.map.clipworld(lp2.x, lp.y, lp.z)))
+            else if (lp.x != lp2.x && ((lp.y == lp2.y && lp.z == lp2.z) || !this->group.scene.world.clipworld(lp2.x, lp.y, lp.z)))
                 this->v.x = -this->v.x;
-            else if (lp.y != lp2.y && ((lp.x == lp2.x && lp.z == lp2.z) || !this->group.scene.map.clipworld(lp.x, lp2.y, lp.z)))
+            else if (lp.y != lp2.y && ((lp.x == lp2.x && lp.z == lp2.z) || !this->group.scene.world.clipworld(lp.x, lp2.y, lp.z)))
                 this->v.y = -this->v.y;
             this->v *= 0.5f;
             this->p = fpos;

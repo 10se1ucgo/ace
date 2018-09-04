@@ -222,7 +222,7 @@ namespace ace { namespace draw {
     }
 
     VXLBlocks::VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) : scale(1), rotation(0), position(0) {
-        this->update(blocks, center);
+        this->update(blocks, center, true);
     }
 
     void VXLBlocks::update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center, bool gen_vis) {
@@ -256,26 +256,27 @@ namespace ace { namespace draw {
         this->mesh.draw();
     }
 
-    Pillar::Pillar(scene::GameScene &s, size_t x, size_t y) : dirty(true), scene(s), x(x), y(y) {
+    Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {
     }
 
     void Pillar::update() {
         std::array<bool, 27> surrounding;
-        bool use_ao = this->scene.map.scene.client.config.json["graphics"].value("ambient_occlusion", true);
+        // bool use_ao = this->scene.client.config.json["graphics"].value("ambient_occlusion", true);
+        bool use_ao = true;
         for (size_t ax = this->x; ax < this->x + PILLAR_SIZE; ax++) {
             for (size_t ay = this->y; ay < this->y + PILLAR_SIZE; ay++) {
                 for (size_t az = 0; az < MAP_Z; az++) {
-                    uint8_t vis = get_vis(this->scene.map, ax, ay, az, true);
+                    uint8_t vis = get_vis(this->map, ax, ay, az, true);
                     if (az == MAP_Z - 1) vis &= 1 << int(Face::TOP);
                     if (vis == 0) continue;
 
                     uint8_t r, g, b, a;
-                    unpack_bytes(this->scene.map.get_color(ax, ay, az), &a, &r, &g, &b);
+                    unpack_bytes(this->map.get_color(ax, ay, az), &a, &r, &g, &b);
 
                     const glm::u8vec3 color(glm::vec3{ r, g, b } * (this->sunblock(ax, ay, az) / 127.f) * (a / 127.f));
 
                     if(use_ao) {
-                        get_surrounding(this->scene.map, ax, ay, az, surrounding);
+                        get_surrounding(this->map, ax, ay, az, surrounding);
                         gen_faces_with_ao(ax, ay, az, vis, color, this->mesh, surrounding);
                     } else {
                         gen_faces(ax, ay, az, vis, color, this->mesh);
@@ -300,7 +301,7 @@ namespace ace { namespace draw {
         int i = 127;
 
         while (dec && z) {
-            if (this->scene.map.is_solid(x, --y, --z, true))
+            if (this->map.is_solid(x, --y, --z, true))
                 i -= dec;
             dec -= 2;
         }
@@ -320,21 +321,29 @@ namespace ace { namespace draw {
         return buf;
     }
 
-    MapRenderer::MapRenderer(scene::GameScene &s) : scene(s) {
+    MapRenderer::MapRenderer(AceMap &map) : map(map) {
         this->gen_pillars();
     }
 
     void MapRenderer::draw(gl::ShaderProgram &shader) {
         for (auto &p : this->pillars) {
-#ifndef NDEBUG
-            if (p.contains(draw2vox(this->scene.cam.position))) {
-                this->scene.debug.draw_cube({ p.x + 8, -32, p.y + 8 }, { PILLAR_SIZE, 64, PILLAR_SIZE }, { 1, 0, 0 });
-            }
-#endif
-            if (this->scene.cam.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
-                p.draw();
-            }
+// #ifndef NDEBUG
+//             if (p.contains(draw2vox(this->scene.cam.position))) {
+//                 this->scene.debug.draw_cube({ p.x + 8, -32, p.y + 8 }, { PILLAR_SIZE, 64, PILLAR_SIZE }, { 1, 0, 0 });
+//             }
+// #endif
+//             if (this->scene.cam.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
+//                 p.draw();
+//             }
+            p.draw();
         }
+    }
+
+    void MapRenderer::maybe_block_updated(int x, int y, int z, bool yes) {
+        this->get_pillar(x - 1, y, z).dirty |= yes;
+        this->get_pillar(x + 1, y, z).dirty |= yes;
+        this->get_pillar(x, y - 1, z).dirty |= yes;
+        this->get_pillar(x, y + 1, z).dirty |= yes;
     }
 
     void MapRenderer::gen_pillars() {
@@ -342,7 +351,7 @@ namespace ace { namespace draw {
         this->pillars.reserve((MAP_X / PILLAR_SIZE) * (MAP_Y / PILLAR_SIZE));
         for (size_t x = 0; x < MAP_X / PILLAR_SIZE; x++) {
             for (size_t y = 0; y < MAP_Y / PILLAR_SIZE; y++) {
-                this->pillars.emplace_back(*this, x * PILLAR_SIZE, y * PILLAR_SIZE);
+                this->pillars.emplace_back(this->map, x * PILLAR_SIZE, y * PILLAR_SIZE);
             }
         }
     }
@@ -409,10 +418,10 @@ namespace ace { namespace draw {
 //     bool DrawMap::set_point(const int x, const int y, const int z, const bool solid, const uint32_t color) {
 //         bool ok = AceMap::set_point(x, y, z, solid, color);
 //
-//         this->get_pillar(x - 1, y, z).dirty |= ok;
-//         this->get_pillar(x + 1, y, z).dirty |= ok;
-//         this->get_pillar(x, y - 1, z).dirty |= ok;
-//         this->get_pillar(x, y + 1, z).dirty |= ok;
+         // this->get_pillar(x - 1, y, z).dirty |= ok;
+         // this->get_pillar(x + 1, y, z).dirty |= ok;
+         // this->get_pillar(x, y - 1, z).dirty |= ok;
+         // this->get_pillar(x, y + 1, z).dirty |= ok;
 //         // pillars dont render edges even across pillar boundries
 //         // so you have to update adjacent pillars if the destroyed block shares a face with another pillar.
 //         // TODO: shadows dont update across chunks. the origin block can be ~18 blocks a way, so maybe update all chunks within

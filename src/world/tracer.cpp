@@ -15,7 +15,7 @@ namespace ace { namespace world {
 
     bool Tracer::update(double dt) {
         this->time_alive += dt;
-        if (this->time_alive >= Tracer::LIFESPAN || scene.map.clipbox(this->position.x, this->position.y, this->position.z)) {
+        if (this->time_alive >= Tracer::LIFESPAN || this->scene.world.clipbox(this->position.x, this->position.y, this->position.z)) {
             return true;
         }
 

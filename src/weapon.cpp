@@ -102,7 +102,7 @@ namespace ace {
         }
 
         glm::ivec3 hit;
-        Face f = this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit);
+        Face f = this->ply.scene.world.hitscan(this->ply.e, this->ply.f, &hit);
 
         if (f == Face::INVALID || any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
             return this->ply.play_sound("woosh.wav");
@@ -142,11 +142,11 @@ namespace ace {
     void BlockTool::update(double dt) {
         if (this->ply.local_player) {
             glm::ivec3 hit;
-            Face face = this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit);
+            Face face = this->ply.scene.world.hitscan(this->ply.p, this->ply.f, &hit);
             if(any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
                 face = Face::INVALID;
             }
-            hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
+            hit = draw::next_block(hit.x, hit.y, hit.z, face);
 
             
 
@@ -206,11 +206,11 @@ namespace ace {
         if (!this->ply.local_player) return true;
 
         glm::ivec3 hit;
-        Face face = this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit);
+        Face face = this->ply.scene.world.hitscan(this->ply.e, this->ply.f, &hit);
         if (face == Face::INVALID || any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
             return false;
         }
-        hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
+        hit = draw::next_block(hit.x, hit.y, hit.z, face);
         this->ply.scene.build_point(hit.x, hit.y, hit.z, this->ply.color, false);
         this->ply.play_sound("switch.wav", 50);
 
@@ -223,10 +223,10 @@ namespace ace {
 
     bool BlockTool::on_use() {
         glm::ivec3 hit;
-        if(!this->ply.local_player || this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit) == Face::INVALID) {
+        if(!this->ply.local_player || this->ply.scene.world.hitscan(this->ply.e, this->ply.f, &hit) == Face::INVALID) {
             return false;
         }
-        this->ply.set_color(glm::u8vec3(unpack_argb(this->ply.scene.map.get_color(hit.x, hit.y, hit.z, true))));
+        // this->ply.set_color(glm::u8vec3(unpack_argb(this->ply.scene.map.get_color(hit.x, hit.y, hit.z, true))));
         this->next_primary = this->ply.scene.time + this->use_rate();
         return true;
     }
@@ -234,12 +234,12 @@ namespace ace {
     void BlockTool::ghost_block_line() {
         if (!this->ply.local_player) return;
 
-        auto blocks(this->ply.scene.map.block_line(this->m1, this->m2));
-        std::vector<VXLBlock> d_blocks;
-        for (auto &x : blocks) {
-            d_blocks.push_back({ x, 0xFF000000 });
-        }
-        this->ghost_block->update(d_blocks, this->m2, true);
+        // auto blocks(this->ply.scene.map.block_line(this->m1, this->m2));
+        // std::vector<VXLBlock> d_blocks;
+        // for (auto &x : blocks) {
+        //     d_blocks.push_back({ x, 0xFF000000 });
+        // }
+        // this->ghost_block->update(d_blocks, this->m2, true);
     }
 
     void BlockTool::transform() {
@@ -419,7 +419,7 @@ namespace ace {
             this->ply.scene.create_object<world::Tracer>(this->tracer(), this->ply.e + dir * 4.f, dir);
 
             glm::ivec3 hit;
-            Face f = this->ply.scene.map.hitscan(this->ply.e, dir, &hit);
+            Face f = this->ply.scene.world.hitscan(this->ply.e, dir, &hit);
             if (f != Face::INVALID) {
                 // damage 0 if != local_ply just to have particles
                 this->ply.scene.client.sound.play("impact.wav", vox2draw(hit) + .5f);

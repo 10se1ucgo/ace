@@ -88,16 +88,6 @@ namespace ace {
             return vis;
         }
 
-        bool clipworld(int x, int y, int z) const;
-        bool clipworld(float x, float y, float z) const {
-            return this->clipworld(int(std::floor(x)), int(std::floor(y)), int(std::floor(z)));
-        }
-
-        bool clipbox(int x, int y, int z) const;
-        bool clipbox(float x, float y, float z) const {
-            return this->clipbox(int(std::floor(x)), int(std::floor(y)), int(std::floor(z)));
-        }
-
         Face hitscan(const glm::dvec3 & p, const glm::dvec3 & d, glm::ivec3 * h) const;
     private:
         bool is_surface(const int x, const int y, const int z) {

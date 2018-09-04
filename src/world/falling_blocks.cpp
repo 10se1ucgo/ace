@@ -22,7 +22,7 @@ namespace ace { namespace world {
         this->position += this->velocity * float(32 * dt);
 
 
-        if (this->scene.map.clipworld(this->position.x, this->position.y, this->position.z)) {
+        if (this->scene.world.clipworld(this->position.x, this->position.y, this->position.z)) {
             this->position = fpos;
             this->velocity *= -0.6;
             this->direction = rand_normalized();

@@ -74,7 +74,8 @@ namespace ace { namespace scene {
         }
     }
 
-    MapDisplay::MapDisplay(HUD &hud): hud(hud), marker(hud.sprites.get("player.bmp")), map(hud.scene.map.get_overview()), big(map), mini(map) {
+    MapDisplay::MapDisplay(HUD &hud): hud(hud), marker(hud.sprites.get("player.bmp")), map(nullptr), big(map), mini(map) {
+        return;
         this->map->order = draw::Layer::FOREGROUND + 4;
         this->marker->order = this->map->order + 1;
         
@@ -84,6 +85,7 @@ namespace ace { namespace scene {
     }
 
     void MapDisplay::update(double dt) {
+        return;
         this->big.position = this->hud.scene.client.size() / 2.f;
 
         this->mini.position = { hud.scene.client.width() - 15, 15 };
@@ -92,6 +94,8 @@ namespace ace { namespace scene {
     }
 
     void MapDisplay::draw() {
+        return;
+
         glm::vec2 offset;
         if(this->big_open) {
             offset = this->big.get_position();

@@ -274,34 +274,6 @@ namespace ace {
         return MAP_Z;
     }
 
-    bool AceMap::clipworld(int x, int y, int z) const {
-        if (x < 0 || x >= MAP_X || y < 0 || y >= MAP_Y)
-            return false;
-
-        if (z == MAP_Z - 1)
-            z--;
-        else if (z >= MAP_Z)
-            return true;
-        else if (z < 0)
-            return false;
-
-        return this->is_solid_unchecked(get_pos(x, y, z));
-    }
-
-    bool AceMap::clipbox(int x, int y, int z) const {
-        if (x < 0 || x >= MAP_X || y < 0 || y >= MAP_Y)
-            return true;
-
-        if (z == MAP_Z - 1)
-            z--;
-        else if (z >= MAP_Z)
-            return true;
-        else if (z < 0)
-            return false;
-
-        return this->is_solid_unchecked(get_pos(x, y, z));
-    }
-
     Face AceMap::hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const {
         constexpr size_t VSID = MAP_X;
 
@@ -350,7 +322,7 @@ namespace ace {
                 }
             }
             if (!is_valid_pos(h->x, h->y, h->z) && (h->z > MAP_Z + 3 || h->z < -3)) return Face::INVALID;
-            if (this->is_solid_unchecked(get_pos(h->x, h->y, h->z))) return dir;
+            if (this->is_solid(h->x, h->y, h->z)) return dir;
         }
     }
 
