@@ -2,7 +2,7 @@
 
 namespace ace { namespace world {
 
-    World::World(scene::GameScene &scene) : scene(scene), map_renderer(scene) {
+    World::World(scene::GameScene &scene) : map_renderer(scene), scene(scene) {
     }
 
     void World::update(double dt) {
@@ -18,28 +18,6 @@ namespace ace { namespace world {
     }
 
     bool World::destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed) {
-    }
-
-    void World::check_node(int x, int y, int z, std::vector<VXLBlock> &destroyed) {
-        marked.clear();
-        nodes.clear();
-        nodes.emplace_back(x, y, z);
-
-        while (!nodes.empty()) {
-            const glm::ivec3 &node = nodes.back();
-            x = node.x; y = node.y; z = node.z;
-            nodes.pop_back();
-            if (z >= MAP_Z - 2) {
-                return;
-            }
-
-            // already visited?
-            const auto ret = marked.emplace(x, y, z);
-            if (ret.second) {
-                this->add_neighbors(nodes, x, y, z);
-            }
-        }
-
         // destroy the node's path!
         // if (destroy) {
         //     // need to iter twice to get proper visflags.
@@ -53,6 +31,26 @@ namespace ace { namespace world {
         //         this->set_point(pos.x, pos.y, pos.z, false, 0);
         //     }
         // }
+    }
+
+    void World::check_floating(int x, int y, int z, std::vector<VXLBlock> &floating) {
+        this->marked.clear();
+        this->nodes.clear();
+        this->nodes.emplace_back(x, y, z);
+
+        while (!nodes.empty()) {
+            glm::ivec3 node = this->nodes.back();
+            this->nodes.pop_back();
+            if (node.z >= MAP_Z - 2) {
+                return;
+            }
+
+            // already visited?
+            const auto ret = this->marked.emplace(node);
+            if (ret.second) {
+                this->add_neighboring_nodes(this->nodes, node.x, node.y, node.z);
+            }
+        }
     }
 
     bool World::damage_block(int x, int y, int z, int damage, bool allow_destroy) {

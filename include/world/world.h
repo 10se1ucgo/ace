@@ -33,14 +33,28 @@ namespace ace { namespace world {
         // Destroy block AND check for floating structures, adding any removed floating blocks to the `destroyed` vector. -> success
         bool destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed);
 
-        void check_node(int x, int y, int z, std::vector<VXLBlock> &destroyed);
+        void add_node(std::vector<glm::ivec3> &v, const int x, const int y, const int z) const {
+            if (this->map.is_solid(x, y, z))
+                v.emplace_back(x, y, z);
+        }
 
-        AceMap map;
-        draw::MapRenderer map_renderer;
+        void add_neighboring_nodes(std::vector<glm::ivec3> &v, const int x, const int y, const int z) const {
+            this->add_node(v, x, y, z - 1);
+            this->add_node(v, x, y - 1, z);
+            this->add_node(v, x, y + 1, z);
+            this->add_node(v, x - 1, y, z);
+            this->add_node(v, x + 1, y, z);
+            this->add_node(v, x, y, z + 1);
+        }
+
+        void check_floating(int x, int y, int z, std::vector<VXLBlock> &destroyed);
 
         // Floating block detection
         std::vector<glm::ivec3> nodes;
         std::unordered_set<glm::ivec3> marked;
+
+        AceMap map;
+        draw::MapRenderer map_renderer;
 
         scene::GameScene &scene;
     };
