@@ -222,30 +222,26 @@ namespace ace { namespace draw {
     }
 
     VXLBlocks::VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) : scale(1), rotation(0), position(0) {
-        this->update(blocks, center, true);
+        this->update(blocks, center);
     }
 
-    void VXLBlocks::update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center, bool gen_vis) {
+    void VXLBlocks::update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) {
         this->centroid = center;
 
         std::unordered_set<glm::ivec3> bmap;
-        if(gen_vis) {
-            for (const VXLBlock &block : blocks) {
-                bmap.emplace(block.position.x, block.position.y, block.position.z);
-            }
+        for (const VXLBlock &block : blocks) {
+            bmap.emplace(block.position.x, block.position.y, block.position.z);
         }
 
         for (const VXLBlock &block : blocks) {
             uint8_t r, g, b, a;
             unpack_bytes(block.color, &a, &r, &g, &b);
 
-
-
             gen_faces(
                 block.position.x - this->centroid.x,
                 block.position.y - this->centroid.y,
                 block.position.z - this->centroid.z,
-                gen_vis ? get_vis(bmap, block.position) : block.vis, glm::u8vec3{ r, g, b }, this->mesh
+                get_vis(bmap, block.position), glm::u8vec3{ r, g, b }, this->mesh
             );
         }
         this->mesh.upload();
@@ -320,22 +316,21 @@ namespace ace { namespace draw {
         fclose(f);
         return buf;
     }
-
+    
     MapRenderer::MapRenderer(AceMap &map) : map(map) {
         this->gen_pillars();
     }
 
-    void MapRenderer::draw(gl::ShaderProgram &shader) {
+    void MapRenderer::draw(gl::ShaderProgram &shader, Camera &camera) {
         for (auto &p : this->pillars) {
 // #ifndef NDEBUG
 //             if (p.contains(draw2vox(this->scene.cam.position))) {
 //                 this->scene.debug.draw_cube({ p.x + 8, -32, p.y + 8 }, { PILLAR_SIZE, 64, PILLAR_SIZE }, { 1, 0, 0 });
 //             }
 // #endif
-//             if (this->scene.cam.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
-//                 p.draw();
-//             }
-            p.draw();
+             if (camera.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
+                 p.draw();
+             }
         }
     }
 
@@ -356,88 +351,6 @@ namespace ace { namespace draw {
         }
     }
 
-//
-//     DrawMap::DrawMap(scene::GameScene &s, const std::string &file_path) : DrawMap(s, read_file(file_path).get()) {
-//     }
-//
-//     DrawMap::DrawMap(scene::GameScene &s, uint8_t *buf) : AceMap(buf), scene(s) {
-//         this->gen_pillars();
-//     }
-//
-//     void DrawMap::update(double dt) {
-//         for (auto i = damage_queue.begin(); i != damage_queue.end();) {
-//             if (scene.time >= i->first) {
-//                 int x = i->second.x, y = i->second.y, z = i->second.z;
-//                 if(this->get_solid(x, y, z)) {
-//                     this->set_point(x, y, z, true, (0x7F << 24) | this->get_color(x, y, z));
-//                 }
-//                 i = damage_queue.erase(i);
-//             } else {
-//                 ++i;
-//             }
-//         }
-//     }
-//
-//     void DrawMap::draw(gl::ShaderProgram &shader) {
-//         // for (auto &p : this->pillars) {
-//         //     if (p.contains(draw2vox(this->scene.cam.position))) {
-//         //         this->scene.debug.draw_quad({ p.x, 0, p.y }, { p.x, -64, p.y }, { p.x + PILLAR_SIZE, -64, p.y }, { p.x + PILLAR_SIZE, 0, p.y }, glm::vec3{ 0, 1, 0 });
-//         //     }
-//         //
-//         // }
-//
-//         for (auto &p : this->pillars) {
-// #ifndef NDEBUG
-//             if (p.contains(draw2vox(this->scene.cam.position))) {
-//                 this->scene.debug.draw_cube({ p.x + 8, -32, p.y + 8 }, { PILLAR_SIZE, 64, PILLAR_SIZE }, { 1, 0, 0 });
-//             }
-// #endif
-//             if (this->scene.cam.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
-//                 p.draw();
-//             }
-//         }
-//     }
-//
-//     Pillar &DrawMap::get_pillar(const int x, const int y, const int z) {
-//         int xp = (x & MAP_X - 1) / PILLAR_SIZE;
-//         int yp = (y & MAP_Y - 1) / PILLAR_SIZE;
-//         return this->pillars[xp * (MAP_Y / PILLAR_SIZE) + yp];
-//     }
-//
-//     void DrawMap::gen_pillars() {
-//         pillars.clear();
-//         pillars.reserve((MAP_X / PILLAR_SIZE) * (MAP_Y / PILLAR_SIZE));
-//         for (size_t x = 0; x < MAP_X / PILLAR_SIZE; x++) {
-//             for (size_t y = 0; y < MAP_Y / PILLAR_SIZE; y++) {
-//                 pillars.emplace_back(*this, x * PILLAR_SIZE, y * PILLAR_SIZE);
-//             }
-//         }
-//     }
-//
-//
-//     bool DrawMap::set_point(const int x, const int y, const int z, const bool solid, const uint32_t color) {
-//         bool ok = AceMap::set_point(x, y, z, solid, color);
-//
-         // this->get_pillar(x - 1, y, z).dirty |= ok;
-         // this->get_pillar(x + 1, y, z).dirty |= ok;
-         // this->get_pillar(x, y - 1, z).dirty |= ok;
-         // this->get_pillar(x, y + 1, z).dirty |= ok;
-//         // pillars dont render edges even across pillar boundries
-//         // so you have to update adjacent pillars if the destroyed block shares a face with another pillar.
-//         // TODO: shadows dont update across chunks. the origin block can be ~18 blocks a way, so maybe update all chunks within
-//         // 18 blocks? or only in the direction of shadows (increasing y)
-//
-//         if (x == 0 || y == 0 || x == MAP_X - 1 || y == MAP_Y - 1 || !(x & 63) || !(y & 63)) {
-//             return ok;
-//         }
-//
-//         glm::u8vec4 pixel = unpack_argb(this->get_color(x, y, this->get_z(x, y)));
-//         pixel.a = 255;
-//         this->scene.hud.map_display.map->tex.set_pixel(x, y, pixel);
-//
-//         return ok;
-//     }
-//
 //     bool DrawMap::build_point(const int x, const int y, const int z, glm::u8vec3 color, bool force) {
 //         if (!force) {
 //             if (!valid_build_pos(x, y, z)) return false;
@@ -448,37 +361,6 @@ namespace ace { namespace draw {
 //         }
 //
 //         return this->set_point(x, y, z, true, pack_bytes(0x7F, color.r, color.g, color.b));
-//     }
-//
-//     bool DrawMap::destroy_point(const int x, const int y, const int z, std::vector<VXLBlock> &destroyed) {
-//         if (!valid_build_pos(x, y, z)) return false;
-//
-//         bool ok = this->set_point(x, y, z, false, 0);
-//
-//         std::vector<glm::ivec3> neighbors;
-//         this->add_neighbors(neighbors, x, y, z);
-//         for (const auto &node : neighbors) {
-//             if (valid_build_pos(node.x, node.y, node.z)) {
-//                 this->check_node(node.x, node.y, node.z, true, destroyed);
-//             }
-//         }
-//
-//         return ok;
-//     }
-//
-//     bool DrawMap::damage_point(int x, int y, int z, uint8_t damage) {
-//         if (!valid_build_pos(x, y, z) || !this->get_solid(x, y, z)) return false;
-//
-//         uint32_t color = this->get_color(x, y, z);
-//         int health = color >> 24;
-//         health -= damage;
-//         if(health <= 0) {
-//             return true;
-//         }
-//         color = ((health & 0xFF) << 24) | (color & 0x00FFFFFF);
-//         this->set_point(x, y, z, true, color);
-//         damage_queue.push_back({ scene.time + 10, {x, y, z} });
-//         return false;
 //     }
 //     
 //     draw::SpriteGroup *DrawMap::get_overview() {

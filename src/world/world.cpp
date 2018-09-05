@@ -8,10 +8,19 @@ namespace ace { namespace world {
     }
 
     void World::update(double dt) {
+        for (auto i = this->damaged_blocks.begin(); i != this->damaged_blocks.end();) {
+            if (scene.time >= i->first) {
+                int x = i->second.x, y = i->second.y, z = i->second.z;
+                this->map.set_color(x, y, z, (0x7F << 24) | (this->map.get_color(x, y, z) & 0x00FFFFFF));
+                i = this->damaged_blocks.erase(i);
+            } else {
+                ++i;
+            }
+        }
     }
 
     void World::draw() {
-        this->map_renderer.draw(this->scene.shaders.map);
+        this->map_renderer.draw(this->scene.shaders.map, this->scene.cam);
     }
 
     bool World::build_block(int x, int y, int z, glm::u8vec3 color, bool force) {
@@ -46,6 +55,23 @@ namespace ace { namespace world {
         return ok;
     }
 
+    bool World::damage_block(int x, int y, int z, int damage, bool allow_destroy) {
+        uint32_t color;
+        if (!draw::valid_build_pos(x, y, z) || !this->map.get_block(x, y, z, &color)) return false;
+
+        int health = color >> 24;
+        health -= damage;
+        if (health <= 0  && allow_destroy) {
+            return this->destroy_block(x, y, z, net::ACTION::DESTROY);
+        }
+
+        color = ((std::max(health, 0) & 0xFF) << 24) | (color & 0x00FFFFFF);
+        this->map.set_color(x, y, z, color);
+        this->map_renderer.maybe_block_updated(x, y, z, true);
+        this->damaged_blocks.push_back({ this->scene.time + 10, { x, y, z } });
+        return false;
+    }
+
     bool World::destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed) {
         if (!draw::valid_build_pos(x, y, z)) return false;
 
@@ -63,12 +89,6 @@ namespace ace { namespace world {
 
         return ok;
     }
-
-
-    bool World::damage_block(int x, int y, int z, int damage, bool allow_destroy) {
-        return true;
-    }
-
 
     void World::check_floating(int x, int y, int z, std::vector<VXLBlock> &floating, bool destroy) {
         this->marked.clear();
@@ -92,7 +112,7 @@ namespace ace { namespace world {
         for (const auto pos : marked) {
             uint32_t color;
             if (this->map.get_block(pos.x, pos.y, pos.z, &color)) {
-                floating.push_back({ pos, color, 0 });
+                floating.push_back({ pos, color });
                 this->map.set_solid(pos.x, pos.y, pos.z, !destroy);
                 this->map_renderer.maybe_block_updated(pos.x, pos.y, pos.z, true);
             }

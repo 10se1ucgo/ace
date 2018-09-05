@@ -46,7 +46,7 @@ public:
         return this->box_in_frustum(p0.x, p0.y, p0.z, p1.x, p1.y, p1.z);
     }
 
-    bool point_in_frustrum(glm::vec3 point) {
+    bool point_in_frustum(glm::vec3 point) {
         for (const auto &plane : this->planes) {
             if (dot(glm::vec3(plane), point) < -plane.w) return false;
         }
@@ -58,9 +58,9 @@ private:
     glm::mat4 _projection, _view, pv;
     float nearc{ 0.1f }, farc{ 256.f };
 
-    using frustrum_vec = glm::vec4;
+    using frustum_vec = glm::vec4;
 
-    frustrum_vec planes[FRUSTUM_NUM_PLANES];
+    frustum_vec planes[FRUSTUM_NUM_PLANES];
 
     void mouse(double dt);
     void keyboard(double dt);

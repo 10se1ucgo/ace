@@ -275,13 +275,13 @@ namespace ace { namespace scene {
             }
         } break;
         case net::PACKET::BlockLine: {
-            // auto *pkt = static_cast<net::BlockLine *>(loader);
-            // auto *ply = this->get_ply(pkt->pid);
-            // std::vector<glm::ivec3> blocks = this->map.block_line(pkt->start, pkt->end);
-            // ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
-            // for(auto &block : blocks) {
-            //     this->build_point(block.x, block.y, block.z, ply ? ply->color : this->block_colors[pkt->pid], true);
-            // }
+            auto *pkt = static_cast<net::BlockLine *>(loader);
+            auto *ply = this->get_ply(pkt->pid);
+            std::vector<glm::ivec3> blocks = ace::block_line(pkt->start, pkt->end);
+            ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
+            for(auto &block : blocks) {
+                this->build_point(block.x, block.y, block.z, ply ? ply->color : this->block_colors[pkt->pid], true);
+            }
         } break;
         case net::PACKET::InputData: {
             auto *pkt = static_cast<net::InputData *>(loader);
@@ -480,15 +480,11 @@ namespace ace { namespace scene {
     }
 
     bool GameScene::damage_point(int x, int y, int z, uint8_t damage, Face f, bool allow_destroy) {
-        // if(f != Face::INVALID) {
-        //     this->create_object<world::DebrisGroup>(draw::DrawMap::get_face(x, y, z, f), glm::vec3(unpack_argb(this->map.get_color(x, y, z))), 0.25f, 4);
-        // }
-        
-        if (damage && this->world.damage_block(x, y, z, damage, true) && allow_destroy) {
-            this->destroy_point(x, y, z);
-            return true;
+        if(f != Face::INVALID) {
+            this->create_object<world::DebrisGroup>(draw::get_face(x, y, z, f), glm::vec3(unpack_argb(this->world.get_color(x, y, z))), 0.25f, 4);
         }
-        return false;
+        
+        return damage && this->world.damage_block(x, y, z, damage, allow_destroy);
     }
 
     void GameScene::set_zoom(bool zoom) {

@@ -23,11 +23,21 @@ namespace ace { namespace world {
         void draw();
 
         bool build_block(int x, int y, int z, glm::u8vec3 color, bool force = false);
-
-        bool destroy_block(int x, int y, int z, net::ACTION type);
-        
+        bool destroy_block(int x, int y, int z, net::ACTION type = net::ACTION::DESTROY);
         // Damage a block, subtracting `damage` from its health. If health <= 0 after, optionally destroy. -> success
         bool damage_block(int x, int y, int z, int damage, bool allow_destroy);
+
+        uint32_t get_color(int x, int y, int z, bool wrapped = false) {
+            return this->map.get_color(x, y, z, wrapped);
+        }
+
+        bool is_solid(int x, int y, int z, bool wrapped = false) const {
+            return this->map.is_solid(x, y, z, wrapped);
+        }
+
+        bool get_block(int x, int y, int z, uint32_t *color, bool wrapped = false) {
+            return this->map.get_block(x, y, z, color, wrapped);
+        }
 
         bool clipworld(int x, int y, int z) const;
         bool clipworld(float x, float y, float z) const {
@@ -65,6 +75,8 @@ namespace ace { namespace world {
         // Floating block detection
         std::vector<glm::ivec3> nodes;
         std::unordered_set<glm::ivec3> marked;
+
+        std::vector<std::pair<double, glm::ivec3>> damaged_blocks; // {
 
         AceMap map;
         draw::MapRenderer map_renderer;

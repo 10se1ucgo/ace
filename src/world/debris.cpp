@@ -56,7 +56,7 @@ namespace ace { namespace world {
         float size = this->life * .1f;
         for(const auto &d : this->debris) {
             auto pos = vox2draw(d.p);
-            if (this->scene.cam.point_in_frustrum(pos))
+            if (this->scene.cam.point_in_frustum(pos))
                 this->scene.billboards.draw({ pos, d.color, size });
         }
     }

@@ -234,12 +234,12 @@ namespace ace {
     void BlockTool::ghost_block_line() {
         if (!this->ply.local_player) return;
 
-        // auto blocks(this->ply.scene.map.block_line(this->m1, this->m2));
-        // std::vector<VXLBlock> d_blocks;
-        // for (auto &x : blocks) {
-        //     d_blocks.push_back({ x, 0xFF000000 });
-        // }
-        // this->ghost_block->update(d_blocks, this->m2, true);
+        auto blocks(ace::block_line(this->m1, this->m2));
+        std::vector<VXLBlock> d_blocks;
+        for (auto &x : blocks) {
+            d_blocks.push_back({ x, 0xFF000000 });
+        }
+        this->ghost_block->update(d_blocks, this->m2);
     }
 
     void BlockTool::transform() {
@@ -264,7 +264,7 @@ namespace ace {
             this->mdl.lighting_rotation = this->ply.mdl_arms.lighting_rotation;
 
             if (!this->ghost_block) {
-                this->ghost_block = std::make_unique<draw::VXLBlocks>(std::vector<VXLBlock>{ VXLBlock{ { 0, 0, 0 }, 0xFF000000, 0b11111111 } });
+                this->ghost_block = std::make_unique<draw::VXLBlocks>(std::vector<VXLBlock>{ VXLBlock{ { 0, 0, 0 }, 0xFF000000 } });
             }
 
             this->ghost_block->position = vox2draw(this->ply.secondary_fire ? this->m2 : this->m1);

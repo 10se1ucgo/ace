@@ -9,6 +9,7 @@
 #include "gl/shader.h"
 #include "gl/gl_util.h"
 #include "vxl.h"
+#include "camera.h"
 
 
 namespace ace { namespace draw {
@@ -40,7 +41,7 @@ namespace ace { namespace draw {
     struct VXLBlocks {
         VXLBlocks(const std::vector<VXLBlock> &blocks) : VXLBlocks(blocks, get_centroid(blocks)) { }
         VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
-        void update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center, bool gen_vis=false);
+        void update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
         void draw(gl::ShaderProgram &s) const;
 
         gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B" };
@@ -68,7 +69,8 @@ namespace ace { namespace draw {
     struct MapRenderer {
         MapRenderer(AceMap &map);
 
-        void draw(gl::ShaderProgram &shader);
+        // TODO: DIRTY!!! how do i get the view frustum normally without being tied to the scene??
+        void draw(gl::ShaderProgram &shader, Camera &camera);
 
         void maybe_block_updated(int x, int y, int z, bool yes);
     private:
@@ -84,18 +86,7 @@ namespace ace { namespace draw {
         std::vector<Pillar> pillars;
     };
 
-    // struct DrawMap : AceMap {
-    //     DrawMap(scene::GameScene &s, const std::string &file_path);
-    //     DrawMap(scene::GameScene &s, uint8_t *buf = nullptr);
-    //
-    //     void update(double dt);
-    //     void draw(gl::ShaderProgram &shader);
-    //
-    //     bool set_point(int x, int y, int z, bool solid, uint32_t color) override;
-    //     bool build_point(int x, int y, int z, glm::u8vec3 color, bool force=false);
-    //     bool destroy_point(int x, int y, int z, std::vector<VXLBlock> &destroyed);
-    //     bool damage_point(int x, int y, int z, uint8_t damage);
-    //
+
     inline glm::ivec3 next_block(int x, int y, int z, Face face) {
         glm::ivec3 pos;
         switch(face) {
@@ -112,27 +103,16 @@ namespace ace { namespace draw {
         }
         return { -1, -1, -1 };
     }
-    //
-    //     static glm::vec3 get_face(int x, int y, int z, Face face) {
-    //         switch (face) {
-    //         case Face::LEFT: return { x - 0.1, y + 0.5, z + 0.5 };
-    //         case Face::RIGHT: return { x + 1.1, y + 0.5, z + 0.5 };
-    //         case Face::BACK: return { x + 0.5, y - 0.1, z + 0.5 };
-    //         case Face::FRONT: return { x + 0.5, y + 1.1, z + 0.5 };
-    //         case Face::TOP: return { x + 0.5, y + 0.5, z - 0.1 };
-    //         case Face::BOTTOM: return { x + 0.5, y + 0.5, z + 1.1 };
-    //         default: return { -1, -1, -1 };
-    //         }
-    //     }
-    //
-    //     Pillar &get_pillar(int x, int y, int z = 0);
-    //
-    //     draw::SpriteGroup *get_overview();
-    //
-    //     scene::GameScene &scene;
-    //     std::vector<Pillar> pillars;
-    //     std::vector<std::pair<double, glm::ivec3>> damage_queue;
-    // private:
-    //     void gen_pillars();
-    // };
+
+    inline glm::vec3 get_face(int x, int y, int z, Face face) {
+        switch (face) {
+            case Face::LEFT: return { x - 0.1, y + 0.5, z + 0.5 };
+            case Face::RIGHT: return { x + 1.1, y + 0.5, z + 0.5 };
+            case Face::BACK: return { x + 0.5, y - 0.1, z + 0.5 };
+            case Face::FRONT: return { x + 0.5, y + 1.1, z + 0.5 };
+            case Face::TOP: return { x + 0.5, y + 0.5, z - 0.1 };
+            case Face::BOTTOM: return { x + 0.5, y + 0.5, z + 1.1 };
+            default: return { -1, -1, -1 };
+        }
+    }
 }}

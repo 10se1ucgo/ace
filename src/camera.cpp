@@ -119,7 +119,7 @@ void Camera::keyboard(double dt) {
 }
 
 bool Camera::box_in_frustum(float x0, float y0, float z0, float x1, float y1, float z1) {
-    frustrum_vec points[8] {
+    frustum_vec points[8] {
         { x0, y0, z0, 0.f },
         { x0, y0, z1, 0.f },
         { x0, y1, z0, 0.f },
