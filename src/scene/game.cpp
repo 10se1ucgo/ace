@@ -189,8 +189,6 @@ namespace ace { namespace scene {
             case SDL_SCANCODE_7: wep = net::WEAPON::SHOTGUN; break;
             case SDL_SCANCODE_F2: this->thirdperson = !this->thirdperson; break;
             case SDL_SCANCODE_F3: if(this->ply) this->ply->alive = !this->ply->alive; break;
-            case SDL_SCANCODE_F4: glFrontFace(GL_CW); break;
-            case SDL_SCANCODE_F5: glFrontFace(GL_CCW); break;
             default: break;
             }
 
