@@ -39,6 +39,10 @@ namespace ace { namespace world {
             return this->map.get_block(x, y, z, color, wrapped);
         }
 
+        int get_z(int x, int y, int start = 0, bool wrapped = false) {
+            return this->map.get_z(x, y, start, wrapped);
+        }
+
         bool clipworld(int x, int y, int z) const;
         bool clipworld(float x, float y, float z) const {
             return this->clipworld(int(std::floor(x)), int(std::floor(y)), int(std::floor(z)));
