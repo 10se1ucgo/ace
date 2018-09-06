@@ -10,7 +10,14 @@
 #include "game_client.h"
 #include "common.h"
 #include "scene/game.h"
+#include <glm/detail/type_mat.hpp>
 
+
+using namespace ::detail;
+
+plane plane_normalize(const glm::vec4 &v) {
+    return plane(v * glm::inversesqrt(glm::dot(glm::vec3(v), glm::vec3(v))));
+}
 
 Camera::Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, glm::vec3 world_up):
     position(position),
@@ -62,15 +69,15 @@ void Camera::update_view() {
     this->scene.uniforms->cam_up = this->up;
     
 
-    if (old_pv == pv) return;
+    if ((old_pv == pv && !this->scene.thirdperson) || (this->scene.thirdperson && !this->scene.client.keyboard.keys[SDL_SCANCODE_F5])) return;
 
     const auto r3(row(pv, 3));
-    this->planes[FRUSTUM_LEFT] = normalize(r3 + row(pv, 0));
-    this->planes[FRUSTUM_RIGHT] = normalize(r3 - row(pv, 0));
-    this->planes[FRUSTUM_TOP] = normalize(r3 - row(pv, 1));
-    this->planes[FRUSTUM_BOTTOM] = normalize(r3 + row(pv, 1));
-    this->planes[FRUSTUM_NEAR] = normalize(r3 + row(pv, 2));
-    this->planes[FRUSTUM_FAR] = normalize(r3 - row(pv, 2));
+    this->planes[FRUSTUM_LEFT] = plane_normalize(r3 + row(pv, 0));
+    this->planes[FRUSTUM_RIGHT] = plane_normalize(r3 - row(pv, 0));
+    this->planes[FRUSTUM_TOP] = plane_normalize(r3 - row(pv, 1));
+    this->planes[FRUSTUM_BOTTOM] = plane_normalize(r3 + row(pv, 1));
+    this->planes[FRUSTUM_NEAR] = plane_normalize(r3 + row(pv, 2));
+    this->planes[FRUSTUM_FAR] = plane_normalize(r3 - row(pv, 2));
 }
 
 void Camera::set_projection(float fov, float w, float h, float nearc, float farc) {
@@ -119,21 +126,21 @@ void Camera::keyboard(double dt) {
 }
 
 bool Camera::box_in_frustum(float x0, float y0, float z0, float x1, float y1, float z1) {
-    frustum_vec points[8] {
-        { x0, y0, z0, 0.f },
-        { x0, y0, z1, 0.f },
-        { x0, y1, z0, 0.f },
-        { x0, y1, z1, 0.f },
-        { x1, y0, z0, 0.f },
-        { x1, y0, z1, 0.f },
-        { x1, y1, z0, 0.f },
-        { x1, y1, z1, 0.f }
+    glm::vec3 points[8] {
+        { x0, y0, z0 },
+        { x0, y0, z1 },
+        { x0, y1, z0 },
+        { x0, y1, z1 },
+        { x1, y0, z0 },
+        { x1, y0, z1 },
+        { x1, y1, z0 },
+        { x1, y1, z1 }
     };
 
-    for(const auto &plane : this->planes) {
+    for (const auto &plane : this->planes) {
         bool in = false;
         for (int i = 0; i < 8 && !in; i++) {
-            in |= dot(plane, points[i]) >= -plane.w;
+            in |= dot(plane.normal, points[i]) >= -plane.constant;
         }
         if (!in) return false;
     }

@@ -5,16 +5,26 @@
 #include "scene/scene.h"
 #include <array>
 
-enum {
-    FRUSTUM_LEFT,
-    FRUSTUM_RIGHT,
-    FRUSTUM_TOP,
-    FRUSTUM_BOTTOM,
-    FRUSTUM_NEAR,
-    FRUSTUM_FAR,
-    FRUSTUM_NUM_PLANES
-};
+namespace detail {
+    enum {
+        FRUSTUM_LEFT,
+        FRUSTUM_RIGHT,
+        FRUSTUM_TOP,
+        FRUSTUM_BOTTOM,
+        FRUSTUM_NEAR,
+        FRUSTUM_FAR,
+        FRUSTUM_NUM_PLANES
+    };
 
+    struct plane {
+        plane() = default;
+        explicit plane(const glm::vec4 &p) : normal(p), constant(p.w) {
+        }
+
+        glm::vec3 normal;
+        float constant;
+    };
+}
 
 class Camera {
 public:
@@ -48,7 +58,7 @@ public:
 
     bool point_in_frustum(glm::vec3 point) {
         for (const auto &plane : this->planes) {
-            if (dot(glm::vec3(plane), point) < -plane.w) return false;
+            if (dot(plane.normal, point) < -plane.constant) return false;
         }
         return true;
     }
@@ -58,9 +68,7 @@ private:
     glm::mat4 _projection, _view, pv;
     float nearc{ 0.1f }, farc{ 256.f };
 
-    using frustum_vec = glm::vec4;
-
-    frustum_vec planes[FRUSTUM_NUM_PLANES];
+    detail::plane planes[detail::FRUSTUM_NUM_PLANES];
 
     void mouse(double dt);
     void keyboard(double dt);
