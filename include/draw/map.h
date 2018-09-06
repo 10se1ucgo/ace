@@ -66,13 +66,14 @@ namespace ace { namespace draw {
         gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B", GL_DYNAMIC_DRAW };
     };
 
-    struct MapRenderer {
+    struct MapRenderer : MapListener {
         MapRenderer(AceMap &map);
 
         // TODO: DIRTY!!! how do i get the view frustum normally without being tied to the scene??
         void draw(gl::ShaderProgram &shader, Camera &camera);
 
-        void maybe_block_updated(int x, int y, int z, bool yes);
+        void on_block_changed(int x, int y, int z, AceMap &map) override;
+        void all_changed(AceMap &map) override;
     private:
         Pillar &get_pillar(const int x, const int y, const int z) {
             int xp = (x & MAP_X - 1) / PILLAR_SIZE;

@@ -54,6 +54,16 @@ namespace ace {
         BOTTOM
     };
 
+    class AceMap;
+
+    // lets take a page out of Minecraft's book
+    struct MapListener {
+        virtual ~MapListener() = default;
+        // do rule of 5s apply here???
+        virtual void on_block_changed(int x, int y, int z, AceMap &map) = 0;
+        virtual void all_changed(AceMap &map) = 0;
+    };
+
     class AceMap {
     public:
         AceMap(uint8_t *buf = nullptr);
@@ -87,16 +97,23 @@ namespace ace {
             return vis;
         }
 
-        Face hitscan(const glm::dvec3 & p, const glm::dvec3 & d, glm::ivec3 * h) const;
+        Face hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const;
+
+        void add_listener(MapListener &listener) {
+            this->listeners.push_back(&listener);
+        }
+        void remove_listener(MapListener &listener) {
+            this->listeners.erase(std::remove(this->listeners.begin(), this->listeners.end(), &listener), this->listeners.end());
+        }
     private:
-        bool is_surface(const int x, const int y, const int z) {
-            if (!this->geometry[get_pos(x, y, z)]) return false;
-            if (x     >     0 && !this->geometry[get_pos(x - 1, y, z)]) return true;
-            if (x + 1 < MAP_X && !this->geometry[get_pos(x + 1, y, z)]) return true;
-            if (y     >     0 && !this->geometry[get_pos(x, y - 1, z)]) return true;
-            if (y + 1 < MAP_Y && !this->geometry[get_pos(x, y + 1, z)]) return true;
-            if (z     >     0 && !this->geometry[get_pos(x, y, z - 1)]) return true;
-            if (z + 1 < MAP_Z && !this->geometry[get_pos(x, y, z + 1)]) return true;
+        bool is_surface(const int x, const int y, const int z) const {
+            if (!this->is_solid_unchecked(get_pos(x, y, z))) return false;
+            if (x     >     0 && !this->is_solid_unchecked(get_pos(x - 1, y, z))) return true;
+            if (x + 1 < MAP_X && !this->is_solid_unchecked(get_pos(x + 1, y, z))) return true;
+            if (y     >     0 && !this->is_solid_unchecked(get_pos(x, y - 1, z))) return true;
+            if (y + 1 < MAP_Y && !this->is_solid_unchecked(get_pos(x, y + 1, z))) return true;
+            if (z     >     0 && !this->is_solid_unchecked(get_pos(x, y, z - 1))) return true;
+            if (z + 1 < MAP_Z && !this->is_solid_unchecked(get_pos(x, y, z + 1))) return true;
             return false;
         }
 
@@ -115,6 +132,13 @@ namespace ace {
         // TODO: This one requires x,y,z to calculate dirt color if needed. Maybe a separate wrapper for that.
         uint32_t get_color_unchecked(size_t pos, int x, int y, int z);
 
+        void notify_listeners(int x, int y, int z) {
+            for (auto &listener : this->listeners) {
+                listener->on_block_changed(x, y, z, *this);
+            }
+        }
+
+        std::vector<MapListener *> listeners;
 
         std::bitset<MAP_X * MAP_Y * MAP_Z> geometry; // x,y,z -> is_solid?
 

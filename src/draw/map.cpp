@@ -318,6 +318,7 @@ namespace ace { namespace draw {
     }
     
     MapRenderer::MapRenderer(AceMap &map) : map(map) {
+        map.add_listener(*this);
         this->gen_pillars();
     }
 
@@ -334,11 +335,17 @@ namespace ace { namespace draw {
         }
     }
 
-    void MapRenderer::maybe_block_updated(int x, int y, int z, bool yes) {
-        this->get_pillar(x - 1, y, z).dirty |= yes;
-        this->get_pillar(x + 1, y, z).dirty |= yes;
-        this->get_pillar(x, y - 1, z).dirty |= yes;
-        this->get_pillar(x, y + 1, z).dirty |= yes;
+    void MapRenderer::on_block_changed(int x, int y, int z, AceMap &map) {
+        this->get_pillar(x - 1, y, z).dirty = true;
+        this->get_pillar(x + 1, y, z).dirty = true;
+        this->get_pillar(x, y - 1, z).dirty = true;
+        this->get_pillar(x, y + 1, z).dirty = true;
+    }
+
+    void MapRenderer::all_changed(AceMap &map) {
+        for (auto &pillar : this->pillars) {
+            pillar.dirty = true;
+        }
     }
 
     void MapRenderer::gen_pillars() {

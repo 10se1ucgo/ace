@@ -130,7 +130,7 @@ namespace ace {
                 while (z < MAP_Z) {
                     // find the air region
                     int air_start = z;
-                    while (z < MAP_Z && !this->geometry[get_pos(x, y, z)])
+                    while (z < MAP_Z && !this->is_solid_unchecked(get_pos(x, y, z)))
                         ++z;
 
                     // find the top region
@@ -140,7 +140,7 @@ namespace ace {
                     int top_colors_end = z;
 
                     // now skip past the solid voxels
-                    while (z < MAP_Z && this->geometry[get_pos(x, y, z)] && !this->is_surface(x, y, z))
+                    while (z < MAP_Z && this->is_solid_unchecked(get_pos(x, y, z)) && !this->is_surface(x, y, z))
                         ++z;
 
                     // at the end of the solid voxels, we have colored voxels.
@@ -207,6 +207,9 @@ namespace ace {
             this->set_color_unchecked(pos, color);
         else
             this->colors.erase(pos); // TODO wrap this in something
+
+        this->notify_listeners(x, y, z);
+
         return true;
     }
 
@@ -230,7 +233,12 @@ namespace ace {
         }
 
         auto pos = get_pos(x, y, z);
-        return is_valid_pos(pos) && (this->set_solid_unchecked(pos, solid), true);
+        
+        if(!is_valid_pos(pos) || !(this->set_solid_unchecked(pos, solid), true)) {
+            return false;
+        }
+        this->notify_listeners(x, y, z);
+        return true;
     }
 
     bool AceMap::is_solid(int x, int y, int z, bool wrapped) const {
@@ -252,7 +260,9 @@ namespace ace {
         auto pos = get_pos(x, y, z);
         if (!is_valid_pos(pos) || !this->is_solid_unchecked(pos)) return;
 
-        this->colors[pos] = color;
+        this->set_color_unchecked(pos, color);
+
+        this->notify_listeners(x, y, z);
     }
 
     uint32_t AceMap::get_color(int x, int y, int z, bool wrapped) {
@@ -268,6 +278,11 @@ namespace ace {
     }
 
     int AceMap::get_z(int x, int y, int start, bool wrapped) {
+        if (wrapped) {
+            x &= MAP_X - 1;
+            y &= MAP_Y - 1;
+        }
+
         for (int z = start; z < MAP_Z; z++) {
             if (this->is_solid(x, y, z)) return z;
         }

@@ -25,7 +25,6 @@ namespace ace { namespace world {
 
     bool World::build_block(int x, int y, int z, glm::u8vec3 color, bool force) {
         bool ok = this->map.set_block(x, y, z, true, pack_bytes(0x7F, color.r, color.g, color.b));
-        this->map_renderer.maybe_block_updated(x, y, z, ok);
         return ok;
     }
 
@@ -67,7 +66,6 @@ namespace ace { namespace world {
 
         color = ((std::max(health, 0) & 0xFF) << 24) | (color & 0x00FFFFFF);
         this->map.set_color(x, y, z, color);
-        this->map_renderer.maybe_block_updated(x, y, z, true);
         this->damaged_blocks.push_back({ this->scene.time + 10, { x, y, z } });
         return false;
     }
@@ -84,8 +82,6 @@ namespace ace { namespace world {
                 this->check_floating(node.x, node.y, node.z, destroyed);
             }
         }
-
-        this->map_renderer.maybe_block_updated(x, y, z, ok);
 
         return ok;
     }
@@ -114,7 +110,6 @@ namespace ace { namespace world {
             if (this->map.get_block(pos.x, pos.y, pos.z, &color)) {
                 floating.push_back({ pos, color });
                 this->map.set_solid(pos.x, pos.y, pos.z, !destroy);
-                this->map_renderer.maybe_block_updated(pos.x, pos.y, pos.z, true);
             }
         }
     }
