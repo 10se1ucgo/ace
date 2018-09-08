@@ -43,6 +43,13 @@ namespace ace { namespace world {
             return this->map.get_z(x, y, start, wrapped);
         }
 
+        Face hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const {
+            return this->map.hitscan(p, d, h);
+        }
+
+        void add_listener(MapListener &listener) { return this->map.add_listener(listener); }
+        void remove_listener(MapListener &listener) { return this->map.remove_listener(listener); }
+
         bool clipworld(int x, int y, int z) const;
         bool clipworld(float x, float y, float z) const {
             return this->clipworld(int(std::floor(x)), int(std::floor(y)), int(std::floor(z)));
@@ -51,10 +58,6 @@ namespace ace { namespace world {
         bool clipbox(int x, int y, int z) const;
         bool clipbox(float x, float y, float z) const {
             return this->clipbox(int(std::floor(x)), int(std::floor(y)), int(std::floor(z)));
-        }
-
-        Face hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const {
-            return this->map.hitscan(p, d, h);
         }
     private:
         // Destroy block AND check for floating structures, adding any removed floating blocks to the `destroyed` vector. -> success

@@ -60,8 +60,8 @@ namespace ace {
     struct MapListener {
         virtual ~MapListener() = default;
         // do rule of 5s apply here???
-        virtual void on_block_changed(int x, int y, int z, AceMap &map) = 0;
-        virtual void all_changed(AceMap &map) = 0;
+        virtual void on_block_changed(int x, int y, int z, AceMap &map) { }
+        virtual void all_changed(AceMap &map) { }
     };
 
     class AceMap {

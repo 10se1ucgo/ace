@@ -367,29 +367,4 @@ namespace ace { namespace draw {
 //             if (neighbors.empty()) return false;
 //         }
 //
-//         return this->set_point(x, y, z, true, pack_bytes(0x7F, color.r, color.g, color.b));
-//     }
-//     
-//     draw::SpriteGroup *DrawMap::get_overview() {
-//         auto pixels(std::make_unique<uint8_t[]>(MAP_X * MAP_Y * 3));
-//         int p = 0;
-//         for(int y = 0; y < MAP_Y; y++) {
-//             for(int x = 0; x < MAP_X; x++) {
-//                 uint8_t r, g, b;
-//                 if(x == 0 || y == 0 || x == MAP_X - 1 || y == MAP_Y - 1) {
-//                     r = g = b = 0;
-//                 } else if((x & 63) == 0 || (y & 63) == 0) {
-//                     r = g = b = 255;
-//                 } else {
-//                     uint8_t a;
-//                     unpack_bytes(this->get_color(x, y, this->get_z(x, y)), &a, &r, &g, &b);
-//                 }
-//                 
-//                 pixels[p++] = r; pixels[p++] = g; pixels[p++] = b;
-//             }
-//         }
-//         auto overview = this->scene.client.sprites.get("map_overview", SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
-//         overview->set_antialias(false);
-//         return overview;
-//     }
 }}

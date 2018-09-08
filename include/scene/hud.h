@@ -15,8 +15,8 @@ namespace ace { namespace scene {
 
     struct HUD;
 
-    struct MapDisplay {
-        MapDisplay(HUD &hud);
+    struct MapDisplay : MapListener {
+        explicit MapDisplay(HUD &hud);
 
         void update(double dt);
         void draw();
@@ -26,12 +26,15 @@ namespace ace { namespace scene {
         draw::Sprite big, mini;
         bool big_open{false};
     private:
+        draw::SpriteGroup *get_overview() const;
         void draw_map_grid(glm::vec2 offset) const;
+
+        void on_block_changed(int x, int y, int z, AceMap &map) override;
     };
 
     struct WeaponChangeMenu {
         // Eventually, this will become an actual UI menu with widgets, similar to retail Ace of Spades.
-        WeaponChangeMenu(HUD &hud);
+        explicit WeaponChangeMenu(HUD &hud);
 
         void update(double dt);
         void draw_3d();
@@ -41,7 +44,7 @@ namespace ace { namespace scene {
     };
 
     struct TeamChangeMenu {
-        TeamChangeMenu(HUD &hud);
+        explicit TeamChangeMenu(HUD &hud);
 
         void update(double dt);
         void draw_3d();
@@ -56,7 +59,6 @@ namespace ace { namespace scene {
         void update(double dt);
         void draw();
         void draw_3d();
-
 
         void on_key(SDL_Scancode scancode, int modifiers, bool pressed);
         void on_mouse_button(int button, bool pressed);
