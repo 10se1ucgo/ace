@@ -109,6 +109,10 @@ namespace ace {
         struct {
             int x = 0, y = 0, dx = 0, dy = 0;
             Uint32 state = 0, dstate = 0;
+
+            bool left() const { return state & SDL_BUTTON_LMASK; }
+            bool right() const { return state & SDL_BUTTON_RMASK; }
+            bool middle() const { return state & SDL_BUTTON_MMASK; }
         } mouse;
 
         std::string input_buffer;
