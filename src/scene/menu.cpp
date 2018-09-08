@@ -200,7 +200,7 @@ namespace ace { namespace scene {
         this->client.sprites.flush(this->client.shaders->sprite);
 
         this->client.shaders->text.bind();
-        this->client.fonts.draw(this->projection, this->client.shaders->text);
+        this->client.fonts.flush(this->projection, this->client.shaders->text);
     }
 
     void MainMenuScene::update(double dt) {

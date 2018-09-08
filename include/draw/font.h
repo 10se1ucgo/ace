@@ -112,7 +112,7 @@ namespace ace { namespace draw {
         ACE_NO_COPY_MOVE(FontManager)
 
         Font *get(const std::string &name, int size, bool antialias=true);
-        void draw(const glm::mat4 &pv, gl::ShaderProgram &s);
+        void flush(const glm::mat4 &pv, gl::ShaderProgram &s);
     private:
         FT_Library ftl{nullptr};
         std::unordered_map<std::string, Font> fonts;

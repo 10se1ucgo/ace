@@ -19,7 +19,7 @@ plane plane_normalize(const glm::vec4 &v) {
     return plane(v * glm::inversesqrt(glm::dot(glm::vec3(v), glm::vec3(v))));
 }
 
-Camera::Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, glm::vec3 world_up):
+Camera::Camera(ace::scene::Scene &s, glm::vec3 position, glm::vec3 forward, glm::vec3 world_up):
     position(position),
     forward(forward),
     right(normalize(cross(world_up, forward))),
@@ -29,25 +29,22 @@ Camera::Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, 
     planes{} {
 
     this->normal_sensitivity = this->scene.client.config.json["controls"].value("mouse_sensitivity", 0.3f);
-    this->zoom_sensitivity = this->scene.client.config.json["controls"].value(
-        "ads_sensitivity", this->normal_sensitivity);
+    this->zoom_sensitivity = this->scene.client.config.json["controls"].value("ads_sensitivity", this->normal_sensitivity);
 
     this->sensitivity = this->normal_sensitivity;
 
     auto ang(ace::dir2ang(this->forward));
     this->yaw = ang.x;
     this->pitch = ang.y;
-
-    this->update_view();
 }
 
-void Camera::update(double dt) {
+void Camera::update(double dt, ace::gl::experimental::ubo<ace::scene::Uniforms3D> &uniforms) {
     this->mouse(dt);
     this->keyboard(dt);
-    this->update_view();
+    this->update_view(uniforms);
 }
 
-void Camera::update_view() {
+void Camera::update_view(ace::gl::experimental::ubo<ace::scene::Uniforms3D> &uniforms) {
     glm::mat4 old_pv(pv);
 
     _view = lookAt(position, position + forward, up);
@@ -56,20 +53,20 @@ void Camera::update_view() {
     right = normalize(cross(world_up, forward));
     up = cross(forward, right);
 
-    if (!this->scene.thirdperson && this->scene.ply)
-        this->scene.ply->set_orientation(ace::draw2vox(this->forward));
+    // if (!this->scene.thirdperson && this->scene.ply)
+    //     this->scene.ply->set_orientation(ace::draw2vox(this->forward));
     this->scene.client.sound.set_listener(this->position, this->forward, this->up);
 
-    this->scene.uniforms->view = this->view();
-    this->scene.uniforms->proj = this->projection();
-    this->scene.uniforms->pv = this->matrix();
-    this->scene.uniforms->cam_pos = this->position;
-    this->scene.uniforms->cam_forward = this->forward;
-    this->scene.uniforms->cam_right = this->right;
-    this->scene.uniforms->cam_up = this->up;
+    uniforms->view = this->view();
+    uniforms->proj = this->projection();
+    uniforms->pv = this->matrix();
+    uniforms->cam_pos = this->position;
+    uniforms->cam_forward = this->forward;
+    uniforms->cam_right = this->right;
+    uniforms->cam_up = this->up;
     
 
-    if ((old_pv == pv && !this->scene.thirdperson) || (this->scene.thirdperson && !this->scene.client.keyboard.keys[SDL_SCANCODE_F5])) return;
+    if (old_pv == pv) return; // && !this->thirdperson) || (this->thirdperson && !this->scene.client.keyboard.keys[SDL_SCANCODE_F5])
 
     const auto r3(row(pv, 3));
     this->planes[FRUSTUM_LEFT] = plane_normalize(r3 + row(pv, 0));
@@ -105,7 +102,7 @@ void Camera::mouse(double dt) {
 }
 
 void Camera::keyboard(double dt) {
-    if (!this->scene.thirdperson && this->scene.ply) return;
+    if (!this->thirdperson) return;
 
     const Uint8 *keyboard = this->scene.client.keyboard.keys;
     float speed = this->speed * dt;
@@ -119,9 +116,9 @@ void Camera::keyboard(double dt) {
         this->position += normalize(cross(this->forward, this->up)) * speed;
     if (keyboard[this->scene.client.config.get_key("left", SDL_SCANCODE_A)])
         this->position -= normalize(cross(this->forward, this->up)) * speed;
-    if (keyboard[this->scene.client.config.get_key("jump", SDL_SCANCODE_SPACE)] && !this->scene.thirdperson)
+    if (keyboard[this->scene.client.config.get_key("jump", SDL_SCANCODE_SPACE)])
         this->position += speed * this->up;
-    if (keyboard[this->scene.client.config.get_key("crouch", SDL_SCANCODE_LCTRL)] && !this->scene.thirdperson)
+    if (keyboard[this->scene.client.config.get_key("crouch", SDL_SCANCODE_LCTRL)])
         this->position -= speed * this->up;
 }
 

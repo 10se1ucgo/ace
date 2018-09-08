@@ -44,17 +44,7 @@ namespace ace { namespace scene {
     };
 
     // i dont think this needs padding to be std140 compliant (we'll see :^))
-#pragma pack(push, 1)
-    struct SceneUniforms {
-        glm::mat4 view, proj, pv;
-        glm::vec3 cam_pos; float ___pad0;
-        glm::vec3 cam_forward; float ___pad1;
-        glm::vec3 cam_right; float ___pad2;
-        glm::vec3 cam_up; float ___pad3;
-        glm::vec3 fog_color; float ___pad4;
-        glm::vec3 light_pos; float ___pad5;
-    };
-#pragma pack(pop)
+
 
     struct RaycastResult {
         world::DrawPlayer *ply;
@@ -112,7 +102,7 @@ namespace ace { namespace scene {
         }
 
         gl::ShaderManager &shaders;
-        gl::experimental::ubo<SceneUniforms> uniforms;
+        gl::experimental::ubo<Uniforms3D> uniforms;
         draw::BillboardManager billboards;
         draw::DebugDraw debug;
         KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
@@ -124,7 +114,7 @@ namespace ace { namespace scene {
         world::DrawPlayer *ply{nullptr};
         net::StateData state_data;
 
-        bool thirdperson{};
+        bool &thirdperson;
 
         std::unordered_map<int, std::unique_ptr<world::DrawPlayer>> players;
         std::unordered_map<int, glm::u8vec3> block_colors;

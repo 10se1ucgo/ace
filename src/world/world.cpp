@@ -1,6 +1,7 @@
 #include "world/world.h"
 #include "world/falling_blocks.h"
 #include "scene/game.h"
+#include "game_client.h"
 
 namespace ace { namespace world {
 
@@ -9,9 +10,9 @@ namespace ace { namespace world {
 
     void World::update(double dt) {
         for (auto i = this->damaged_blocks.begin(); i != this->damaged_blocks.end();) {
-            if (scene.time >= i->first) {
-                int x = i->second.x, y = i->second.y, z = i->second.z;
-                this->map.set_color(x, y, z, (0x7F << 24) | (this->map.get_color(x, y, z) & 0x00FFFFFF));
+            if (this->scene.time >= i->first) {
+                auto pos = i->second;
+                this->map.set_color(pos.x, pos.y, pos.z, (0x7F << 24) | (this->map.get_color(pos.x, pos.y, pos.z) & 0x00FFFFFF));
                 i = this->damaged_blocks.erase(i);
             } else {
                 ++i;
@@ -20,7 +21,7 @@ namespace ace { namespace world {
     }
 
     void World::draw() {
-        this->map_renderer.draw(this->scene.shaders.map, this->scene.cam);
+        this->map_renderer.draw(this->scene.client.shaders->map, this->scene.cam);
     }
 
     bool World::build_block(int x, int y, int z, glm::u8vec3 color, bool force) {

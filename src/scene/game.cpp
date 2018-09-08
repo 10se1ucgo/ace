@@ -27,14 +27,15 @@ namespace ace { namespace scene {
     GameScene::GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name, uint8_t *buf) :
         Scene(client),
         shaders(*client.shaders),
-        uniforms(this->shaders.create_ubo<SceneUniforms>("SceneUniforms")),
+        uniforms(this->shaders.create_ubo<Uniforms3D>("SceneUniforms")),
         cam(*this, { 256, 0, 256 }, { 0, -1, 0 }),
         world(*this, buf),
         hud(*this),
         state_data(state_data),
         teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color, net::TEAM::TEAM1)},
                 {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }),
-        ply_name(std::move(ply_name)) {
+        ply_name(std::move(ply_name)),
+        thirdperson(this->cam.thirdperson) {
         // pyspades has a dumb system where sending more
         // than one PositionData packet every 0.7 seconds will cause you to rubberband
         // `if current_time - last_update < 0.7: rubberband()`
@@ -128,11 +129,18 @@ namespace ace { namespace scene {
 
         this->world.update(dt);
 
-        this->cam.update(dt);
+        this->cam.update(dt, this->uniforms);
+        if (this->ply) {
+            this->ply->set_orientation(ace::draw2vox(this->cam.forward));
+        }
         for (auto &kv : this->players) {
             kv.second->update(dt);
         }
-        this->cam.update_view();
+        this->cam.update_view(this->uniforms);
+        // TODO this is ugly
+        if(this->ply) {
+            this->ply->set_orientation(ace::draw2vox(this->cam.forward));
+        }
 
         for (auto &kv : this->entities) {
             kv.second->update(dt);

@@ -282,7 +282,7 @@ namespace ace { namespace draw {
         }
     }
 
-    void FontManager::draw(const glm::mat4& pv, gl::ShaderProgram& s) {
+    void FontManager::flush(const glm::mat4& pv, gl::ShaderProgram& s) {
         s.uniform("mvp", pv);
         for(auto &kv : this->fonts) {
             kv.second.draw(pv, s);

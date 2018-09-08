@@ -4,6 +4,8 @@
 
 #include "scene/scene.h"
 #include <array>
+#include "gl/gl_util.h"
+#include "gl/shader.h"
 
 namespace detail {
     enum {
@@ -29,10 +31,11 @@ namespace detail {
 class Camera {
 public:
     float yaw{ 0.f }, pitch{ 0.f }, speed{ 5.f }, sensitivity, normal_sensitivity, zoom_sensitivity;
+    bool thirdperson{ false };
     glm::vec3 position, forward, right, up, world_up;
-    ace::scene::GameScene &scene;
+    ace::scene::Scene &scene;
 
-    Camera(ace::scene::GameScene &s, glm::vec3 position, glm::vec3 forward, glm::vec3 world_up={ 0, 1, 0 });
+    Camera(ace::scene::Scene &s, glm::vec3 position, glm::vec3 forward, glm::vec3 world_up={ 0, 1, 0 });
 
     const glm::mat4x4 &projection() const {
         return this->_projection;
@@ -46,8 +49,8 @@ public:
         return this->pv;
     }
 
-    void update(double dt);
-    void update_view();
+    void update(double dt, ace::gl::experimental::ubo<ace::scene::Uniforms3D> &uniforms);
+    void update_view(ace::gl::experimental::ubo<ace::scene::Uniforms3D> &uniforms);
 
     void set_projection(float fov, float w, float h, float nearc = 0.1f, float farc = 256.f);
 

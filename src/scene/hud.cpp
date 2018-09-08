@@ -370,7 +370,7 @@ namespace ace { namespace scene {
         this->sprites.flush(scene.shaders.sprite);
         
         this->scene.shaders.text.bind();
-        this->scene.client.fonts.draw(projection, scene.shaders.text);
+        this->scene.client.fonts.flush(projection, scene.shaders.text);
     }
 
     void HUD::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {

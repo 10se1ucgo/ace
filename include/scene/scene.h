@@ -41,4 +41,18 @@ namespace ace {
 
     class GameScene;
     class LoadingScene;
+
+#pragma pack(push, 1)
+    // i cant design anything 
+    // also idk what to name this
+    struct Uniforms3D {
+        glm::mat4 view, proj, pv;
+        glm::vec3 cam_pos; float ___pad0;
+        glm::vec3 cam_forward; float ___pad1;
+        glm::vec3 cam_right; float ___pad2;
+        glm::vec3 cam_up; float ___pad3;
+        glm::vec3 fog_color; float ___pad4;
+        glm::vec3 light_pos; float ___pad5;
+    };
+#pragma pack(pop)
 }}
