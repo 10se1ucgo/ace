@@ -60,8 +60,9 @@ namespace ace { namespace world {
 
         int health = color >> 24;
         health -= damage;
-        if (health <= 0  && allow_destroy) {
-            return this->destroy_block(x, y, z, net::ACTION::DESTROY);
+        if (health <= 0) {
+            if(allow_destroy) this->destroy_block(x, y, z, net::ACTION::DESTROY);
+            return true;
         }
 
         color = ((std::max(health, 0) & 0xFF) << 24) | (color & 0x00FFFFFF);
