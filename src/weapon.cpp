@@ -226,7 +226,7 @@ namespace ace {
         if(!this->ply.local_player || this->ply.scene.world.hitscan(this->ply.e, this->ply.f, &hit) == Face::INVALID) {
             return false;
         }
-        // this->ply.set_color(glm::u8vec3(unpack_argb(this->ply.scene.map.get_color(hit.x, hit.y, hit.z, true))));
+        this->ply.set_color(glm::u8vec3(unpack_argb(this->ply.scene.world.get_color(hit.x, hit.y, hit.z, true))));
         this->next_primary = this->ply.scene.time + this->use_rate();
         return true;
     }
