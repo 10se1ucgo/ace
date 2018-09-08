@@ -303,19 +303,6 @@ namespace ace { namespace draw {
         }
         return i;
     }
-
-    std::unique_ptr<uint8_t[]> read_file(const std::string &file_path) {
-        FILE *f = fopen(file_path.c_str(), "rb");
-        if (!f) THROW_ERROR("COULD NOT READ MAP FILE {}\n", file_path);
-
-        fseek(f, 0, SEEK_END);
-        long len = ftell(f);
-        rewind(f);
-        auto buf = std::make_unique<uint8_t[]>(len);
-        fread(buf.get(), len, 1, f);
-        fclose(f);
-        return buf;
-    }
     
     MapRenderer::MapRenderer(AceMap &map) : map(map) {
         map.add_listener(*this);
