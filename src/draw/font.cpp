@@ -198,7 +198,7 @@ namespace ace { namespace draw {
         return glm::vec2(size) * scale;
     }
 
-    void Font::render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const {
+    glm::vec2 Font::render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const {
         glm::vec2 opos(pos);
         for (unsigned char c : str) {
             if(c == '\n') {
@@ -210,6 +210,7 @@ namespace ace { namespace draw {
             }
             this->add_glyph(c, pos, color, scale, v);
         }
+        return pos;
     }
 
     void Font::add_glyph(char c, glm::vec2 &pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const {
@@ -232,18 +233,19 @@ namespace ace { namespace draw {
         v.push_back({ { x + w, y + h }, glyph.br, color }); // bottom right
     }
 
-    void Font::draw(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
+    glm::vec2 Font::draw(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
         pos = this->get_aligned_position(pos, this->measure(str, scale), alignment);
-        this->render(str, pos, color, scale, this->vbo.data);
+        return this->render(str, pos, color, scale, this->vbo.data);
     }
 
-    void Font::draw_truncated(float max_length, const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale,  Align alignment) {
+    glm::vec2 Font::draw_truncated(float max_length, const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale,  Align alignment) {
         pos = this->get_aligned_position(pos, this->measure(str, scale), alignment);
         float max_x_pos = pos.x + max_length;
         for (unsigned char c : str) {
-            if (pos.x >= max_x_pos) return;
+            if (pos.x >= max_x_pos) return pos;
             this->add_glyph(c, pos, color, scale, this->vbo.data);
         }
+        return pos;
         // TODO make this not crap and also draw ellipsis
     }
 
@@ -260,9 +262,9 @@ namespace ace { namespace draw {
         this->draw(r);
     }
 
-    void Font::draw_shadowed(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
+    glm::vec2 Font::draw_shadowed(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
         this->draw(str, pos + glm::vec2(2), glm::vec3(0.5), scale, alignment); // B)
-        this->draw(str, pos, color, scale, alignment);
+        return this->draw(str, pos, color, scale, alignment);
     }
 
     FontManager::FontManager() {
