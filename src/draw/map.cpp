@@ -26,7 +26,8 @@ namespace ace { namespace draw {
             return vis;
         }
 
-        uint8_t get_vis(std::unordered_set<glm::ivec3> &set, glm::ivec3 pos) {
+        template<typename T>
+        uint8_t get_vis(T &set, glm::ivec3 pos) {
             if (!set.count(pos)) return 0;
 
             uint8_t vis = 0;
@@ -242,6 +243,23 @@ namespace ace { namespace draw {
                 block.position.y - this->centroid.y,
                 block.position.z - this->centroid.z,
                 get_vis(bmap, block.position), glm::u8vec3{ r, g, b }, this->mesh
+            );
+        }
+        this->mesh.upload();
+    }
+
+    void VXLBlocks::update(const std::unordered_map<glm::ivec3, uint32_t> &blocks, const glm::vec3 &center) {
+        this->centroid = center;
+
+        for (auto &i : blocks) {
+            uint8_t r, g, b, a;
+            unpack_bytes(i.second, &a, &r, &g, &b);
+
+            gen_faces(
+                i.first.x - this->centroid.x,
+                i.first.y - this->centroid.y,
+                i.first.z - this->centroid.z,
+                get_vis(blocks, i.first), glm::u8vec3{ r, g, b }, this->mesh
             );
         }
         this->mesh.upload();

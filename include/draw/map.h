@@ -42,6 +42,7 @@ namespace ace { namespace draw {
         VXLBlocks(const std::vector<VXLBlock> &blocks) : VXLBlocks(blocks, get_centroid(blocks)) { }
         VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
         void update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
+        void update(const std::unordered_map<glm::ivec3, uint32_t> &blocks, const glm::vec3 &center);
         void draw(gl::ShaderProgram &s) const;
 
         gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B" };
