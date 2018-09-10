@@ -235,7 +235,10 @@ namespace ace {
                             this->input_buffer.pop_back();
                         break;
                     case SDL_SCANCODE_RETURN:
+                        SDL_StopTextInput();
                         this->scene->on_text_finished(false);
+                        this->input_buffer.clear();
+                        break;
                     case SDL_SCANCODE_ESCAPE:
                         SDL_StopTextInput();
                         this->scene->on_text_finished(true);
