@@ -80,7 +80,7 @@ namespace ace { namespace scene {
         this->uniforms.upload();
 
         this->shaders.map.bind();
-        this->shaders.map.uniform("model"_u = glm::mat4(1.0), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
+        this->shaders.map.uniforms("model"_u = glm::mat4(1.0), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
         this->world.draw();
 
         this->shaders.model.bind();

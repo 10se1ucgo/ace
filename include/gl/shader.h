@@ -90,9 +90,9 @@ namespace ace { namespace gl {
         DECLARE_UNIFORM_V_FUNC(glm::fvec, f)
 
         template<typename THead, typename... TTail>
-        void uniform(const uni_arg<THead> &head, const uni_arg<TTail> & ...uniforms) {
+        void uniforms(const uni_arg<THead> &head, const uni_arg<TTail> & ...uniforms) {
             this->uniform(std::string(head.first), head.second);
-            return this->uniform(uniforms...);
+            return this->uniforms(uniforms...);
         }
 
         GLuint uniform_loc(const std::string &name) {
@@ -112,7 +112,7 @@ namespace ace { namespace gl {
         static GLuint bound_program;
 
     private:
-        void uniform() { }
+        void uniforms() { }
     };
 
     namespace experimental {

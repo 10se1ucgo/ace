@@ -6,8 +6,8 @@ set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
 if (MSVC)
     # TOTALLY not from iceball
-	set(CMAKE_PREFIX_PATH "ext/sdl2;ext/enet;ext/zlib;ext/openal;ext/freetype;ext/glm;ext/alure;ext/nlohmann;ext/libcurl" CACHE PATH "" FORCE)
-	set_source_files_properties(filename.c PROPERTIES LANGUAGE CXX)
+    set(CMAKE_PREFIX_PATH "ext/sdl2;ext/enet;ext/zlib;ext/openal;ext/freetype;ext/glm;ext/alure;ext/nlohmann;ext/libcurl" CACHE PATH "" FORCE)
+    set_source_files_properties(filename.c PROPERTIES LANGUAGE CXX)
     # without this i get errors when linkiing OpenAL `module unsafe for SAFESEH` image.
     # the fix would be to compile OpenAL myself? but LAZY so ill do it later and leave this crap here 
     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
@@ -36,6 +36,8 @@ if(JSON_INCLUDE_DIRS STREQUAL "JSON_INCLUDE_DIRS-NOTFOUND")
   message( FATAL_ERROR "Nlohmann JSON library not found" )
 endif()
 
+
+
 include_directories(include ${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR}
                             ${ENet_INCLUDE_DIRS}
                             ${ZLIB_INCLUDE_DIRS}
@@ -49,7 +51,12 @@ file(GLOB_RECURSE SRC_FILES src/*.c src/*.cpp src/*.cc)
 file(GLOB_RECURSE INC_FILES include/*.h include/*.hpp include/*.hh)
 
 add_executable(ace ${SRC_FILES} ${INC_FILES})
+
 add_subdirectory(ext/fmt)
+
+set(PYBIND11_PYTHON_VERSION 3.7)
+add_subdirectory("ext/pybind11")
+
 target_link_libraries(ace ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES}
                           ${OPENGL_LIBRARIES} 
                           ${ENet_LIBRARIES}
@@ -58,4 +65,4 @@ target_link_libraries(ace ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES}
                           ${FREETYPE_LIBRARIES}
                           ${CURL_LIBRARIES}
                           ${LIBDL_LIBRARY}
-                          fmt::fmt)
+                          fmt::fmt pybind11::embed)
