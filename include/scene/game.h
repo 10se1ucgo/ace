@@ -92,11 +92,6 @@ namespace ace { namespace scene {
 
         void respawn_entities();
 
-        template<typename TObj, typename... TArgs>
-        auto *create_object(TArgs&&... args) {
-            return this->world.create_object<TObj>(std::forward<TArgs>(args)...);
-        }
-
         gl::ShaderManager &shaders;
         gl::experimental::ubo<Uniforms3D> uniforms;
         draw::BillboardManager billboards;

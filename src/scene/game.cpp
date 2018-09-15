@@ -322,7 +322,7 @@ namespace ace { namespace scene {
         }  break;
         case net::PACKET::GrenadePacket: {
             auto *pkt = static_cast<net::GrenadePacket *>(loader);
-            this->create_object<world::Grenade>(pkt->position, pkt->velocity, pkt->fuse);
+            this->world.create_object<world::Grenade>(pkt->position, pkt->velocity, pkt->fuse);
         } break;
         case net::PACKET::SetTool: {
             auto *pkt = static_cast<net::SetTool *>(loader);

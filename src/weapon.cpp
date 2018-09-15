@@ -307,7 +307,7 @@ namespace ace {
         if (!this->ply.local_player) return true;
 
         this->ply.scene.send_grenade(this->fuse);
-        this->ply.scene.create_object<world::Grenade>(this->ply.p, this->ply.f + this->ply.v, this->fuse);
+        this->ply.scene.world.create_object<world::Grenade>(this->ply.p, this->ply.f + this->ply.v, this->fuse);
         this->primary_ammo--;
         return true;
     }
@@ -416,7 +416,7 @@ namespace ace {
             glm::vec3 dir = this->ply.f;
             float spread = this->spread() * (this->ply.secondary_fire ? 1 : 2);
             dir += glm::vec3{ calc_spread(spread), calc_spread(spread), calc_spread(spread) };
-            this->ply.scene.create_object<world::Tracer>(this->tracer(), this->ply.e + dir * 4.f, dir);
+            this->ply.scene.world.create_object<world::Tracer>(this->tracer(), this->ply.e + dir * 4.f, dir);
 
             glm::ivec3 hit;
             Face f = this->ply.scene.world.hitscan(this->ply.e, dir, &hit);
