@@ -43,9 +43,6 @@ namespace ace { namespace scene {
         std::vector<world::DrawPlayer *> players;
     };
 
-    // i dont think this needs padding to be std140 compliant (we'll see :^))
-
-
     struct RaycastResult {
         world::DrawPlayer *ply;
         net::HIT type;
@@ -95,10 +92,9 @@ namespace ace { namespace scene {
 
         void respawn_entities();
 
-        template<typename TObj, typename... TArgs, typename = std::enable_if_t<std::is_base_of<world::WorldObject, TObj>::value>>
-        world::WorldObject *create_object(TArgs&&... args) {
-            queued_objects.emplace_back(std::make_unique<TObj>(*this, std::forward<TArgs>(args)...));
-            return queued_objects.back().get();
+        template<typename TObj, typename... TArgs>
+        auto *create_object(TArgs&&... args) {
+            return this->world.create_object<TObj>(std::forward<TArgs>(args)...);
         }
 
         gl::ShaderManager &shaders;
@@ -121,8 +117,6 @@ namespace ace { namespace scene {
         std::unordered_map<net::TEAM, Team> teams;
 
         std::unordered_map<uint8_t, std::unique_ptr<world::Entity>> entities;
-        std::vector<std::unique_ptr<world::WorldObject>> objects;
-        std::vector<std::unique_ptr<world::WorldObject>> queued_objects;
 
         world::DrawPlayer *get_ply(int pid, bool create = true, bool local_player = false) {
             auto ply = players.find(pid);

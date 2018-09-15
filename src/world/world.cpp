@@ -4,24 +4,25 @@
 #include "game_client.h"
 
 namespace ace { namespace world {
+    using namespace gl::literals;
 
     World::World(scene::GameScene &scene, uint8_t *buf) : map(buf), map_renderer(map), scene(scene) {
     }
 
     void World::update(double dt) {
-        for (auto i = this->damaged_blocks.begin(); i != this->damaged_blocks.end();) {
-            if (this->scene.time >= i->first) {
-                auto pos = i->second;
-                this->map.set_color(pos.x, pos.y, pos.z, (0x7F << 24) | (this->map.get_color(pos.x, pos.y, pos.z) & 0x00FFFFFF));
-                i = this->damaged_blocks.erase(i);
-            } else {
-                ++i;
-            }
-        }
+        this->update_damaged_blocks();
+        this->update_objects(dt);
     }
 
     void World::draw() {
+        this->scene.shaders.map.bind();
+        this->scene.shaders.map.uniforms("model"_u = glm::mat4(1.0), "replacement_color"_u = glm::vec3(0.f), "filter_color"_u = glm::vec3(0.f), "alpha"_u = 1.0f);
         this->map_renderer.draw(this->scene.client.shaders->map, this->scene.cam);
+
+        this->scene.shaders.model.bind();
+        for (const auto &obj : this->objects) {
+            obj->draw();
+        }
     }
 
     bool World::build_block(int x, int y, int z, glm::u8vec3 color, bool force) {
@@ -50,7 +51,7 @@ namespace ace { namespace world {
             break;
         }
         if (!v.empty()) {
-            this->scene.create_object<world::FallingBlocks>(v);
+            this->create_object<world::FallingBlocks>(v);
         }
         return ok;
     }
@@ -112,6 +113,35 @@ namespace ace { namespace world {
             if (this->map.get_block(pos.x, pos.y, pos.z, &color)) {
                 floating.push_back({ pos, color });
                 this->map.set_solid(pos.x, pos.y, pos.z, !destroy);
+            }
+        }
+    }
+
+    void World::update_damaged_blocks() {
+        for (auto i = this->damaged_blocks.begin(); i != this->damaged_blocks.end();) {
+            if (this->scene.time >= i->first) {
+                auto pos = i->second;
+                this->map.set_color(pos.x, pos.y, pos.z, (0x7F << 24) | (this->map.get_color(pos.x, pos.y, pos.z) & 0x00FFFFFF));
+                i = this->damaged_blocks.erase(i);
+            } else {
+                ++i;
+            }
+        }
+    }
+
+    void World::update_objects(double dt) {
+        // 
+        this->objects.reserve(this->objects.size() + this->queued_objects.size());
+        while (!this->queued_objects.empty()) {
+            this->objects.emplace_back(std::move(this->queued_objects.back()));
+            this->queued_objects.pop_back();
+        }
+
+        for (auto i = this->objects.begin(); i != this->objects.end();) {
+            if ((*i)->update(dt)) {
+                i = this->objects.erase(i);
+            } else {
+                ++i;
             }
         }
     }

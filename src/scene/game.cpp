@@ -95,10 +95,6 @@ namespace ace { namespace scene {
             kv.second->draw();
         }
 
-        for (const auto &obj : objects) {
-            obj->draw();
-        }
-
 #ifndef NDEBUG 
         if(this->ply) 
             this->debug.draw_ray(vox2draw(this->ply->e), this->ply->draw_forward * 25.f, this->get_team(this->ply->team).float_color);
@@ -144,19 +140,6 @@ namespace ace { namespace scene {
 
         for (auto &kv : this->entities) {
             kv.second->update(dt);
-        }
-
-        while(!this->queued_objects.empty()) {
-            const auto it = this->queued_objects.end() - 1;
-            this->objects.emplace_back(std::move(*it));
-            this->queued_objects.erase(it);
-        }
-        for (auto i = this->objects.begin(); i != this->objects.end();) {
-            if ((*i)->update(dt)) {
-                i = this->objects.erase(i);
-            } else {
-                ++i;
-            }
         }
 
         this->hud.update(dt);

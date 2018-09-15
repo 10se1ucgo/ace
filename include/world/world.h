@@ -59,6 +59,18 @@ namespace ace { namespace world {
         bool clipbox(float x, float y, float z) const {
             return this->clipbox(int(std::floor(x)), int(std::floor(y)), int(std::floor(z)));
         }
+
+        template<typename TObj, typename... TArgs, typename = std::enable_if_t<std::is_base_of<world::WorldObject, TObj>::value>>
+        TObj *create_object(TArgs&&... args) {
+            // TODO: TRANSITION WorldObject TO TAKE World AS PARAMETER, NOT SCENE.
+            // TODO: EVENTUALLY, MAKE WorldObject AND World INDEPENDENT OF GameScene!
+            auto obj = std::make_unique<TObj>(this->scene, std::forward<TArgs>(args)...);
+            auto *ptr = obj.get();
+            // avoid creating objects in the middle of the frame
+            // (especially when objects create new objects inside update)
+            this->queued_objects.emplace_back(std::move(obj));
+            return ptr;
+        }
     private:
         // Destroy block AND check for floating structures, adding any removed floating blocks to the `destroyed` vector. -> success
         bool destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed);
@@ -79,6 +91,9 @@ namespace ace { namespace world {
 
         void check_floating(int x, int y, int z, std::vector<VXLBlock> &floating, bool destroy = true);
 
+        void update_damaged_blocks();
+        void update_objects(double dt);
+
         // Floating block detection
         std::vector<glm::ivec3> nodes;
         std::unordered_set<glm::ivec3> marked;
@@ -89,5 +104,9 @@ namespace ace { namespace world {
         draw::MapRenderer map_renderer;
 
         scene::GameScene &scene;
+
+        std::vector<std::unique_ptr<world::WorldObject>> objects;
+        std::vector<std::unique_ptr<world::WorldObject>> queued_objects;
+
     };
 }}
