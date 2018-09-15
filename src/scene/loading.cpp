@@ -60,7 +60,9 @@ namespace ace { namespace scene {
            this->client.net.connect(this->server);
         }
 
-        this->frame.nav_bar->on_quit(&GameClient::quit, &this->client);
+        this->frame.nav_bar->on_quit([&client = this->client]() {
+            client.quit();
+        });
         this->frame.nav_bar->on_menu([&client = this->client]() {
             client.net.disconnect();
         });
@@ -72,7 +74,7 @@ namespace ace { namespace scene {
         });
 
         this->frame.start_button->enable(false);
-        this->frame.start_button->on("press_end", &LoadingScene::start_game, this);
+        this->frame.start_button->on("press_end", [this]() { this->start_game(); });
     }
 
     void LoadingScene::draw() {

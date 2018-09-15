@@ -49,7 +49,9 @@ namespace ace { namespace scene {
         }
 
         void start() override {
-            this->nav_bar->on_quit(&GameClient::quit, &this->scene.client);
+            this->nav_bar->on_quit([&client = this->scene.client]() {
+                client.quit();
+            });
             this->nav_bar->on_menu([&scene = this->scene]() {
                 scene.set_menu<MainMenu>();
             });
@@ -65,7 +67,7 @@ namespace ace { namespace scene {
                 }
             });
 
-            this->refresh_button->on("press_end", &ServerListMenu::refresh, this);
+            this->refresh_button->on("press_end", [this]() { this->refresh(); });
 
             this->refresh();
         }
@@ -140,7 +142,7 @@ namespace ace { namespace scene {
             this->scene.set_menu<ServerListMenu>();
         });
 
-        this->nav_quit->on("press_start", &GameClient::quit, &this->scene.client);
+        this->nav_quit->on("press_end", [&client = this->scene.client]() { client.quit(); });
     }
 
     void MainMenu::update(double dt) {
