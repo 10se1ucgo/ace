@@ -90,7 +90,7 @@ namespace ace {
                 if (glm::dot(this->ply.f, glm::normalize(kv.second->p - this->ply.p)) < .55f) continue;
 
                 kv.second->play_sound("whack.wav");
-                this->ply.scene.create_object<world::DebrisGroup>(kv.second->e, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
+                this->ply.scene.world.create_debris(kv.second->e, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
                 if (this->ply.local_player) {
                     net::HitPacket hp;
                     hp.pid = kv.second->pid;
@@ -435,7 +435,7 @@ namespace ace {
 
                 // TODO: prevent being able to shoot through blocks
 
-                this->ply.scene.create_object<world::DebrisGroup>(result.hit, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
+                this->ply.scene.world.create_debris(result.hit, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
                 if (this->ply.local_player) {
                     net::HitPacket hp;
                     hp.pid = result.ply->pid;

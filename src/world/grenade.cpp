@@ -29,7 +29,7 @@ namespace ace { namespace world {
 
             for(int i = 1; i <= 3; i++) {
                 glm::vec3 color = water ? glm::vec3(51 * i, 51 * (i + 1), 51 * (i + 2)) : glm::vec3(32 * i);
-                this->scene.create_object<world::DebrisGroup>(this->p, color, 0.5f * i, 4 * i);
+                this->scene.world.create_debris(this->p, color, 0.5f * i, 4 * i);
             }
             this->scene.client.sound.play(water ? "waterexplode.wav" : "explode.wav", this->mesh.position);
             return true;

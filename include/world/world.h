@@ -16,6 +16,8 @@ namespace ace { namespace world {
         scene::GameScene &scene;
     };
 
+    struct DebrisGroup;
+
     struct World {
         World(scene::GameScene &scene, uint8_t *buf);
 
@@ -71,6 +73,8 @@ namespace ace { namespace world {
             this->queued_objects.emplace_back(std::move(obj));
             return ptr;
         }
+
+        void create_debris(glm::vec3 position, glm::u8vec3 color, float velocity_mod, int number) const;
     private:
         // Destroy block AND check for floating structures, adding any removed floating blocks to the `destroyed` vector. -> success
         bool destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed);
@@ -94,6 +98,11 @@ namespace ace { namespace world {
         void update_damaged_blocks();
         void update_objects(double dt);
 
+        scene::GameScene &scene;
+
+        std::vector<std::unique_ptr<world::WorldObject>> objects;
+        std::vector<std::unique_ptr<world::WorldObject>> queued_objects;
+
         // Floating block detection
         std::vector<glm::ivec3> nodes;
         std::unordered_set<glm::ivec3> marked;
@@ -102,11 +111,6 @@ namespace ace { namespace world {
 
         AceMap map;
         draw::MapRenderer map_renderer;
-
-        scene::GameScene &scene;
-
-        std::vector<std::unique_ptr<world::WorldObject>> objects;
-        std::vector<std::unique_ptr<world::WorldObject>> queued_objects;
-
+        DebrisGroup &debris;
     };
 }}

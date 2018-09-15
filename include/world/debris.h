@@ -6,26 +6,24 @@
 
 
 namespace ace { namespace world {
-    struct DebrisGroup;
-
     struct Debris {
-        Debris(DebrisGroup &group, glm::vec3 position, glm::vec3 velocity, glm::u8vec3 color);
+        Debris(glm::vec3 position, glm::vec3 velocity, glm::vec3 color);
 
-        bool update(double dt);
+        bool update(double dt, World &world);
 
-        DebrisGroup &group;
         glm::vec3 p, v, color;
+        float life;
+
+        constexpr static float MAX_LIFE = 2.5f;
     };
 
     struct DebrisGroup : WorldObject {
-        DebrisGroup(scene::GameScene &scene, glm::vec3 position, glm::u8vec3 color, float vel_mod, int num);
+        DebrisGroup(scene::GameScene &scene);
+        void add(glm::vec3 position, glm::u8vec3 color, float velocity_mod, int number);
 
         bool update(double dt) override;
         void draw() override;
 
         std::vector<Debris> debris;
-        
-        constexpr static float MAX_LIFE = 2.5f;
-        float life;
     };
 }}

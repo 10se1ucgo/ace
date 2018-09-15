@@ -1,12 +1,14 @@
 #include "world/world.h"
+#include "world/debris.h"
 #include "world/falling_blocks.h"
 #include "scene/game.h"
 #include "game_client.h"
 
+
 namespace ace { namespace world {
     using namespace gl::literals;
 
-    World::World(scene::GameScene &scene, uint8_t *buf) : map(buf), map_renderer(map), scene(scene) {
+    World::World(scene::GameScene &scene, uint8_t *buf) : scene(scene), map(buf), map_renderer(map), debris(*this->create_object<DebrisGroup>()) {
     }
 
     void World::update(double dt) {
@@ -71,6 +73,10 @@ namespace ace { namespace world {
         this->map.set_color(x, y, z, color);
         this->damaged_blocks.push_back({ this->scene.time + 10, { x, y, z } });
         return false;
+    }
+
+    void World::create_debris(glm::vec3 position, glm::u8vec3 color, float velocity_mod, int number) const {
+        this->debris.add(position, color, velocity_mod, number);
     }
 
     bool World::destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed) {
