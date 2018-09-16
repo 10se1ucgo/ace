@@ -273,10 +273,9 @@ namespace ace { namespace draw {
     Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {
     }
 
-    void Pillar::update() {
+    void Pillar::update(bool use_ao) {
         std::array<bool, 27> surrounding;
         // bool use_ao = this->scene.client.config.json["graphics"].value("ambient_occlusion", true);
-        bool use_ao = true;
         for (size_t ax = this->x; ax < this->x + PILLAR_SIZE; ax++) {
             for (size_t ay = this->y; ay < this->y + PILLAR_SIZE; ay++) {
                 for (size_t az = 0; az < MAP_Z; az++) {
@@ -304,8 +303,8 @@ namespace ace { namespace draw {
         this->dirty = false;
     }
 
-    void Pillar::draw() {
-        if (dirty) this->update();
+    void Pillar::draw(bool update_with_ao) {
+        if (this->dirty) this->update(update_with_ao);
 
         this->mesh.draw();
     }
@@ -322,7 +321,7 @@ namespace ace { namespace draw {
         return i;
     }
     
-    MapRenderer::MapRenderer(AceMap &map) : map(map) {
+    MapRenderer::MapRenderer(AceMap &map, bool use_ao) : map(map), use_ao(use_ao) {
         map.add_listener(*this);
         this->gen_pillars();
     }
@@ -335,7 +334,7 @@ namespace ace { namespace draw {
 //             }
 // #endif
              if (camera.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
-                 p.draw();
+                 p.draw(this->use_ao);
              }
         }
     }
