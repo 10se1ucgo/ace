@@ -266,7 +266,7 @@ namespace ace { namespace world {
         this->restock(true);
     }
 
-    const char *STEPS[] = {
+    constexpr const char *STEPS[] = {
         "footstep1.wav", "footstep2.wav", "footstep3.wav", "footstep4.wav",
         "wade1.wav", "wade2.wav", "wade3.wav", "wade4.wav"
     };

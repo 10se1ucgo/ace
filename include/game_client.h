@@ -116,6 +116,7 @@ namespace ace {
         } mouse;
 
         std::string input_buffer;
+        size_t input_cursor = 0;
 
         
         double time = 0.0;

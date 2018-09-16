@@ -231,18 +231,29 @@ namespace ace {
                 if(this->text_input_active()) {
                     switch(event.key.keysym.scancode) {
                     case SDL_SCANCODE_BACKSPACE:
-                        if(!this->input_buffer.empty())
-                            this->input_buffer.pop_back();
+                        if (!this->input_buffer.empty() && this->input_cursor > 0) {
+                            this->input_buffer.erase(this->input_cursor - 1, 1);
+                            this->input_cursor = std::min<size_t>(this->input_cursor - 1, this->input_buffer.size());
+                        }
                         break;
                     case SDL_SCANCODE_RETURN:
                         SDL_StopTextInput();
                         this->scene->on_text_finished(false);
                         this->input_buffer.clear();
+                        this->input_cursor = 0;
                         break;
                     case SDL_SCANCODE_ESCAPE:
                         SDL_StopTextInput();
                         this->scene->on_text_finished(true);
                         this->input_buffer.clear();
+                        this->input_cursor = 0;
+                        break;
+                    case SDL_SCANCODE_LEFT:
+                        if(this->input_cursor > 0)
+                            this->input_cursor = std::min<size_t>(this->input_cursor - 1, this->input_buffer.size());
+                        break;
+                    case SDL_SCANCODE_RIGHT:
+                        this->input_cursor = std::min<size_t>(this->input_cursor + 1, this->input_buffer.size());
                         break;
                     default:
                         break;
@@ -268,10 +279,13 @@ namespace ace {
             case SDL_MOUSEMOTION:
                 this->scene->on_mouse_motion(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
                 break;
-            case SDL_TEXTINPUT:
-                if(this->scene->on_text_typing(std::string(event.text.text)))
-                    this->input_buffer.append(event.text.text);
-                break;
+            case SDL_TEXTINPUT: {
+                std::string str(event.text.text);
+                if (this->scene->on_text_typing(str)) {
+                    this->input_buffer.insert(std::min<size_t>(this->input_cursor, this->input_buffer.size()), str);
+                    this->input_cursor += str.length();
+                }
+            } break;
             default:
                 break;
             }

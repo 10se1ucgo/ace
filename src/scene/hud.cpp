@@ -601,8 +601,10 @@ namespace ace { namespace scene {
         }
 
         if (this->scene.client.text_input_active()) {
-            const char *prefix = this->cur_chat_type == net::CHAT::ALL ? "(Global) " : "(Team): ";
-            this->sys13->draw(prefix + this->scene.client.input_buffer + "_", { 25, scene.client.height() - 20 });
+            const char *prefix = this->cur_chat_type == net::CHAT::ALL ? "Global" : "Team";
+            auto &buffer = this->scene.client.input_buffer;
+            auto cursor = this->scene.client.input_cursor;
+            this->sys13->draw(fmt::format("({}): {}_{}", prefix, buffer.substr(0, cursor), buffer.substr(cursor)), { 25, scene.client.height() - 20 });
         }
     }
 
