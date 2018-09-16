@@ -67,10 +67,6 @@ namespace ace { namespace gl {
         }
         static void unbind() { glUseProgram(0); }
 
-        void uniform(const std::string &name, std::initializer_list<GLint> values);
-        void uniform(const std::string &name, std::initializer_list<GLuint> values);
-        void uniform(const std::string &name, std::initializer_list<GLfloat> values);
-
         DECLARE_UNIFORM_FUNC(GLint, i)
         DECLARE_UNIFORM_FUNC(GLuint, ui)
         DECLARE_UNIFORM_FUNC(GLfloat, f)

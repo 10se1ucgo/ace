@@ -10,19 +10,6 @@
 #include <fstream>
 
 
-#define DECLARE_UNIFORM_V_FUNC(T_FUNC) const GLint location = this->uniform_loc(name); \
-const auto *list = values.begin(); \
-const size_t size = values.size(); \
-if (!size) return; \
-switch (size & 3 /* size % 4 */) { \
-case 1: glUniform1##T_FUNC##v(location, size, list); break; \
-case 2: glUniform2##T_FUNC##v(location, size, list); break; \
-case 3: glUniform3##T_FUNC##v(location, size, list); break; \
-case 0: glUniform4##T_FUNC##v(location, size, list); break; \
-default: \
-    break; /* this shouldnt ever happen */ \
-}
-
 namespace ace { namespace gl {
     Shader::Shader(const std::string &file, GLenum type): handle(glCreateShader(type)) {
         std::ifstream in(file, std::ios::in | std::ios::binary);
@@ -40,7 +27,7 @@ namespace ace { namespace gl {
         if (status == GL_FALSE) {
             GLint length;
             glGetShaderiv(this->handle, GL_INFO_LOG_LENGTH, &length);
-            auto log = std::make_unique<GLchar[]>(length);
+            auto log(std::make_unique<GLchar[]>(length));
             glGetShaderInfoLog(this->handle, length, nullptr, log.get());
             THROW_ERROR("Error compiling shader: {}", log.get());
         }
@@ -72,16 +59,6 @@ namespace ace { namespace gl {
 
     ShaderProgram::~ShaderProgram() {
         glDeleteProgram(this->program);
-    }
-
-    void ShaderProgram::uniform(const std::string &name, std::initializer_list<GLfloat> values) {
-        DECLARE_UNIFORM_V_FUNC(f);
-    }
-    void ShaderProgram::uniform(const std::string &name, std::initializer_list<GLint> values) {
-        DECLARE_UNIFORM_V_FUNC(i);
-    }
-    void ShaderProgram::uniform(const std::string &name, std::initializer_list<GLuint> values) {
-        DECLARE_UNIFORM_V_FUNC(ui);
     }
 
     ShaderManager::ShaderManager():
