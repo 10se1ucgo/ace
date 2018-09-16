@@ -52,7 +52,11 @@ namespace ace {
         glm::vec3 cam_right; float ___pad2;
         glm::vec3 cam_up; float ___pad3;
         glm::vec3 fog_color; float ___pad4;
-        glm::vec3 light_pos; float ___pad5;
+        glm::vec3 light_pos;
+        // based on my understanding of std140 this should be aligned ok??
+        // i should prob use one of the padding floats instead but that would look ugly!!
+        float fog_start;
+        float fog_end;
     };
 #pragma pack(pop)
 }}

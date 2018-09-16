@@ -36,7 +36,7 @@ namespace ace {
         SDL_Scancode get_key(const std::string &key, SDL_Scancode default_value) {
             try {
                 return this->get_key(key);
-            } catch (nlohmann::json::out_of_range &e) {
+            } catch (nlohmann::json::out_of_range &) {
                 return default_value;
             }
         }

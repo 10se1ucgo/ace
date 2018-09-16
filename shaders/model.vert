@@ -19,6 +19,8 @@ layout (std140) uniform SceneUniforms {
     vec3 cam_up;
     vec3 fog_color;
     vec3 light_pos;
+    float fog_start;
+    float fog_end;
 };
 
 uniform mat4 model;
@@ -36,6 +38,6 @@ void main() {
     diffuse = max(dot(normalize(normal_matrix * normal), light_pos) + kv6diffuse, 0.0);
 
     color = vertex_color == filter_color ? replacement_color : vertex_color;
-    fog = int(!local) * (1.0 - clamp((128 - length((view * model_space).xyz)) / 64, 0.0, 1.0));
+    fog = int(!local) * (1.0 - clamp((fog_end - length((view * model_space).xyz)) / fog_start, 0.0, 1.0));
     f_fog_color = fog_color;
 }

@@ -15,9 +15,11 @@ layout (std140) uniform SceneUniforms {
     vec3 cam_up;
     vec3 fog_color;
     vec3 light_pos;
+    float fog_start;
+    float fog_end;
 };
 
-uniform float alpha = 1.0;
+uniform float alpha;
 
 void main() {
     frag_color = vec4(mix(color * ao_mult, fog_color, fog), alpha);

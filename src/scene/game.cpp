@@ -32,14 +32,10 @@ namespace ace { namespace scene {
         world(*this, buf),
         hud(*this),
         state_data(state_data),
+        thirdperson(this->cam.thirdperson),
         teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color, net::TEAM::TEAM1)},
-                {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }),
-        ply_name(std::move(ply_name)),
-        thirdperson(this->cam.thirdperson) {
-        // pyspades has a dumb system where sending more
-        // than one PositionData packet every 0.7 seconds will cause you to rubberband
-        // `if current_time - last_update < 0.7: rubberband()`
-        // If anything, that < really should be a > but oh well.
+            {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }),
+        ply_name(std::move(ply_name)) {
 
         this->set_fog_color(glm::vec3(state_data.fog_color) / 255.f);
 
@@ -60,6 +56,11 @@ namespace ace { namespace scene {
         this->client.tasks.schedule(1.0, [this](util::Task &t) {
             this->send_position_update(); t.keep_going();
         });
+        // pyspades has a dumb system where sending more
+        // than one PositionData packet every 0.7 seconds will cause you to rubberband
+        // `if current_time - last_update < 0.7: rubberband()`
+        // If anything, that < really should be a > but oh well.
+
         this->client.tasks.schedule(1.0 / 30, [this](util::Task &t) {
             this->send_orientation_update(); t.keep_going();
         });
@@ -569,18 +570,15 @@ namespace ace { namespace scene {
     }
 
     RaycastResult GameScene::cast_ray(glm::vec3 origin, glm::vec3 dir, world::DrawPlayer *exclude) {
-        RaycastResult r;
-
-        for (auto &kv : this->players) {
+        for (const auto &kv : this->players) {
             if (!kv.second->alive || kv.second.get() == exclude) continue;
             if (glm::dot(dir, kv.second->e - origin) < 0) continue;
 
-            
-            r.type = kv.second->test_ray(origin, dir, &r.hit);
+            glm::vec3 hit;
+            net::HIT type = kv.second->test_ray(origin, dir, &hit);
 
-            if (r.type != net::HIT::INVALID) {
-                r.ply = kv.second.get();
-                return r;
+            if (type != net::HIT::INVALID) {
+                return { kv.second.get(), type, hit };
             }
         }
 
@@ -607,6 +605,8 @@ namespace ace { namespace scene {
     void GameScene::set_fog_color(glm::vec3 color) {
         glClearColor(color.r, color.g, color.b, 1.0f);
         this->uniforms->light_pos = normalize(glm::vec3{ -0.16, 0.8, 0.56 });
+        this->uniforms->fog_start = 64.f;
+        this->uniforms->fog_end = 128.f;
         this->uniforms->fog_color = color;
     }
 }}

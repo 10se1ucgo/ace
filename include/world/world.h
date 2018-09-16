@@ -63,7 +63,7 @@ namespace ace { namespace world {
         }
 
         template<typename TObj, typename... TArgs, typename = std::enable_if_t<std::is_base_of<world::WorldObject, TObj>::value>>
-        TObj *create_object(TArgs&&... args) {
+        TObj &create_object(TArgs&&... args) {
             // TODO: TRANSITION WorldObject TO TAKE World AS PARAMETER, NOT SCENE.
             // TODO: EVENTUALLY, MAKE WorldObject AND World INDEPENDENT OF GameScene!
             auto obj = std::make_unique<TObj>(this->scene, std::forward<TArgs>(args)...);
@@ -71,7 +71,7 @@ namespace ace { namespace world {
             // avoid creating objects in the middle of the frame
             // (especially when objects create new objects inside update)
             this->queued_objects.emplace_back(std::move(obj));
-            return ptr;
+            return *ptr;
         }
 
         void create_debris(glm::vec3 position, glm::u8vec3 color, float velocity_mod, int number) const;

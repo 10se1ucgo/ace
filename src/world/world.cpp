@@ -8,7 +8,7 @@
 namespace ace { namespace world {
     using namespace gl::literals;
 
-    World::World(scene::GameScene &scene, uint8_t *buf) : scene(scene), map(buf), map_renderer(map), debris(*this->create_object<DebrisGroup>()) {
+    World::World(scene::GameScene &scene, uint8_t *buf) : scene(scene), map(buf), map_renderer(map), debris(this->create_object<DebrisGroup>()) {
     }
 
     void World::update(double dt) {

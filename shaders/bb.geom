@@ -20,6 +20,8 @@ layout (std140) uniform SceneUniforms {
     vec3 cam_up;
     vec3 fog_color;
     vec3 light_pos;
+    float fog_start;
+    float fog_end;
 };
 
 

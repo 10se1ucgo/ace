@@ -127,14 +127,14 @@ namespace ace { namespace scene {
             auto &ent = kv.second;
             if (!ent->visible()) continue;
 
-            glm::vec2 p(ent->position);
+            glm::vec2 p(ent->position());
             if(!this->big_open) {
                 p = clamp(p - player_pos, -64.f, 64.f);
             }
 
             auto *spr = this->hud.sprites.get(ent->icon());
             spr->order = this->marker->order + 1;
-            spr->draw(glm::vec4(this->hud.scene.get_team(ent->team).float_color, 1.0f), offset + p, 0, { 1, 1 }, draw::Align::CENTER);
+            spr->draw(glm::vec4(ent->team().float_color, 1.0f), offset + p, 0, { 1, 1 }, draw::Align::CENTER);
         }
     }
 
