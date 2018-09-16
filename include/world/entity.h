@@ -3,8 +3,16 @@
 
 #include "world/world.h"
 #include "kv6.h"
+#include "player.h"
 
-namespace ace { namespace world {
+namespace ace { 
+namespace scene {
+    struct Team;
+}
+
+namespace world {
+    struct DrawPlayer;
+
     struct Entity : WorldObject {
         Entity(scene::GameScene& scene, uint8_t id, glm::vec3 position, net::TEAM team, uint8_t carrier,
                const std::string& mesh, float scale=0.1f);
@@ -14,16 +22,21 @@ namespace ace { namespace world {
         void draw() override;
         bool visible() const;
 
+        glm::vec3 position() const { return this->_position; }
+        scene::Team &team() const;
+        DrawPlayer *carrier() const;
+
         void set_position(glm::vec3 pos);
         void set_team(net::TEAM team);
         void set_carrier(uint8_t carrier);
 
-        virtual std::string icon() = 0;
+        virtual std::string icon() const = 0;
 
         uint8_t id;
-        glm::vec3 position;
-        net::TEAM team;
-        uint8_t carrier;
+    protected:
+        glm::vec3 _position;
+        net::TEAM _team;
+        uint8_t _carrier;
 
         KV6 mesh;
 //        draw::SpriteGroup
@@ -32,7 +45,7 @@ namespace ace { namespace world {
     struct CommandPost : Entity {
         CommandPost(scene::GameScene& scene, uint8_t id, glm::vec3 position, net::TEAM team, uint8_t carrier) : Entity(scene, id, position, team, carrier, "cp.kv6", 0.3f) {}
         
-        std::string icon() final { return "medical.bmp"; }
+        std::string icon() const final { return "medical.bmp"; }
     };
 
     struct Flag : Entity {
@@ -43,7 +56,7 @@ namespace ace { namespace world {
             return Entity::update(dt);
         }
 
-        std::string icon() final { return "intel.bmp"; }
+        std::string icon() const final { return "intel.bmp"; }
     };
 
 //    struct AmmoCrate : Entity {

@@ -48,9 +48,9 @@ namespace ace { namespace draw {
         virtual void layout() {}
 
         // i have no idea what im doing lol
-        template<typename TFunc, typename... TArgs>
-        void on(const std::string &event, TFunc&& func, TArgs&&... args) {
-            this->handlers.emplace(event, std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        template<typename TFunc>
+        void on(const std::string &event, TFunc&& func) {
+            this->handlers.emplace(event, std::forward<TFunc>(func));
         }
     protected:
         virtual void fire(const std::string &event);
@@ -221,19 +221,19 @@ namespace ace { namespace draw {
             this->back.set_size(scale); this->menu.set_size(scale); this->quit.set_size(scale);
         }
 
-        template<typename TFunc, typename... TArgs>
-        void on_back(TFunc&& func, TArgs&&... args) {
-            this->back.on("press_start", std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        template<typename TFunc>
+        void on_back(TFunc&& func) {
+            this->back.on("press_start", std::forward<TFunc>(func));
         }
 
-        template<typename TFunc, typename... TArgs>
-        void on_menu(TFunc&& func, TArgs&&... args) {
-            this->menu.on("press_start", std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        template<typename TFunc>
+        void on_menu(TFunc&& func) {
+            this->menu.on("press_start", std::forward<TFunc>(func));
         }
 
-        template<typename TFunc, typename... TArgs>
-        void on_quit(TFunc&& func, TArgs&&... args) {
-            this->quit.on("press_start", std::bind(std::forward<TFunc>(func), std::forward<TArgs>(args)...));
+        template<typename TFunc>
+        void on_quit(TFunc&& func) {
+            this->quit.on("press_start", std::forward<TFunc>(func));
         }
 
         TextButton back, menu, quit;

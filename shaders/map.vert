@@ -18,12 +18,14 @@ layout (std140) uniform SceneUniforms {
     vec3 cam_up;
     vec3 fog_color;
     vec3 light_pos;
+    float fog_start;
+    float fog_end;
 };
 
 uniform mat4 model;
 
-uniform vec3 filter_color = vec3(0.0);
-uniform vec3 replacement_color = vec3(0.0);
+uniform vec3 filter_color;
+uniform vec3 replacement_color;
 
 const float shading[6] = float[](
     0.75,
@@ -46,5 +48,5 @@ void main() {
     gl_Position = proj * view_space;
     color = (vertex_color == filter_color ? replacement_color : vertex_color) * shading[face];
     ao_mult = ao[ao_level];
-    fog = 1.0 - clamp((128 - length(view_space)) / 64, 0.0, 1.0);
+    fog = 1.0 - clamp((fog_end - length(view_space)) / fog_start, 0.0, 1.0);
 }

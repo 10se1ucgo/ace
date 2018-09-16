@@ -1,13 +1,17 @@
 cmake_minimum_required(VERSION 3.6)
 project(ace)
-
 set(CMAKE_SOURCE_DIR src)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
+
+option(USE_PYBIND11 "Generate Python bindings with pybind11" OFF)
+
+
+
 if (MSVC)
     # TOTALLY not from iceball
-	set(CMAKE_PREFIX_PATH "ext/sdl2;ext/enet;ext/zlib;ext/openal;ext/freetype;ext/glm;ext/alure;ext/nlohmann;ext/libcurl" CACHE PATH "" FORCE)
-	set_source_files_properties(filename.c PROPERTIES LANGUAGE CXX)
+    set(CMAKE_PREFIX_PATH "ext/sdl2;ext/enet;ext/zlib;ext/openal;ext/freetype;ext/glm;ext/alure;ext/nlohmann;ext/libcurl" CACHE PATH "" FORCE)
+    set_source_files_properties(filename.c PROPERTIES LANGUAGE CXX)
     # without this i get errors when linkiing OpenAL `module unsafe for SAFESEH` image.
     # the fix would be to compile OpenAL myself? but LAZY so ill do it later and leave this crap here 
     set(CMAKE_EXE_LINKER_FLAGS_DEBUG "${CMAKE_EXE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
@@ -33,7 +37,7 @@ find_package(ALURE REQUIRED)
 
 find_path(JSON_INCLUDE_DIRS "nlohmann/json.hpp" HINTS "include")
 if(JSON_INCLUDE_DIRS STREQUAL "JSON_INCLUDE_DIRS-NOTFOUND")
-  message( FATAL_ERROR "Nlohmann JSON library not found" )
+    message( FATAL_ERROR "Nlohmann JSON library not found" )
 endif()
 
 include_directories(include ${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR}
@@ -48,8 +52,16 @@ include_directories(include ${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR}
 file(GLOB_RECURSE SRC_FILES src/*.c src/*.cpp src/*.cc)
 file(GLOB_RECURSE INC_FILES include/*.h include/*.hpp include/*.hh)
 
-add_executable(ace ${SRC_FILES} ${INC_FILES})
+if(USE_PYBIND11)
+    file(GLOB_RECURSE BINDING_FILES python_bindings/*.h python_bindings/*.cpp)
+
+    add_definitions(-DUSE_PYBIND11)
+    add_subdirectory(ext/pybind11)  
+endif(USE_PYBIND11)
+
 add_subdirectory(ext/fmt)
+
+add_executable(ace ${SRC_FILES} ${INC_FILES} ${BINDING_FILES})
 target_link_libraries(ace ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES}
                           ${OPENGL_LIBRARIES} 
                           ${ENet_LIBRARIES}
@@ -59,3 +71,7 @@ target_link_libraries(ace ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES}
                           ${CURL_LIBRARIES}
                           ${LIBDL_LIBRARY}
                           fmt::fmt)
+
+if(USE_PYBIND11)
+    target_link_libraries(ace pybind11::embed)
+endif(USE_PYBIND11)

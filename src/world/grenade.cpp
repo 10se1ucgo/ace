@@ -29,7 +29,7 @@ namespace ace { namespace world {
 
             for(int i = 1; i <= 3; i++) {
                 glm::vec3 color = water ? glm::vec3(51 * i, 51 * (i + 1), 51 * (i + 2)) : glm::vec3(32 * i);
-                this->scene.create_object<world::DebrisGroup>(this->p, color, 0.5f * i, 4 * i);
+                this->scene.world.create_debris(this->p, color, 0.5f * i, 4 * i);
             }
             this->scene.client.sound.play(water ? "waterexplode.wav" : "explode.wav", this->mesh.position);
             return true;
@@ -55,7 +55,7 @@ namespace ace { namespace world {
         //make it bounce (accurate)
         glm::ivec3 lp(floor(this->p.x), floor(this->p.y), floor(this->p.z));
 
-        if (this->scene.map.clipworld(lp.x, lp.y, lp.z)) { //hit a wall
+        if (this->scene.world.clipworld(lp.x, lp.y, lp.z)) { //hit a wall
             if (fabs(this->v.x) > 0.1f ||
                 fabs(this->v.y) > 0.1f ||
                 fabs(this->v.z) > 0.1f) {
@@ -63,11 +63,11 @@ namespace ace { namespace world {
             }
 
             glm::ivec3 lp2(floor(fpos.x), floor(fpos.y), floor(fpos.z));
-            if (lp.z != lp2.z && ((lp.x == lp2.x && lp.y == lp2.y) || !this->scene.map.clipworld(lp.x, lp.y, lp2.z)))
+            if (lp.z != lp2.z && ((lp.x == lp2.x && lp.y == lp2.y) || !this->scene.world.clipworld(lp.x, lp.y, lp2.z)))
                 this->v.z = -this->v.z;
-            else if (lp.x != lp2.x && ((lp.y == lp2.y && lp.z == lp2.z) || !this->scene.map.clipworld(lp2.x, lp.y, lp.z)))
+            else if (lp.x != lp2.x && ((lp.y == lp2.y && lp.z == lp2.z) || !this->scene.world.clipworld(lp2.x, lp.y, lp.z)))
                 this->v.x = -this->v.x;
-            else if (lp.y != lp2.y && ((lp.x == lp2.x && lp.z == lp2.z) || !this->scene.map.clipworld(lp.x, lp2.y, lp.z)))
+            else if (lp.y != lp2.y && ((lp.x == lp2.x && lp.z == lp2.z) || !this->scene.world.clipworld(lp.x, lp2.y, lp.z)))
                 this->v.y = -this->v.y;
 
             this->p = fpos; //set back to old position

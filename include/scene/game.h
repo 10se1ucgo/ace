@@ -43,19 +43,6 @@ namespace ace { namespace scene {
         std::vector<world::DrawPlayer *> players;
     };
 
-    // i dont think this needs padding to be std140 compliant (we'll see :^))
-#pragma pack(push, 1)
-    struct SceneUniforms {
-        glm::mat4 view, proj, pv;
-        glm::vec3 cam_pos; float ___pad0;
-        glm::vec3 cam_forward; float ___pad1;
-        glm::vec3 cam_right; float ___pad2;
-        glm::vec3 cam_up; float ___pad3;
-        glm::vec3 fog_color; float ___pad4;
-        glm::vec3 light_pos; float ___pad5;
-    };
-#pragma pack(pop)
-
     struct RaycastResult {
         world::DrawPlayer *ply;
         net::HIT type;
@@ -105,32 +92,26 @@ namespace ace { namespace scene {
 
         void respawn_entities();
 
-        template<typename TObj, typename... TArgs, typename = std::enable_if_t<std::is_base_of<world::WorldObject, TObj>::value>>
-        world::WorldObject *create_object(TArgs&&... args) {
-            queued_objects.emplace_back(std::make_unique<TObj>(*this, std::forward<TArgs>(args)...));
-            return queued_objects.back().get();
-        }
-
         gl::ShaderManager &shaders;
-        gl::experimental::ubo<SceneUniforms> uniforms;
+        gl::experimental::ubo<Uniforms3D> uniforms;
         draw::BillboardManager billboards;
         draw::DebugDraw debug;
         KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
         Camera cam;
-        draw::DrawMap map;
+
+        world::World world;
+
         HUD hud;
         world::DrawPlayer *ply{nullptr};
         net::StateData state_data;
 
-        bool thirdperson{};
+        bool &thirdperson;
 
         std::unordered_map<int, std::unique_ptr<world::DrawPlayer>> players;
         std::unordered_map<int, glm::u8vec3> block_colors;
         std::unordered_map<net::TEAM, Team> teams;
 
         std::unordered_map<uint8_t, std::unique_ptr<world::Entity>> entities;
-        std::vector<std::unique_ptr<world::WorldObject>> objects;
-        std::vector<std::unique_ptr<world::WorldObject>> queued_objects;
 
         world::DrawPlayer *get_ply(int pid, bool create = true, bool local_player = false) {
             auto ply = players.find(pid);

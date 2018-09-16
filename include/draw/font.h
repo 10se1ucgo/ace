@@ -71,9 +71,10 @@ namespace ace { namespace draw {
     struct Font {
         Font(const std::string &name, int size, bool monochrome, FT_Library ft);
 
-        void draw(const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
-        void draw_truncated(float max_length, const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
-        void draw_shadowed(const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
+        // Returns the bottom left of where the next glyph would have started
+        glm::vec2 draw(const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
+        glm::vec2 draw_truncated(float max_length, const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
+        glm::vec2 draw_shadowed(const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
 
         void draw(const glm::mat4 &pv, gl::ShaderProgram &s);
 
@@ -82,7 +83,7 @@ namespace ace { namespace draw {
 
         int size() const { return size_; }
     private:
-        void render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const;
+        glm::vec2 render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const;
         void add_glyph(char c, glm::vec2 &pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const;
 
         void draw(const Text &r);
@@ -112,7 +113,7 @@ namespace ace { namespace draw {
         ACE_NO_COPY_MOVE(FontManager)
 
         Font *get(const std::string &name, int size, bool antialias=true);
-        void draw(const glm::mat4 &pv, gl::ShaderProgram &s);
+        void flush(const glm::mat4 &pv, gl::ShaderProgram &s);
     private:
         FT_Library ftl{nullptr};
         std::unordered_map<std::string, Font> fonts;

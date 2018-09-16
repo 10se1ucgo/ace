@@ -78,17 +78,17 @@ namespace util {
             }
         }
 
-        template<typename TTime, typename TFunc, typename... TArgs>
-        Task &schedule(TTime time, TFunc&& func, TArgs&&... args) {
-            this->tasks.emplace_back(this, std::bind(std::forward<TFunc>(func), std::placeholders::_1, std::forward<TArgs>(args)...));
+        template<typename TTime, typename TFunc>
+        Task &schedule(TTime time, TFunc&& func) {
+            this->tasks.emplace_back(this, std::forward<TFunc>(func));
             auto &task = this->tasks.back();
             task.call_in(time);
             return task;
         }
 
-        template<typename TTime, typename TFunc, typename... TArgs>
-        Task &schedule_persistent(TTime time, TFunc&& func, TArgs&&... args) {
-            this->persistent_tasks.emplace_back(this, std::bind(std::forward<TFunc>(func), std::placeholders::_1, std::forward<TArgs>(args)...));
+        template<typename TTime, typename TFunc>
+        Task &schedule_persistent(TTime time, TFunc&& func) {
+            this->persistent_tasks.emplace_back(this, std::forward<TFunc>(func));
             auto &task = this->persistent_tasks.back();
             task.call_in(time);
             return task;

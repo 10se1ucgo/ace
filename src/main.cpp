@@ -3,7 +3,6 @@
 #include <iostream>
 
 #include "game_client.h"
-#include "scene/loading.h"
 #include "scene/menu.h"
 
 int main(int argc, char **argv) {

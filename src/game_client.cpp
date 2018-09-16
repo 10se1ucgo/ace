@@ -235,7 +235,10 @@ namespace ace {
                             this->input_buffer.pop_back();
                         break;
                     case SDL_SCANCODE_RETURN:
+                        SDL_StopTextInput();
                         this->scene->on_text_finished(false);
+                        this->input_buffer.clear();
+                        break;
                     case SDL_SCANCODE_ESCAPE:
                         SDL_StopTextInput();
                         this->scene->on_text_finished(true);
@@ -246,11 +249,12 @@ namespace ace {
                     }
                     return;
                 }
-                this->scene->on_key(event.key.keysym.scancode, event.key.keysym.mod, true);
+                if(!event.key.repeat) this->scene->on_key(event.key.keysym.scancode, event.key.keysym.mod, true);
                 handle_key_press(event);
                 break;
             case SDL_KEYUP:
-                this->scene->on_key(event.key.keysym.scancode, event.key.keysym.mod, false);
+                if (this->text_input_active()) return;
+                if(!event.key.repeat) this->scene->on_key(event.key.keysym.scancode, event.key.keysym.mod, false);
                 break;
             case SDL_WINDOWEVENT:
                 handle_window_event(event);

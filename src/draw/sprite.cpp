@@ -89,7 +89,7 @@ namespace ace { namespace draw {
         return (std::pair<typename TMap::iterator, bool>(it, false));
     }
 
-    SpriteGroup * SpriteManager::get(const std::string &name) {
+    SpriteGroup *SpriteManager::get(const std::string &name) {
         try {
             return &sprites.at(name);
         } catch (std::out_of_range &) {

@@ -74,13 +74,15 @@ namespace ace { namespace scene {
         }
     }
 
-    MapDisplay::MapDisplay(HUD &hud): hud(hud), marker(hud.sprites.get("player.bmp")), map(hud.scene.map.get_overview()), big(map), mini(map) {
+    MapDisplay::MapDisplay(HUD &hud): hud(hud), marker(hud.sprites.get("player.bmp")), map(this->get_overview()), big(map), mini(map) {
         this->map->order = draw::Layer::FOREGROUND + 4;
         this->marker->order = this->map->order + 1;
         
         this->big.alignment = draw::Align::CENTER;
         this->mini.alignment = draw::Align::TOP_RIGHT;
         this->mini.scale = glm::vec2{ 0.25f };
+
+        this->hud.scene.world.add_listener(*this);
     }
 
     void MapDisplay::update(double dt) {
@@ -125,15 +127,38 @@ namespace ace { namespace scene {
             auto &ent = kv.second;
             if (!ent->visible()) continue;
 
-            glm::vec2 p(ent->position);
+            glm::vec2 p(ent->position());
             if(!this->big_open) {
                 p = clamp(p - player_pos, -64.f, 64.f);
             }
 
             auto *spr = this->hud.sprites.get(ent->icon());
             spr->order = this->marker->order + 1;
-            spr->draw(glm::vec4(this->hud.scene.get_team(ent->team).float_color, 1.0f), offset + p, 0, { 1, 1 }, draw::Align::CENTER);
+            spr->draw(glm::vec4(ent->team().float_color, 1.0f), offset + p, 0, { 1, 1 }, draw::Align::CENTER);
         }
+    }
+
+    draw::SpriteGroup *MapDisplay::get_overview() const {
+        auto pixels(std::make_unique<uint8_t[]>(MAP_X * MAP_Y * 3));
+        int p = 0;
+        for (int y = 0; y < MAP_Y; y++) {
+            for (int x = 0; x < MAP_X; x++) {
+                uint8_t r, g, b;
+                if (x == 0 || y == 0 || x == MAP_X - 1 || y == MAP_Y - 1) {
+                    r = g = b = 0;
+                } else if ((x & 63) == 0 || (y & 63) == 0) {
+                    r = g = b = 255;
+                } else {
+                    uint8_t a;
+                    unpack_bytes(this->hud.scene.world.get_color(x, y, this->hud.scene.world.get_z(x, y)), &a, &r, &g, &b);
+                }
+
+                pixels[p++] = r; pixels[p++] = g; pixels[p++] = b;
+            }
+        }
+        auto overview = this->hud.scene.client.sprites.get("map_overview", SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
+        overview->set_antialias(false);
+        return overview;
     }
 
     void MapDisplay::draw_map_grid(glm::vec2 offset) const {
@@ -146,6 +171,16 @@ namespace ace { namespace scene {
             float y = offset.y + (32 + 64 * (c - 1));
             this->hud.sys15->draw(std::to_string(c), { offset.x, y }, { 1, 1, 1 }, { 1,1 }, draw::Align::BOTTOM_RIGHT);
         }
+    }
+
+    void MapDisplay::on_block_changed(int x, int y, int z, AceMap &map) {
+        if (x == MAP_X - 1 || y == MAP_Y - 1 || !(x & 63) || !(y & 63)) {
+            return;
+        }
+
+        glm::u8vec4 pixel = unpack_argb(this->hud.scene.world.get_color(x, y, this->hud.scene.world.get_z(x, y)));
+        pixel.a = 255;
+        this->map->tex.set_pixel(x, y, pixel);
     }
 
     WeaponChangeMenu::WeaponChangeMenu(HUD &hud) :
@@ -335,7 +370,7 @@ namespace ace { namespace scene {
         this->sprites.flush(scene.shaders.sprite);
         
         this->scene.shaders.text.bind();
-        this->scene.client.fonts.draw(projection, scene.shaders.text);
+        this->scene.client.fonts.flush(projection, scene.shaders.text);
     }
 
     void HUD::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {

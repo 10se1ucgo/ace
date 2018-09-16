@@ -90,7 +90,7 @@ namespace ace {
                 if (glm::dot(this->ply.f, glm::normalize(kv.second->p - this->ply.p)) < .55f) continue;
 
                 kv.second->play_sound("whack.wav");
-                this->ply.scene.create_object<world::DebrisGroup>(kv.second->e, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
+                this->ply.scene.world.create_debris(kv.second->e, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
                 if (this->ply.local_player) {
                     net::HitPacket hp;
                     hp.pid = kv.second->pid;
@@ -102,7 +102,7 @@ namespace ace {
         }
 
         glm::ivec3 hit;
-        Face f = this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit);
+        Face f = this->ply.scene.world.hitscan(this->ply.e, this->ply.f, &hit);
 
         if (f == Face::INVALID || any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
             return this->ply.play_sound("woosh.wav");
@@ -142,11 +142,11 @@ namespace ace {
     void BlockTool::update(double dt) {
         if (this->ply.local_player) {
             glm::ivec3 hit;
-            Face face = this->ply.scene.map.hitscan(this->ply.p, this->ply.f, &hit);
+            Face face = this->ply.scene.world.hitscan(this->ply.p, this->ply.f, &hit);
             if(any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
                 face = Face::INVALID;
             }
-            hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
+            hit = draw::next_block(hit.x, hit.y, hit.z, face);
 
             
 
@@ -206,11 +206,11 @@ namespace ace {
         if (!this->ply.local_player) return true;
 
         glm::ivec3 hit;
-        Face face = this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit);
+        Face face = this->ply.scene.world.hitscan(this->ply.e, this->ply.f, &hit);
         if (face == Face::INVALID || any(greaterThan(glm::abs(this->ply.p - glm::vec3(hit)), glm::vec3(3.5f)))) {
             return false;
         }
-        hit = draw::DrawMap::next_block(hit.x, hit.y, hit.z, face);
+        hit = draw::next_block(hit.x, hit.y, hit.z, face);
         this->ply.scene.build_point(hit.x, hit.y, hit.z, this->ply.color, false);
         this->ply.play_sound("switch.wav", 50);
 
@@ -223,10 +223,10 @@ namespace ace {
 
     bool BlockTool::on_use() {
         glm::ivec3 hit;
-        if(!this->ply.local_player || this->ply.scene.map.hitscan(this->ply.e, this->ply.f, &hit) == Face::INVALID) {
+        if(!this->ply.local_player || this->ply.scene.world.hitscan(this->ply.e, this->ply.f, &hit) == Face::INVALID) {
             return false;
         }
-        this->ply.set_color(glm::u8vec3(unpack_argb(this->ply.scene.map.get_color(hit.x, hit.y, hit.z, true))));
+        this->ply.set_color(glm::u8vec3(unpack_argb(this->ply.scene.world.get_color(hit.x, hit.y, hit.z, true))));
         this->next_primary = this->ply.scene.time + this->use_rate();
         return true;
     }
@@ -234,12 +234,12 @@ namespace ace {
     void BlockTool::ghost_block_line() {
         if (!this->ply.local_player) return;
 
-        auto blocks(this->ply.scene.map.block_line(this->m1, this->m2));
+        auto blocks(ace::block_line(this->m1, this->m2));
         std::vector<VXLBlock> d_blocks;
         for (auto &x : blocks) {
             d_blocks.push_back({ x, 0xFF000000 });
         }
-        this->ghost_block->update(d_blocks, this->m2, true);
+        this->ghost_block->update(d_blocks, this->m2);
     }
 
     void BlockTool::transform() {
@@ -264,7 +264,7 @@ namespace ace {
             this->mdl.lighting_rotation = this->ply.mdl_arms.lighting_rotation;
 
             if (!this->ghost_block) {
-                this->ghost_block = std::make_unique<draw::VXLBlocks>(std::vector<VXLBlock>{ VXLBlock{ { 0, 0, 0 }, 0xFF000000, 0b11111111 } });
+                this->ghost_block = std::make_unique<draw::VXLBlocks>(std::vector<VXLBlock>{ VXLBlock{ { 0, 0, 0 }, 0xFF000000 } });
             }
 
             this->ghost_block->position = vox2draw(this->ply.secondary_fire ? this->m2 : this->m1);
@@ -307,7 +307,7 @@ namespace ace {
         if (!this->ply.local_player) return true;
 
         this->ply.scene.send_grenade(this->fuse);
-        this->ply.scene.create_object<world::Grenade>(this->ply.p, this->ply.f + this->ply.v, this->fuse);
+        this->ply.scene.world.create_object<world::Grenade>(this->ply.p, this->ply.f + this->ply.v, this->fuse);
         this->primary_ammo--;
         return true;
     }
@@ -416,10 +416,10 @@ namespace ace {
             glm::vec3 dir = this->ply.f;
             float spread = this->spread() * (this->ply.secondary_fire ? 1 : 2);
             dir += glm::vec3{ calc_spread(spread), calc_spread(spread), calc_spread(spread) };
-            this->ply.scene.create_object<world::Tracer>(this->tracer(), this->ply.e + dir * 4.f, dir);
+            this->ply.scene.world.create_object<world::Tracer>(this->tracer(), this->ply.e + dir * 4.f, dir);
 
             glm::ivec3 hit;
-            Face f = this->ply.scene.map.hitscan(this->ply.e, dir, &hit);
+            Face f = this->ply.scene.world.hitscan(this->ply.e, dir, &hit);
             if (f != Face::INVALID) {
                 // damage 0 if != local_ply just to have particles
                 this->ply.scene.client.sound.play("impact.wav", vox2draw(hit) + .5f);
@@ -435,7 +435,7 @@ namespace ace {
 
                 // TODO: prevent being able to shoot through blocks
 
-                this->ply.scene.create_object<world::DebrisGroup>(result.hit, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
+                this->ply.scene.world.create_debris(result.hit, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
                 if (this->ply.local_player) {
                     net::HitPacket hp;
                     hp.pid = result.ply->pid;

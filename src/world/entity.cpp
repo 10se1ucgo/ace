@@ -26,24 +26,32 @@ namespace ace { namespace world {
             return;
 
         this->scene.shaders.model.bind();
-        this->scene.shaders.model.uniform("replacement_color", this->scene.get_team(this->team).float_color);
-        this->mesh.position = vox2draw(position);
+        this->scene.shaders.model.uniform("replacement_color", this->scene.get_team(this->_team).float_color);
+        this->mesh.position = vox2draw(_position);
         this->mesh.draw(this->scene.shaders.model);
     }
 
     bool Entity::visible() const {
-        return this->carrier >= 32 || this->scene.get_ply(this->carrier, false) == nullptr;
+        return this->_carrier >= 32 || this->scene.get_ply(this->_carrier, false) == nullptr;
+    }
+
+    scene::Team &Entity::team() const {
+        return this->scene.get_team(this->_team);
+    }
+
+    DrawPlayer *Entity::carrier() const {
+        return this->scene.get_ply(this->_carrier, false);
     }
 
     void Entity::set_position(glm::vec3 pos) {
-        this->position = pos;
+        this->_position = pos;
     }
 
     void Entity::set_team(net::TEAM team) {
-        this->team = team;
+        this->_team = team;
     }
 
     void Entity::set_carrier(uint8_t carrier) {
-        this->carrier = carrier;
+        this->_carrier = carrier;
     }
 }}

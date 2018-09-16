@@ -95,7 +95,7 @@ namespace ace { namespace world {
         float f = dt * 32.f;
         this->p += this->v * f;
 
-        if(this->scene.map.clipworld(this->p.x, this->p.y, this->p.z + 1.35f)) {
+        if(this->scene.world.clipworld(this->p.x, this->p.y, this->p.z + 1.35f)) {
             this->v.z = -this->v.z;
             this->v *= 0.25f;
             this->p = fpos;
@@ -116,16 +116,16 @@ namespace ace { namespace world {
         float z2 = this->p.z - 1.35f;
 
         //first check if player can lower feet (in midair)
-        if (this->airborne && !(this->scene.map.clipbox(x1, y1, z1) ||
-                                this->scene.map.clipbox(x1, y2, z1) ||
-                                this->scene.map.clipbox(x2, y1, z1) ||
-                                this->scene.map.clipbox(x2, y2, z1))) {
+        if (this->airborne && !(this->scene.world.clipbox(x1, y1, z1) ||
+                                this->scene.world.clipbox(x1, y2, z1) ||
+                                this->scene.world.clipbox(x2, y1, z1) ||
+                                this->scene.world.clipbox(x2, y2, z1))) {
             this->crouch = false;
         //then check if they can raise their head
-        } else if (!(this->scene.map.clipbox(x1, y1, z2) ||
-              this->scene.map.clipbox(x1, y2, z2) ||
-              this->scene.map.clipbox(x2, y1, z2) ||
-              this->scene.map.clipbox(x2, y2, z2))) {
+        } else if (!(this->scene.world.clipbox(x1, y1, z2) ||
+              this->scene.world.clipbox(x1, y2, z2) ||
+              this->scene.world.clipbox(x2, y1, z2) ||
+              this->scene.world.clipbox(x2, y2, z2))) {
             this->p.z -= 0.9f;
             this->e.z -= 0.9f;
             this->crouch = false;
@@ -153,8 +153,8 @@ namespace ace { namespace world {
         float z = m;
 
         while (z >= -1.36f &&
-               !this->scene.map.clipbox(nx + f, this->p.y - 0.45f, nz + z) &&
-               !this->scene.map.clipbox(nx + f, this->p.y + 0.45f, nz + z)) {
+               !this->scene.world.clipbox(nx + f, this->p.y - 0.45f, nz + z) &&
+               !this->scene.world.clipbox(nx + f, this->p.y + 0.45f, nz + z)) {
             z -= 0.9f;
         }
 
@@ -164,8 +164,8 @@ namespace ace { namespace world {
 
             z = 0.35f;
             while (z >= -2.36f &&
-                   !this->scene.map.clipbox(nx + f, this->p.y - 0.45f, nz + z) &&
-                   !this->scene.map.clipbox(nx + f, this->p.y + 0.45f, nz + z))
+                   !this->scene.world.clipbox(nx + f, this->p.y - 0.45f, nz + z) &&
+                   !this->scene.world.clipbox(nx + f, this->p.y + 0.45f, nz + z))
                 z -= 0.9f;
 
             if (z < -2.36f) {
@@ -182,8 +182,8 @@ namespace ace { namespace world {
         z = m;
 
         while (z >= -1.36f &&
-               !this->scene.map.clipbox(this->p.x - 0.45f, ny + f, nz + z) &&
-               !this->scene.map.clipbox(this->p.x + 0.45f, ny + f, nz + z)) {
+               !this->scene.world.clipbox(this->p.x - 0.45f, ny + f, nz + z) &&
+               !this->scene.world.clipbox(this->p.x + 0.45f, ny + f, nz + z)) {
             z -= 0.9f;
         }
 
@@ -192,8 +192,8 @@ namespace ace { namespace world {
         } else if (!this->crouch && this->f.z < 0.5f && !this->sprint && !climb) {
             z = 0.35f;
             while (z >= -2.36f &&
-                   !this->scene.map.clipbox(this->p.x - 0.45f, ny + f, nz + z) &&
-                   !this->scene.map.clipbox(this->p.x + 0.45f, ny + f, nz + z)) {
+                   !this->scene.world.clipbox(this->p.x - 0.45f, ny + f, nz + z) &&
+                   !this->scene.world.clipbox(this->p.x + 0.45f, ny + f, nz + z)) {
                 z -= 0.9f;
             }
 
@@ -221,10 +221,10 @@ namespace ace { namespace world {
 
         this->airborne = true;
 
-        if (this->scene.map.clipbox(this->p.x - 0.45f, this->p.y - 0.45f, nz + m) ||
-            this->scene.map.clipbox(this->p.x - 0.45f, this->p.y + 0.45f, nz + m) ||
-            this->scene.map.clipbox(this->p.x + 0.45f, this->p.y - 0.45f, nz + m) ||
-            this->scene.map.clipbox(this->p.x + 0.45f, this->p.y + 0.45f, nz + m)) {
+        if (this->scene.world.clipbox(this->p.x - 0.45f, this->p.y - 0.45f, nz + m) ||
+            this->scene.world.clipbox(this->p.x - 0.45f, this->p.y + 0.45f, nz + m) ||
+            this->scene.world.clipbox(this->p.x + 0.45f, this->p.y - 0.45f, nz + m) ||
+            this->scene.world.clipbox(this->p.x + 0.45f, this->p.y + 0.45f, nz + m)) {
             if (this->v.z >= 0) {
                 this->wade = this->p.z > 61;
                 this->airborne = false;

@@ -27,18 +27,15 @@ namespace ace { namespace scene {
     GameScene::GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name, uint8_t *buf) :
         Scene(client),
         shaders(*client.shaders),
-        uniforms(this->shaders.create_ubo<SceneUniforms>("SceneUniforms")),
+        uniforms(this->shaders.create_ubo<Uniforms3D>("SceneUniforms")),
         cam(*this, { 256, 0, 256 }, { 0, -1, 0 }),
-        map(*this, buf),
+        world(*this, buf),
         hud(*this),
         state_data(state_data),
+        thirdperson(this->cam.thirdperson),
         teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color, net::TEAM::TEAM1)},
-                {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }),
+            {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }),
         ply_name(std::move(ply_name)) {
-        // pyspades has a dumb system where sending more
-        // than one PositionData packet every 0.7 seconds will cause you to rubberband
-        // `if current_time - last_update < 0.7: rubberband()`
-        // If anything, that < really should be a > but oh well.
 
         this->set_fog_color(glm::vec3(state_data.fog_color) / 255.f);
 
@@ -59,6 +56,11 @@ namespace ace { namespace scene {
         this->client.tasks.schedule(1.0, [this](util::Task &t) {
             this->send_position_update(); t.keep_going();
         });
+        // pyspades has a dumb system where sending more
+        // than one PositionData packet every 0.7 seconds will cause you to rubberband
+        // `if current_time - last_update < 0.7: rubberband()`
+        // If anything, that < really should be a > but oh well.
+
         this->client.tasks.schedule(1.0 / 30, [this](util::Task &t) {
             this->send_orientation_update(); t.keep_going();
         });
@@ -79,8 +81,8 @@ namespace ace { namespace scene {
         this->uniforms.upload();
 
         this->shaders.map.bind();
-        this->shaders.map.uniform("model"_u = glm::mat4(1.0), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
-        this->map.draw(this->shaders.map);
+        this->shaders.map.uniforms("model"_u = glm::mat4(1.0), "alpha"_u = 1.0f, "replacement_color"_u = glm::vec3(0.f));
+        this->world.draw();
 
         this->shaders.model.bind();
         for (auto &kv : this->players) {
@@ -92,10 +94,6 @@ namespace ace { namespace scene {
 
         for (auto &kv : entities) {
             kv.second->draw();
-        }
-
-        for (const auto &obj : objects) {
-            obj->draw();
         }
 
 #ifndef NDEBUG 
@@ -126,29 +124,23 @@ namespace ace { namespace scene {
             kv.second.update_players(*this);
         }
 
-        this->map.update(dt);
+        this->world.update(dt);
 
-        this->cam.update(dt);
+        this->cam.update(dt, this->uniforms);
+        if (this->ply) {
+            this->ply->set_orientation(ace::draw2vox(this->cam.forward));
+        }
         for (auto &kv : this->players) {
             kv.second->update(dt);
         }
-        this->cam.update_view();
+        this->cam.update_view(this->uniforms);
+        // TODO this is ugly
+        if(this->ply) {
+            this->ply->set_orientation(ace::draw2vox(this->cam.forward));
+        }
 
         for (auto &kv : this->entities) {
             kv.second->update(dt);
-        }
-
-        while(!this->queued_objects.empty()) {
-            const auto it = this->queued_objects.end() - 1;
-            this->objects.emplace_back(std::move(*it));
-            this->queued_objects.erase(it);
-        }
-        for (auto i = this->objects.begin(); i != this->objects.end();) {
-            if ((*i)->update(dt)) {
-                i = this->objects.erase(i);
-            } else {
-                ++i;
-            }
         }
 
         this->hud.update(dt);
@@ -189,8 +181,6 @@ namespace ace { namespace scene {
             case SDL_SCANCODE_7: wep = net::WEAPON::SHOTGUN; break;
             case SDL_SCANCODE_F2: this->thirdperson = !this->thirdperson; break;
             case SDL_SCANCODE_F3: if(this->ply) this->ply->alive = !this->ply->alive; break;
-            case SDL_SCANCODE_F4: glFrontFace(GL_CW); break;
-            case SDL_SCANCODE_F5: glFrontFace(GL_CCW); break;
             default: break;
             }
 
@@ -277,7 +267,7 @@ namespace ace { namespace scene {
         case net::PACKET::BlockLine: {
             auto *pkt = static_cast<net::BlockLine *>(loader);
             auto *ply = this->get_ply(pkt->pid);
-            std::vector<glm::ivec3> blocks = this->map.block_line(pkt->start, pkt->end);
+            std::vector<glm::ivec3> blocks = ace::block_line(pkt->start, pkt->end);
             ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
             for(auto &block : blocks) {
                 this->build_point(block.x, block.y, block.z, ply ? ply->color : this->block_colors[pkt->pid], true);
@@ -333,7 +323,7 @@ namespace ace { namespace scene {
         }  break;
         case net::PACKET::GrenadePacket: {
             auto *pkt = static_cast<net::GrenadePacket *>(loader);
-            this->create_object<world::Grenade>(pkt->position, pkt->velocity, pkt->fuse);
+            this->world.create_object<world::Grenade>(pkt->position, pkt->velocity, pkt->fuse);
         } break;
         case net::PACKET::SetTool: {
             auto *pkt = static_cast<net::SetTool *>(loader);
@@ -464,7 +454,7 @@ namespace ace { namespace scene {
     bool GameScene::build_point(int x, int y, int z, glm::u8vec3 color, bool s2c) {
         if (s2c) {
             this->client.sound.play("build.wav", vox2draw(glm::vec3{ x, y, z } + 0.5f), 50);
-            return map.build_point(x, y, z, color, s2c);
+            return this->world.build_block(x, y, z, color, s2c);
         }
         this->send_block_action(x, y, z, net::ACTION::BUILD);
         return false;
@@ -476,39 +466,16 @@ namespace ace { namespace scene {
             return false;
         }
 
-        std::vector<VXLBlock> v;
-        bool ok = map.destroy_point(x, y, z, v);
-        switch(type) {
-        case net::ACTION::SPADE:
-            ok |= map.destroy_point(x, y, z + 1, v);
-            ok |= map.destroy_point(x, y, z - 1, v);
-            break;
-        case net::ACTION::GRENADE:
-            for (int i = x - 1; i < x + 2; i++) {
-                for (int j = y - 1; j < y + 2; j++) {
-                    for(int k = z - 1; k < z + 2; k++) {
-                        ok |= map.destroy_point(i, j, k, v);
-                    }
-                }
-            }
-            break;
-        default:
-            break;
-        }
-        if (!v.empty()) {
-            this->create_object<world::FallingBlocks>(v);
-//            objects.emplace_back(std::make_unique<world::FallingBlocks>(*this, v));
-        }
-        return ok;
+        return this->world.destroy_block(x, y, z, type);
     }
 
     bool GameScene::damage_point(int x, int y, int z, uint8_t damage, Face f, bool allow_destroy) {
         if(f != Face::INVALID) {
-            this->create_object<world::DebrisGroup>(draw::DrawMap::get_face(x, y, z, f), glm::vec3(unpack_argb(this->map.get_color(x, y, z))), 0.25f, 4);
+            this->world.create_debris(draw::get_face(x, y, z, f), glm::vec3(unpack_argb(this->world.get_color(x, y, z))), 0.25f, 4);
         }
 
-        if (damage && this->map.damage_point(x, y, z, damage) && allow_destroy) {
-            this->destroy_point(x, y, z);
+        if(damage && this->world.damage_block(x, y, z, damage, false) && allow_destroy) {
+            this->send_block_action(x, y, z, net::ACTION::DESTROY);
             return true;
         }
         return false;
@@ -603,18 +570,15 @@ namespace ace { namespace scene {
     }
 
     RaycastResult GameScene::cast_ray(glm::vec3 origin, glm::vec3 dir, world::DrawPlayer *exclude) {
-        RaycastResult r;
-
-        for (auto &kv : this->players) {
+        for (const auto &kv : this->players) {
             if (!kv.second->alive || kv.second.get() == exclude) continue;
             if (glm::dot(dir, kv.second->e - origin) < 0) continue;
 
-            
-            r.type = kv.second->test_ray(origin, dir, &r.hit);
+            glm::vec3 hit;
+            net::HIT type = kv.second->test_ray(origin, dir, &hit);
 
-            if (r.type != net::HIT::INVALID) {
-                r.ply = kv.second.get();
-                return r;
+            if (type != net::HIT::INVALID) {
+                return { kv.second.get(), type, hit };
             }
         }
 
@@ -641,6 +605,8 @@ namespace ace { namespace scene {
     void GameScene::set_fog_color(glm::vec3 color) {
         glClearColor(color.r, color.g, color.b, 1.0f);
         this->uniforms->light_pos = normalize(glm::vec3{ -0.16, 0.8, 0.56 });
+        this->uniforms->fog_start = 64.f;
+        this->uniforms->fog_end = 128.f;
         this->uniforms->fog_color = color;
     }
 }}
