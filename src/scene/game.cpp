@@ -126,14 +126,14 @@ namespace ace { namespace scene {
 
         this->world.update(dt);
 
-        this->cam.update(dt, this->uniforms);
+        this->cam.update(dt, this->uniforms.data);
         if (this->ply) {
             this->ply->set_orientation(ace::draw2vox(this->cam.forward));
         }
         for (auto &kv : this->players) {
             kv.second->update(dt);
         }
-        this->cam.update_view(this->uniforms);
+        this->cam.update_view(this->uniforms.data);
         // TODO this is ugly
         if(this->ply) {
             this->ply->set_orientation(ace::draw2vox(this->cam.forward));

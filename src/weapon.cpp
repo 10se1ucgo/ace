@@ -264,7 +264,7 @@ namespace ace {
             this->mdl.lighting_rotation = this->ply.mdl_arms.lighting_rotation;
 
             if (!this->ghost_block) {
-                this->ghost_block = std::make_unique<draw::VXLBlocks>(std::vector<VXLBlock>{ VXLBlock{ { 0, 0, 0 }, 0xFF000000 } });
+                this->ghost_block = std::make_unique<draw::VXLBlocks>(glm::u8vec3(0));
             }
 
             this->ghost_block->position = vox2draw(this->ply.secondary_fire ? this->m2 : this->m1);

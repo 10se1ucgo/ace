@@ -66,7 +66,7 @@ namespace ace { namespace draw {
 
 
         // TODO merge with gen_faces
-        void gen_faces_with_ao(const float x, const float y, const float z, const uint8_t vis, const glm::u8vec3 color, gl::experimental::mesh<VXLVertex> &mesh, const std::array<bool, 27> &surr) {
+        void gen_faces_with_ao(const float x, const float y, const float z, const uint8_t vis, const glm::u8vec3 &color, gl::experimental::mesh<VXLVertex> &mesh, const std::array<bool, 27> &surr) {
             const float x0 = x, x1 = x + 1.0f;
             const float y0 = -z - 1.0f, y1 = -z;
             const float z0 = y, z1 = y + 1.0f;
@@ -164,7 +164,7 @@ namespace ace { namespace draw {
             }
         }
 
-        void gen_faces(const float x, const float y, const float z, const uint8_t vis, glm::u8vec3 color, gl::experimental::mesh<VXLVertex> &mesh) {
+        void gen_faces(const float x, const float y, const float z, const uint8_t vis, const glm::u8vec3 &color, gl::experimental::mesh<VXLVertex> &mesh) {
             const float x0 = x, x1 = x + 1.0f;
             const float y0 = -z - 1.0f, y1 = -z;
             const float z0 = y, z1 = y + 1.0f;
@@ -222,8 +222,9 @@ namespace ace { namespace draw {
         }
     }
 
-    VXLBlocks::VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) : scale(1), rotation(0), position(0) {
-        this->update(blocks, center);
+    VXLBlocks::VXLBlocks(glm::u8vec3 color): centroid(0) {
+        this->_gen_faces(glm::vec3(0), color, 0b11111111);
+        this->mesh.upload();
     }
 
     void VXLBlocks::update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) {
@@ -235,15 +236,7 @@ namespace ace { namespace draw {
         }
 
         for (const VXLBlock &block : blocks) {
-            uint8_t r, g, b, a;
-            unpack_bytes(block.color, &a, &r, &g, &b);
-
-            gen_faces(
-                block.position.x - this->centroid.x,
-                block.position.y - this->centroid.y,
-                block.position.z - this->centroid.z,
-                get_vis(bmap, block.position), glm::u8vec3{ r, g, b }, this->mesh
-            );
+            this->_gen_faces(block.position, glm::u8vec3(unpack_argb(block.color)), get_vis(bmap, block.position));
         }
         this->mesh.upload();
     }
@@ -252,15 +245,16 @@ namespace ace { namespace draw {
         this->centroid = center;
 
         for (auto &i : blocks) {
-            uint8_t r, g, b, a;
-            unpack_bytes(i.second, &a, &r, &g, &b);
+            this->_gen_faces(i.first, glm::u8vec3(unpack_argb(i.second)), get_vis(blocks, i.first));
+        }
+        this->mesh.upload();
+    }
 
-            gen_faces(
-                i.first.x - this->centroid.x,
-                i.first.y - this->centroid.y,
-                i.first.z - this->centroid.z,
-                get_vis(blocks, i.first), glm::u8vec3{ r, g, b }, this->mesh
-            );
+    void VXLBlocks::update(const std::unordered_map<glm::ivec3, glm::u8vec3> &blocks, const glm::vec3 &center) {
+        this->centroid = center;
+
+        for (auto &i : blocks) {
+            this->_gen_faces(i.first, i.second, get_vis(blocks, i.first));
         }
         this->mesh.upload();
     }
@@ -268,6 +262,11 @@ namespace ace { namespace draw {
     void VXLBlocks::draw(gl::ShaderProgram& s) const {
         s.uniform("model", model_matrix(this->position, this->rotation, this->scale));
         this->mesh.draw();
+    }
+
+    inline void VXLBlocks::_gen_faces(const glm::vec3 &position, const glm::u8vec3 &color, uint8_t visibility) {
+        glm::vec3 vert = position - this->centroid;
+        gen_faces(vert.x, vert.y, vert.z, visibility, color, this->mesh);
     }
 
     Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {

@@ -50,8 +50,8 @@ namespace ace {
             return this->pv;
         }
 
-        void update(double dt, ace::gl::experimental::ubo<ace::scene::Uniforms3D> &uniforms);
-        void update_view(ace::gl::experimental::ubo<ace::scene::Uniforms3D> &uniforms);
+        void update(double dt, ace::scene::Uniforms3D &uniforms);
+        void update_view(ace::scene::Uniforms3D &uniforms);
 
         void set_projection(float fov, float w, float h, float nearc = 0.1f, float farc = 256.f);
 

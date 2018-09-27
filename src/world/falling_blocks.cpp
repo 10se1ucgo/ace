@@ -6,7 +6,7 @@
 namespace ace { namespace world {
     FallingBlocks::FallingBlocks(scene::GameScene& scene, const std::vector<VXLBlock>& blocks):
         WorldObject(scene),
-        mesh(blocks),
+        mesh(blocks, draw::get_centroid(blocks)),
         position(mesh.centroid),
         velocity(0),
         direction(rand_normalized()) {

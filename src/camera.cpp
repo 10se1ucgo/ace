@@ -40,13 +40,13 @@ namespace ace {
         this->pitch = ang.y;
     }
 
-    void Camera::update(double dt, ace::gl::experimental::ubo<ace::scene::Uniforms3D> &uniforms) {
+    void Camera::update(double dt, ace::scene::Uniforms3D &uniforms) {
         this->mouse(dt);
         this->keyboard(dt);
         this->update_view(uniforms);
     }
 
-    void Camera::update_view(ace::gl::experimental::ubo<ace::scene::Uniforms3D> &uniforms) {
+    void Camera::update_view(ace::scene::Uniforms3D &uniforms) {
         glm::mat4 old_pv(pv);
 
         _view = lookAt(position, position + forward, up);
@@ -59,13 +59,13 @@ namespace ace {
         //     this->scene.ply->set_orientation(ace::draw2vox(this->forward));
         this->scene.client.sound.set_listener(this->position, this->forward, this->up);
 
-        uniforms->view = this->view();
-        uniforms->proj = this->projection();
-        uniforms->pv = this->matrix();
-        uniforms->cam_pos = this->position;
-        uniforms->cam_forward = this->forward;
-        uniforms->cam_right = this->right;
-        uniforms->cam_up = this->up;
+        uniforms.view = this->view();
+        uniforms.proj = this->projection();
+        uniforms.pv = this->matrix();
+        uniforms.cam_pos = this->position;
+        uniforms.cam_forward = this->forward;
+        uniforms.cam_right = this->right;
+        uniforms.cam_up = this->up;
 
 
         if (old_pv == pv) return; // && !this->thirdperson) || (this->thirdperson && !this->scene.client.keyboard.keys[SDL_SCANCODE_F5])
@@ -114,9 +114,9 @@ namespace ace {
         if (keyboard[this->scene.client.config.get_key("left", SDL_SCANCODE_A)])
             this->position -= normalize(cross(this->forward, this->up)) * speed;
         if (keyboard[this->scene.client.config.get_key("jump", SDL_SCANCODE_SPACE)])
-            this->position += speed * this->up;
+            this->position.y += speed;
         if (keyboard[this->scene.client.config.get_key("crouch", SDL_SCANCODE_LCTRL)])
-            this->position -= speed * this->up;
+            this->position.y -= speed;
     }
 
     bool Camera::box_in_frustum(float x0, float y0, float z0, float x1, float y1, float z1) {

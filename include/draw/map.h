@@ -39,14 +39,24 @@ namespace ace { namespace draw {
     }
 
     struct VXLBlocks {
-        VXLBlocks(const std::vector<VXLBlock> &blocks) : VXLBlocks(blocks, get_centroid(blocks)) { }
-        VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
+        explicit VXLBlocks(glm::u8vec3 color);
+        // TODO consolidate these
+        // No reason to inconsistently use uint32s or u8vec3s for color
+        // Maybe also remove VXLBlock.
+        VXLBlocks(const std::vector<VXLBlock> &blocks, const glm::vec3 &center) { this->update(blocks, center); }
+        VXLBlocks(const std::unordered_map<glm::ivec3, uint32_t> &blocks, const glm::vec3 &center) { this->update(blocks, center); }
+        VXLBlocks(const std::unordered_map<glm::ivec3, glm::u8vec3> &blocks, const glm::vec3 &center) { this->update(blocks, center); }
+
         void update(const std::vector<VXLBlock> &blocks, const glm::vec3 &center);
         void update(const std::unordered_map<glm::ivec3, uint32_t> &blocks, const glm::vec3 &center);
+        void update(const std::unordered_map<glm::ivec3, glm::u8vec3> &blocks, const glm::vec3 &center);
+
         void draw(gl::ShaderProgram &s) const;
 
         gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B" };
-        glm::vec3 scale, rotation, position, centroid;
+        glm::vec3 scale{ 1 }, rotation{ 0 }, position{ 0 }, centroid;
+    private:
+        void _gen_faces(const glm::vec3 &position, const glm::u8vec3 &color, uint8_t visibility);
     };
 
     struct Pillar {

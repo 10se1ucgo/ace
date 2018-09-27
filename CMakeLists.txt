@@ -19,7 +19,10 @@ if (MSVC)
     set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
     add_definitions(-DCURL_STATICLIB)
     add_definitions(-DGLM_FORCE_NO_CTOR_INIT)
-else (MSVC) #Just assume everyone on windows uses msvc for now
+    # CAN PYERRORS.H STOP MACROING SNPRINTF TO _SNPRINTF IT BREAKS NLOHMANN JSON
+    add_definitions(-DHAVE_SNPRINTF=1)
+    # THANKS JERK.
+else (MSVC) # Just assume everyone on windows uses msvc for now
     set(LIBDL_LIBRARY dl)
 endif (MSVC)
 
@@ -54,6 +57,7 @@ file(GLOB_RECURSE INC_FILES include/*.h include/*.hpp include/*.hh)
 
 if(USE_PYBIND11)
     file(GLOB_RECURSE BINDING_FILES python_bindings/*.h python_bindings/*.cpp)
+    include_directories(python_bindings)
 
     add_definitions(-DUSE_PYBIND11)
     add_subdirectory(ext/pybind11)  
