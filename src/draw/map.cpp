@@ -293,7 +293,6 @@ namespace ace { namespace draw {
                     } else {
                         gen_faces(ax, ay, az, vis, color, this->mesh);
                     }
-                    
                 }
             }
         }
@@ -332,9 +331,9 @@ namespace ace { namespace draw {
 //                 this->scene.debug.draw_cube({ p.x + 8, -32, p.y + 8 }, { PILLAR_SIZE, 64, PILLAR_SIZE }, { 1, 0, 0 });
 //             }
 // #endif
-             if (camera.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
-                 p.draw(this->use_ao);
-             }
+            if (camera.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
+                p.draw(this->use_ao);
+            }
         }
     }
 

@@ -136,7 +136,6 @@ namespace ace { namespace world {
     }
 
     void World::update_objects(double dt) {
-        // 
         this->objects.reserve(this->objects.size() + this->queued_objects.size());
         while (!this->queued_objects.empty()) {
             this->objects.emplace_back(std::move(this->queued_objects.back()));

@@ -98,14 +98,14 @@ namespace ace {
         this->w = config.json["graphics"].value("window_width", 800);
         this->h = config.json["graphics"].value("window_height", 600);
 
+        Uint32 flags = SDL_WINDOW_OPENGL;
+        flags |= window_mode == "fullscreen" ? SDL_WINDOW_FULLSCREEN : 0;
+        flags |= window_mode == "borderless" ? SDL_WINDOW_BORDERLESS : 0;
         this->window = SDL_CreateWindow(
             this->window_title.c_str(),
             SDL_WINDOWPOS_CENTERED, SDL_WINDOWPOS_CENTERED, this->w, this->h,
-            SDL_WINDOW_OPENGL | (window_mode == "windowed" ? 0 : SDL_WINDOW_FULLSCREEN)
+            flags
         );
-        if(window_mode == "borderless") {
-            SDL_SetWindowBordered(this->window, SDL_FALSE);
-        }
         if (this->window == nullptr)
             SDL_ERROR("SDL_CreateWindow");
 
