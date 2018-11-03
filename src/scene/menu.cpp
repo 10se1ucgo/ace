@@ -29,10 +29,10 @@ namespace ace { namespace scene {
             content(scene.client.sprites.get("ui/server select/server_select_content_frames.png")),
             list_sb(this->add<draw::ScrollBar>(this->frame.offset() + glm::vec2{ 720, 200 } * this->frame.scale(), glm::vec2{ 25, 520 } * this->frame.scale())),
             list(this->add<draw::ListCtrl>(this->frame.offset() + glm::vec2{ 75, 200 } * this->frame.scale(), glm::vec2{ 640, 475 } * this->frame.scale(), this->frame.scale(), this->list_sb)),
-            nav_bar(this->add<draw::NavBar>()),
-            refresh_button(this->add<draw::Button>("REFRESH", this->frame.offset() + glm::vec2{ 415, 725 } * this->frame.scale(), glm::vec2{ 150, 50 } * this->frame.scale(), 18)),
-            fav_button(this->add<draw::Button>("FAVORITE", this->frame.offset() + glm::vec2{ 570, 725 } * this->frame.scale(), glm::vec2{ 180, 50 } * this->frame.scale(), 18)),
-            connect_button(this->add<draw::Button>("CONNECT", this->frame.offset() + glm::vec2{ 780, 680 } * this->frame.scale(), glm::vec2{ 305, 100 } * this->frame.scale(), 36)),
+            nav_bar(this->add<draw::NavBar>(glm::vec2{}, 30 * this->frame.scale().y)),
+            refresh_button(this->add<draw::Button>("REFRESH", this->frame.offset() + glm::vec2{ 415, 725 } * this->frame.scale(), glm::vec2{ 150, 50 } * this->frame.scale(), 18 * this->frame.scale().y)),
+            fav_button(this->add<draw::Button>("FAVORITE", this->frame.offset() + glm::vec2{ 570, 725 } * this->frame.scale(), glm::vec2{ 180, 50 } * this->frame.scale(), 18 * this->frame.scale().y)),
+            connect_button(this->add<draw::Button>("CONNECT", this->frame.offset() + glm::vec2{ 780, 680 } * this->frame.scale(), glm::vec2{ 305, 100 } * this->frame.scale(), 36 * this->frame.scale().y)),
             server_count_label(scene.client.fonts.get("Vera.ttf", 20 * this->frame.scale().y), "Received XXX Servers") {
 
             this->background->order = draw::Layer::BACKGROUND;

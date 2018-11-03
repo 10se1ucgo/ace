@@ -122,9 +122,9 @@ namespace ace { namespace draw {
                            std::string text, const std::string &icon, draw::Align alignment,
                            int font_size, const std::string &font):
         BaseButton(s, position, size),
+        alignment(alignment),
         icon(s.client.sprites.get(icon)),
-        text(s.client.fonts.get(font, font_size), std::move(text), glm::vec3(1), glm::vec2(1), Align::BOTTOM_LEFT),
-        alignment(alignment) {
+        text(s.client.fonts.get(font, font_size), std::move(text), glm::vec3(1), glm::vec2(1), Align::BOTTOM_LEFT) {
 
         this->icon.alignment = Align::BOTTOM_LEFT;
         
@@ -235,17 +235,17 @@ namespace ace { namespace draw {
     }
 
     void ProgressBar::draw() {
-        float space_between_bullets = (this->scale * this->bar->w() + this->padding);
-        int total_bullets = this->size().x / space_between_bullets;
-        int filled_bullets = total_bullets * (this->value / float(this->range));
+        float space_between_bars = (this->scale * this->bar->w() + this->padding);
+        int total_bars = this->size().x / space_between_bars;
+        int filled_bars = total_bars * (this->value / float(this->range));
         glm::vec2 draw_pos(this->position());
-        for(int x = 0; x < filled_bullets; x++) {
+        for(int x = 0; x < filled_bars; x++) {
             this->bar->draw(glm::vec4{ 1.0f }, draw_pos, 0.0f, glm::vec2(this->scale));
-            draw_pos.x += space_between_bullets;
+            draw_pos.x += space_between_bars;
         }
-        for (int x = 0; x < total_bullets - filled_bullets; x++) {
+        for (int x = 0; x < total_bars - filled_bars; x++) {
             this->bar->draw(glm::vec4{ 0.8f, 0.8f, 0.8f, 1.0f }, draw_pos, 0.0f, glm::vec2(this->scale));
-            draw_pos.x += space_between_bullets;
+            draw_pos.x += space_between_bars;
         }
     }
 
@@ -378,7 +378,7 @@ namespace ace { namespace draw {
             auto color =  i == this->_selected ? (glm::vec3(189, 169, 74) / 255.f) : glm::vec3(1);
             this->entry_font->draw_truncated(this->players.x_pos - this->name.x_pos - 25, e.name, pen + glm::vec2{ name.x_pos, 0 }, color);
             this->entry_font->draw(std::to_string(e.players) + "/" + std::to_string(e.max_players), pen + glm::vec2{ players.x_pos, 0 }, color);
-            this->entry_font->draw(e.map, pen + glm::vec2{ map.x_pos, 0 }, color);
+            this->entry_font->draw_truncated(this->mode.x_pos - this->map.x_pos - 25, e.map, pen + glm::vec2{ map.x_pos, 0 }, color);
             this->entry_font->draw(e.mode, pen + glm::vec2{ mode.x_pos, 0 }, color);
             this->entry_font->draw(std::to_string(e.ping), pen + glm::vec2{ ping.x_pos, 0 }, color);
             pen.y += this->col_height;

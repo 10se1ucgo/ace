@@ -184,11 +184,11 @@ namespace ace { namespace draw {
     };
 
     struct NavBar : InputHandler {
-        NavBar(scene::Scene &scene, glm::vec2 size = {40, 40}) :
+        NavBar(scene::Scene &scene, glm::vec2 size = {40, 40}, int font_size = 30) :
             InputHandler(scene),
-            back(scene, {}, size, "BACK", "ui/common_elements/nav_bar/back_icon.png", Align::BOTTOM_LEFT),
-            menu(scene, {}, size, "MENU", "ui/common_elements/nav_bar/main_menu_icon.png", Align::BOTTOM_CENTER),
-            quit(scene, {}, size, "QUIT", "ui/common_elements/nav_bar/quit_icon.png", Align::BOTTOM_RIGHT) {
+            back(scene, {}, size, "BACK", "ui/common_elements/nav_bar/back_icon.png", Align::BOTTOM_LEFT, font_size),
+            menu(scene, {}, size, "MENU", "ui/common_elements/nav_bar/main_menu_icon.png", Align::BOTTOM_CENTER, font_size),
+            quit(scene, {}, size, "QUIT", "ui/common_elements/nav_bar/quit_icon.png", Align::BOTTOM_RIGHT, font_size) {
 
             // glm::vec2{}, glm::vec2{40}, "QUIT", "ui/common_elements/nav_bar/quit_icon.png"
         }
