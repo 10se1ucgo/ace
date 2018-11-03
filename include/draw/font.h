@@ -13,9 +13,13 @@
 
 namespace ace { namespace draw {
     namespace detail {
+        // Quad explosion done in geometry shader
 #pragma pack(push, 1)
         struct GlyphVertex {
-            glm::vec2 pos, tex;
+            glm::vec2 pos, size;
+            // maybe I can even move glyph tex coords data to the gpu
+            // but then id never have room to maybe expand to support unicode
+            glm::vec2 tex_tl, tex_br;
             glm::vec3 color;
         };
 #pragma pack(pop)
@@ -26,7 +30,7 @@ namespace ace { namespace draw {
     // todo expand this to be more useful
     struct Text {
         Text(Font *font, std::string str, glm::vec3 color = glm::vec3(1.0f),
-                     glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
+             glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
         
         void update(std::string str, glm::vec3 color = glm::vec3(1.0f),
                     glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
@@ -99,9 +103,8 @@ namespace ace { namespace draw {
         int _line_height;
        
         struct FontChar {
-            glm::ivec2 advance, dim, bearing;
-            glm::vec2 tl, tr, bl, br;
-            float tx;
+            glm::vec2 advance, bearing, dim;
+            glm::vec2 top_left, bottom_right;
         } chars[256];
 
         friend Text;

@@ -81,6 +81,7 @@ namespace ace { namespace gl {
         }), 
         text({
             { get_resource_path("shaders/text.vert"), GL_VERTEX_SHADER },
+            { get_resource_path("shaders/text.geom"), GL_GEOMETRY_SHADER },
             { get_resource_path("shaders/text.frag"), GL_FRAGMENT_SHADER }
         }),
         line({

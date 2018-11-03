@@ -80,7 +80,7 @@ namespace ace { namespace draw {
             this->height = std::max(this->height, g->bitmap.rows);
         }
 
-        this->vao.attrib_pointer("2f,2f,3f", this->vbo.handle);
+        this->vao.attrib_pointer("2f,2f,4f,3f", this->vbo.handle);
 
         glActiveTexture(GL_TEXTURE0);
         glBindTexture(GL_TEXTURE_2D, this->tex);
@@ -121,13 +121,10 @@ namespace ace { namespace draw {
             this->chars[c].advance = { g->advance.x >> 6, g->advance.y >> 6 };
             this->chars[c].dim = { g->bitmap.width, g->bitmap.rows };
             this->chars[c].bearing = { g->bitmap_left, g->bitmap_top };
-            auto tx = float(x) / this->width;
-            this->chars[c].tx = tx;
 
-            this->chars[c].tl = { tx, 0 };
-            this->chars[c].tr = { tx + this->chars[c].dim.x / float(this->width), 0 };
-            this->chars[c].bl = { tx, this->chars[c].dim.y / float(this->height) };
-            this->chars[c].br = { tx + this->chars[c].dim.x / float(this->width), this->chars[c].dim.y / float(this->height) };
+            auto tx = float(x) / this->width;
+            this->chars[c].top_left = { tx, 0 };
+            this->chars[c].bottom_right = { tx + this->chars[c].dim.x / this->width, this->chars[c].dim.y / this->height };
 
             x += g->bitmap.width + 1;
         }
@@ -145,7 +142,7 @@ namespace ace { namespace draw {
         glBindTexture(GL_TEXTURE_2D, this->tex);
         
         this->vbo.upload();
-        this->vao.draw(GL_TRIANGLES, this->vbo.draw_count, this->vbo.draw_offset);
+        this->vao.draw(GL_POINTS, this->vbo.draw_count, this->vbo.draw_offset);
     }
 
     glm::vec2 Font::get_aligned_position(glm::vec2 pos, glm::vec2 size, Align alignment) const {
@@ -179,9 +176,9 @@ namespace ace { namespace draw {
 
     glm::vec2 Font::measure(const std::string& str, glm::vec2 scale) const {
         // this is bad
-
-        glm::ivec2 size(0, 0);
-        int pen = 0, lines = 1;
+        glm::vec2 size(0, 0);
+        float pen = 0;
+        int lines = 1;
         for(unsigned char c : str) {
             if(c == '\n') {
                 size.x = std::max(pen, size.x);
@@ -192,10 +189,8 @@ namespace ace { namespace draw {
             size.y = std::max(this->chars[c].bearing.y, size.y);
         }
         size.x = std::max(pen, size.x);
-        if(lines > 1) {
-            size.y += (lines - 1) * this->_line_height;
-        }
-        return glm::vec2(size) * scale;
+        size.y += (lines - 1) * this->_line_height;
+        return size * scale;
     }
 
     glm::vec2 Font::render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const {
@@ -218,19 +213,13 @@ namespace ace { namespace draw {
 
         float x = pos.x + glyph.bearing.x * scale.x;
         float y = pos.y - glyph.bearing.y * scale.y;
-        float w = glyph.dim.x * scale.x;
-        float h = glyph.dim.y * scale.y;
+        glm::vec2 size = glyph.dim * scale;
 
-        pos += glm::vec2(glyph.advance) * scale;
+        pos += glyph.advance * scale;
 
-        if (!w || !h) return;
+        if (!size.x || !size.y) return;
 
-        v.push_back({ { x,     y }, glyph.tl, color }); // top left
-        v.push_back({ { x + w, y }, glyph.tr, color }); // top right
-        v.push_back({ { x,     y + h }, glyph.bl, color }); // bottom left
-        v.push_back({ { x + w, y }, glyph.tr, color });
-        v.push_back({ { x,     y + h }, glyph.bl, color });
-        v.push_back({ { x + w, y + h }, glyph.br, color }); // bottom right
+        v.push_back({ {x, y}, size, glyph.top_left, glyph.bottom_right, color });
     }
 
     glm::vec2 Font::draw(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, Align alignment) {
@@ -251,8 +240,8 @@ namespace ace { namespace draw {
 
     void Font::draw(const Text &r) {
         this->vbo->reserve(this->vbo->size() + r.vertices.size());
-        for(auto &x : r.vertices) {
-            this->vbo->push_back({ x.pos + r.position, x.tex, x.color });
+        for(auto &glyph : r.vertices) {
+            this->vbo->push_back({ glyph.pos + r.position, glyph.size, glyph.tex_tl, glyph.tex_br, glyph.color });
         }
     }
 

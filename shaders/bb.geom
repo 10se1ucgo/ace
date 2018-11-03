@@ -26,19 +26,19 @@ layout (std140) uniform SceneUniforms {
 
 
 void main() {
-    gl_Position = pv * vec4(((cam_right - cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    gl_Position = pv * vec4(((cam_right - cam_up) * bb[0].size) + bb[0].pos, 1.0); // bottom left
     frag_color = bb[0].color;
     EmitVertex();
 
-    gl_Position = pv * vec4(((-cam_right - cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    gl_Position = pv * vec4(((-cam_right - cam_up) * bb[0].size) + bb[0].pos, 1.0); // bottom right 
     frag_color = bb[0].color;
     EmitVertex();
 
-    gl_Position = pv * vec4(((cam_right + cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    gl_Position = pv * vec4(((cam_right + cam_up) * bb[0].size) + bb[0].pos, 1.0); // top left
     frag_color = bb[0].color;
     EmitVertex();
 
-    gl_Position = pv * vec4(((-cam_right + cam_up) * bb[0].size) + bb[0].pos, 1.0);
+    gl_Position = pv * vec4(((-cam_right + cam_up) * bb[0].size) + bb[0].pos, 1.0); // top right
     frag_color = bb[0].color;
     EmitVertex();
 

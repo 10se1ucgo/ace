@@ -1,14 +1,19 @@
 #version 330 core
 layout (location = 0) in vec2 position;
-layout (location = 1) in vec2 tex_coords;
-layout (location = 2) in vec3 color;
-out vec4 f_color;
-out vec2 f_tex_coords;
+layout (location = 1) in vec2 size;
+layout (location = 2) in vec4 tex_coords;
+layout (location = 3) in vec3 color;
 
-uniform mat4 mvp;
+out TextGlyph {
+    vec2 position;
+    vec2 size;
+    vec4 tex_coords;
+    vec3 color;
+} glyph;
 
 void main() {
-    gl_Position = mvp * vec4(position, 0.0, 1.0);
-    f_tex_coords = tex_coords;
-    f_color = vec4(color, 1.0);
+    glyph.position = position;
+    glyph.size = size;
+    glyph.tex_coords = tex_coords;
+    glyph.color = color;
 }
