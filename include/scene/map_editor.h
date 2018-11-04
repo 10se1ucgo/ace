@@ -38,7 +38,7 @@ namespace ace { namespace scene {
 
         Camera cam;
 
-        AceMap map;
+        EditableMap map;
         draw::MapRenderer map_renderer;
 
         draw::DebugDraw debug;

@@ -126,7 +126,7 @@ namespace ace {
     };
 
 
-    class EditableMap : public AceMap {
+    class EditableMap final : public AceMap {
     public:
         EditableMap(uint8_t *buf = nullptr);
         // TODO:
