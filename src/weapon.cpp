@@ -418,28 +418,36 @@ namespace ace {
             dir += glm::vec3{ calc_spread(spread), calc_spread(spread), calc_spread(spread) };
             this->ply.scene.world.create_object<world::Tracer>(this->tracer(), this->ply.e + dir * 4.f, dir);
 
-            glm::ivec3 hit;
-            Face f = this->ply.scene.world.hitscan(this->ply.e, dir, &hit);
+            glm::ivec3 block_hit;
+            Face f = this->ply.scene.world.hitscan(this->ply.e, dir, &block_hit);
             if (f != Face::INVALID) {
                 // damage 0 if != local_ply just to have particles
-                this->ply.scene.client.sound.play("impact.wav", vox2draw(hit) + .5f);
-                block_destroyed |= this->ply.scene.damage_point(hit.x, hit.y, hit.z, this->ply.local_player ? this->block_damage() : 0, f, !block_destroyed);
+                this->ply.scene.client.sound.play("impact.wav", vox2draw(block_hit) + .5f);
+                block_destroyed |= this->ply.scene.damage_point(block_hit.x, block_hit.y, block_hit.z, this->ply.local_player ? this->block_damage() : 0, f, !block_destroyed);
             }
 
-            scene::RaycastResult result = this->ply.scene.cast_ray(this->ply.e, dir, &this->ply);
-            if (result.ply != nullptr) {
-                if (result.type == net::HIT::HEAD) {
-                    this->ply.scene.client.sound.play("whack.wav", vox2draw(result.hit), 125);
+            scene::RaycastResult ply_hit = this->ply.scene.cast_ray(this->ply.e, dir, &this->ply);
+            if (ply_hit.ply != nullptr) {
+                if (ply_hit.type == net::HIT::HEAD) {
+                    this->ply.scene.client.sound.play("whack.wav", vox2draw(ply_hit.hit), 125);
                 }
-                this->ply.scene.client.sound.play("hitplayer.wav", vox2draw(result.hit), 125);
+                this->ply.scene.client.sound.play("hitplayer.wav", vox2draw(ply_hit.hit), 125);
 
                 // TODO: prevent being able to shoot through blocks
 
-                this->ply.scene.world.create_debris(result.hit, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
+                this->ply.scene.world.create_debris(ply_hit.hit, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
+#ifndef NDEBUG
+                this->ply.scene.client.tasks.schedule(0.0, [this, hit = ply_hit.hit](util::Task &t) {
+                    this->ply.scene.debug.draw_cube(vox2draw(hit), glm::vec3(0.25), draw::colors::red());
+                    if(t.time() < 5) {
+                        t.keep_going();
+                    }
+                });
+#endif
                 if (this->ply.local_player) {
                     net::HitPacket hp;
-                    hp.pid = result.ply->pid;
-                    hp.value = result.type;
+                    hp.pid = ply_hit.ply->pid;
+                    hp.value = ply_hit.type;
                     this->ply.scene.client.net.send_packet(hp);
                 }
             }

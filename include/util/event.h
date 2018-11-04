@@ -25,11 +25,6 @@ namespace util {
             this->call_in(this->_interval);
         }
 
-        template<typename TTime>
-        void keep_going(TTime time) {
-            this->call_in(time);
-        }
-
         void call_in(double seconds);
 
         template<typename TRep, typename TPeriod>
@@ -39,10 +34,14 @@ namespace util {
 
         uint64_t call_count() const { return this->_num_calls; }
 
+        // Time since last call, in seconds.
         double dt() const;
+
+        // Time since first call, in seconds.
+        double time() const;
     private:
         std::function<void(Task&)> function;
-        double _interval = 0.0, _next_call = 0.0, _last_call = 0.0;
+        double _interval = 0.0, _first_call = 0.0, _next_call = 0.0, _last_call = 0.0;
         uint64_t _num_calls = 0;
         bool _done = false;
 

@@ -21,7 +21,15 @@ namespace ace { namespace util {
         return this->manager->get_time() - this->_last_call;
     }
 
+    double Task::time() const {
+        return this->manager->get_time() - this->_first_call;
+    }
+
     bool Task::call() {
+        if (this->call_count() == 0) {
+            this->_first_call = this->manager->get_time();
+        }
+
         this->_done = true;
         this->function(std::ref(*this));
         this->_num_calls++;
