@@ -4,7 +4,6 @@
 
 #include "game_client.h"
 #include "scene/menu.h"
-#include "scene/map_editor.h"
 
 int main(int argc, char **argv) {
 #ifdef NDEBUG
