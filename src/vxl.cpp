@@ -49,11 +49,63 @@ namespace ace {
         return glm::u8vec3(unpack_argb(col));
     }
 
-    AceMap::AceMap(uint8_t *buf) {
+    Face AceMap::hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const {
+        constexpr size_t VSID = MAP_X;
+
+        h->x = p.x;
+        h->y = p.y;
+        h->z = p.z;
+        if (!is_valid_pos(h->x, h->y, h->z) && (h->z > MAP_Z + 3 || h->z < -3)) {
+            return Face::INVALID;
+        }
+
+        // ok after 10 minutes of experimenting it seems that this code is equivalent to
+        // ixi = d.x < 0.0 ? -1 : 1; (but way faster)
+        // thanks ken
+        int ixi = reinterpret_cast<const int32_t *>(&d.x)[1] >> 31 | 1;
+        int iyi = reinterpret_cast<const int32_t *>(&d.y)[1] >> 31 | 1;
+        int izi = reinterpret_cast<const int32_t *>(&d.z)[1] >> 31 | 1;
+
+        float f = 0x3fffffff / VSID;
+        float kx, ky, kz;
+        if ((fabs(d.x) >= fabs(d.y)) && (fabs(d.x) >= fabs(d.z))) {
+            kx = 1024.0;
+            if (d.y == 0) ky = f; else ky = std::min(fabs(d.x / d.y) * 1024.0, double(f));
+            if (d.z == 0) kz = f; else kz = std::min(fabs(d.x / d.z) * 1024.0, double(f));
+        } else if (fabs(d.y) >= fabs(d.z)) {
+            ky = 1024.0;
+            if (d.x == 0) kx = f; else kx = std::min(fabs(d.y / d.x) * 1024.0, double(f));
+            if (d.z == 0) kz = f; else kz = std::min(fabs(d.y / d.z) * 1024.0, double(f));
+        } else {
+            kz = 1024.0;
+            if (d.x == 0) kx = f; else kx = std::min(fabs(d.z / d.x) * 1024.0, double(f));
+            if (d.y == 0) ky = f; else ky = std::min(fabs(d.z / d.y) * 1024.0, double(f));
+        }
+        int dxi = kx; int dx = (p.x - float(h->x)) * kx; if (ixi >= 0) dx = dxi - dx;
+        int dyi = ky; int dy = (p.y - float(h->y)) * ky; if (iyi >= 0) dy = dyi - dy;
+        int dzi = kz; int dz = (p.z - float(h->z)) * kz; if (izi >= 0) dz = dzi - dz;
+
+        while (true) {
+            Face dir;
+            if ((dz <= dx) && (dz <= dy)) {
+                h->z += izi; dz += dzi; dir = Face(5 - (izi > 0));
+            } else {
+                if (dx < dy) {
+                    h->x += ixi; dx += dxi; dir = Face(1 - (ixi > 0));
+                } else {
+                    h->y += iyi; dy += dyi; dir = Face(3 - (iyi > 0));
+                }
+            }
+            if (!is_valid_pos(h->x, h->y, h->z) && (h->z > MAP_Z + 3 || h->z < -3)) return Face::INVALID;
+            if (this->is_solid(h->x, h->y, h->z)) return dir;
+        }
+    }
+
+    EditableMap::EditableMap(uint8_t *buf) {
         this->read(buf);
     }
 
-    void AceMap::read(uint8_t *buf) {
+    void EditableMap::read(uint8_t *buf) {
         fmt::print("READING MAP\n");
         if (!buf) return;
 
@@ -107,7 +159,7 @@ namespace ace {
         fmt::print("MAP READ TIME: {}\n", std::chrono::duration<double>(end - start).count());
     }
 
-    std::vector<uint8_t> AceMap::write() {
+    std::vector<uint8_t> EditableMap::write() {
         std::vector<uint8_t> v;
         v.reserve(3 * 1024 * 1024);
         int x = 0, y = 0;
@@ -115,7 +167,7 @@ namespace ace {
         return v;
     }
 
-    size_t AceMap::write(std::vector<uint8_t> &v, int *sx, int *sy, int columns) {
+    size_t EditableMap::write(std::vector<uint8_t> &v, int *sx, int *sy, int columns) {
         const size_t initial_size = v.size();
         int column = 0;
         const bool all = columns < 0;
@@ -193,7 +245,7 @@ namespace ace {
         return v.size() - initial_size;
     }
 
-    bool AceMap::set_block(int x, int y, int z, bool solid, uint32_t color, bool wrapped) {
+    bool EditableMap::set_block(int x, int y, int z, bool solid, uint32_t color, bool wrapped) {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
@@ -213,7 +265,7 @@ namespace ace {
         return true;
     }
 
-    bool AceMap::get_block(int x, int y, int z, uint32_t *color, bool wrapped) {
+    bool EditableMap::get_block(int x, int y, int z, uint32_t *color, bool wrapped) {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
@@ -226,7 +278,7 @@ namespace ace {
         return this->is_solid_unchecked(pos);
     }
 
-    bool AceMap::set_solid(int x, int y, int z, bool solid, bool wrapped) {
+    bool EditableMap::set_solid(int x, int y, int z, bool solid, bool wrapped) {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
@@ -241,7 +293,7 @@ namespace ace {
         return true;
     }
 
-    bool AceMap::is_solid(int x, int y, int z, bool wrapped) const {
+    bool EditableMap::is_solid(int x, int y, int z, bool wrapped) const {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
@@ -251,7 +303,7 @@ namespace ace {
         return is_valid_pos(pos) && this->is_solid_unchecked(pos);
     }
 
-    void AceMap::set_color(int x, int y, int z, uint32_t color, bool wrapped) {
+    void EditableMap::set_color(int x, int y, int z, uint32_t color, bool wrapped) {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
@@ -265,7 +317,7 @@ namespace ace {
         this->notify_listeners(x, y, z);
     }
 
-    uint32_t AceMap::get_color(int x, int y, int z, bool wrapped) {
+    uint32_t EditableMap::get_color(int x, int y, int z, bool wrapped) {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
@@ -277,71 +329,7 @@ namespace ace {
         return this->get_color_unchecked(pos, x, y, z);
     }
 
-    int AceMap::get_z(int x, int y, int start, bool wrapped) {
-        if (wrapped) {
-            x &= MAP_X - 1;
-            y &= MAP_Y - 1;
-        }
-
-        for (int z = start; z < MAP_Z; z++) {
-            if (this->is_solid(x, y, z)) return z;
-        }
-        return MAP_Z;
-    }
-
-    Face AceMap::hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const {
-        constexpr size_t VSID = MAP_X;
-
-        h->x = p.x;
-        h->y = p.y;
-        h->z = p.z;
-        if (!is_valid_pos(h->x, h->y, h->z) && (h->z > MAP_Z + 3 || h->z < -3)) {
-            return Face::INVALID;
-        }
-
-        // ok after 10 minutes of experimenting it seems that this code is equivalent to
-        // ixi = d.x < 0.0 ? -1 : 1; (but way faster)
-        // thanks ken
-        int ixi = reinterpret_cast<const int32_t *>(&d.x)[1] >> 31 | 1;
-        int iyi = reinterpret_cast<const int32_t *>(&d.y)[1] >> 31 | 1;
-        int izi = reinterpret_cast<const int32_t *>(&d.z)[1] >> 31 | 1;
-
-        float f = 0x3fffffff / VSID;
-        float kx, ky, kz;
-        if ((fabs(d.x) >= fabs(d.y)) && (fabs(d.x) >= fabs(d.z))) {
-            kx = 1024.0;
-            if (d.y == 0) ky = f; else ky = std::min(fabs(d.x / d.y) * 1024.0, double(f));
-            if (d.z == 0) kz = f; else kz = std::min(fabs(d.x / d.z) * 1024.0, double(f));
-        } else if (fabs(d.y) >= fabs(d.z)) {
-            ky = 1024.0;
-            if (d.x == 0) kx = f; else kx = std::min(fabs(d.y / d.x) * 1024.0, double(f));
-            if (d.z == 0) kz = f; else kz = std::min(fabs(d.y / d.z) * 1024.0, double(f));
-        } else {
-            kz = 1024.0;
-            if (d.x == 0) kx = f; else kx = std::min(fabs(d.z / d.x) * 1024.0, double(f));
-            if (d.y == 0) ky = f; else ky = std::min(fabs(d.z / d.y) * 1024.0, double(f));
-        }
-        int dxi = kx; int dx = (p.x - float(h->x)) * kx; if (ixi >= 0) dx = dxi - dx;
-        int dyi = ky; int dy = (p.y - float(h->y)) * ky; if (iyi >= 0) dy = dyi - dy;
-        int dzi = kz; int dz = (p.z - float(h->z)) * kz; if (izi >= 0) dz = dzi - dz;
-
-        while (true) {
-            Face dir;
-            if ((dz <= dx) && (dz <= dy)) {
-                h->z += izi; dz += dzi; dir = Face(5 - (izi>0));
-            } else {
-                if (dx < dy) {
-                    h->x += ixi; dx += dxi; dir = Face(1 - (ixi>0));
-                } else {
-                    h->y += iyi; dy += dyi; dir = Face(3 - (iyi>0));
-                }
-            }
-            if (!is_valid_pos(h->x, h->y, h->z) && (h->z > MAP_Z + 3 || h->z < -3)) return Face::INVALID;
-            if (this->is_solid(h->x, h->y, h->z)) return dir;
-        }
-    }
-
-    uint32_t AceMap::get_color_unchecked(size_t pos, int x, int y, int z) {
+    uint32_t EditableMap::get_color_unchecked(size_t pos, int x, int y, int z) {
         auto color = this->colors.find(pos);
         if (color == this->colors.end()) {
             return this->colors[pos] = dirtcolor(x, y, z);

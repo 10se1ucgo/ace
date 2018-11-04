@@ -13,19 +13,6 @@ namespace ace { namespace draw {
             return side1 + side2 + corner;
         }
 
-        uint8_t get_vis(AceMap &map, const int x, const int y, const int z, bool wrapped = false) {
-            if (!map.is_solid(x, y, z, wrapped)) return 0;
-
-            uint8_t vis = 0;
-            if (!map.is_solid(x - 1, y, z, wrapped)) vis |= 1 << int(Face::LEFT);
-            if (!map.is_solid(x + 1, y, z, wrapped)) vis |= 1 << int(Face::RIGHT);
-            if (!map.is_solid(x, y - 1, z, wrapped)) vis |= 1 << int(Face::BACK);
-            if (!map.is_solid(x, y + 1, z, wrapped)) vis |= 1 << int(Face::FRONT);
-            if (!map.is_solid(x, y, z - 1, wrapped)) vis |= 1 << int(Face::TOP);
-            if (!map.is_solid(x, y, z + 1, wrapped)) vis |= 1 << int(Face::BOTTOM);
-            return vis;
-        }
-
         template<typename T>
         uint8_t get_vis(T &set, glm::ivec3 pos) {
             if (!set.count(pos)) return 0;
@@ -278,7 +265,7 @@ namespace ace { namespace draw {
         for (size_t ax = this->x; ax < this->x + PILLAR_SIZE; ax++) {
             for (size_t ay = this->y; ay < this->y + PILLAR_SIZE; ay++) {
                 for (size_t az = 0; az < MAP_Z; az++) {
-                    uint8_t vis = get_vis(this->map, ax, ay, az, true);
+                    uint8_t vis = this->map.get_vis(ax, ay, az, true);
                     if (az == MAP_Z - 1) vis &= 1 << int(Face::TOP);
                     if (vis == 0) continue;
 

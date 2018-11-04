@@ -55,6 +55,7 @@ namespace ace {
     };
 
     class AceMap;
+    class EditableMap;
 
     // lets take a page out of Minecraft's book
     struct MapListener {
@@ -66,25 +67,34 @@ namespace ace {
 
     class AceMap {
     public:
-        AceMap(uint8_t *buf = nullptr);
+        virtual ~AceMap() = default;
 
-        void read(uint8_t *buf);
-        std::vector<uint8_t> write();
-        size_t write(std::vector<uint8_t> &v, int *sx, int *sy, int columns = -1);
+        virtual bool is_solid(int x, int y, int z, bool wrapped = false) const = 0;
+        virtual uint32_t get_color(int x, int y, int z, bool wrapped = false) = 0;
 
-        bool set_block(int x, int y, int z, bool solid, uint32_t color = 0, bool wrapped = false);
-        bool get_block(int x, int y, int z, uint32_t *color, bool wrapped = false);
+        virtual bool get_block(int x, int y, int z, uint32_t *color, bool wrapped = false) {
+            if (wrapped) {
+                x &= MAP_X - 1;
+                y &= MAP_Y - 1;
+            }
 
-        bool set_solid(int x, int y, int z, bool solid, bool wrapped = false);
-        bool is_solid(int x, int y, int z, bool wrapped = false) const;
+            *color = this->get_color(x, y, z);
+            return this->is_solid(x, y, z);
+        }
 
-        // FORMAT: 0xAARRGGBB
-        void set_color(int x, int y, int z, uint32_t color, bool wrapped = false);
-        uint32_t get_color(int x, int y, int z, bool wrapped = false);
+        virtual int get_z(int x, int y, int start = 0, bool wrapped = false) {
+            if (wrapped) {
+                x &= MAP_X - 1;
+                y &= MAP_Y - 1;
+            }
 
-        int get_z(int x, int y, int start = 0, bool wrapped = false);
+            for (int z = start; z < MAP_Z; z++) {
+                if (this->is_solid(x, y, z)) return z;
+            }
+            return MAP_Z;
+        }
 
-        uint8_t get_vis(int x, int y, int z, bool wrapped = false) const {
+        virtual uint8_t get_vis(int x, int y, int z, bool wrapped = false) const {
             if (!this->is_solid(x, y, z, wrapped)) return 0;
 
             uint8_t vis = 0;
@@ -97,17 +107,48 @@ namespace ace {
             return vis;
         }
 
-        Face hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const;
+        virtual Face hitscan(const glm::dvec3 &p, const glm::dvec3 &d, glm::ivec3 *h) const;
 
-        void add_listener(MapListener &listener) {
+        virtual void add_listener(MapListener &listener) {
             this->listeners.push_back(&listener);
         }
-        void remove_listener(MapListener &listener) {
+        virtual void remove_listener(MapListener &listener) {
             this->listeners.erase(std::remove(this->listeners.begin(), this->listeners.end(), &listener), this->listeners.end());
         }
+    protected:
+        virtual void notify_listeners(int x, int y, int z) {
+            for (auto &listener : this->listeners) {
+                listener->on_block_changed(x, y, z, *this);
+            }
+        }
+
+        std::vector<MapListener *> listeners;
+    };
+
+
+    class EditableMap : public AceMap {
+    public:
+        EditableMap(uint8_t *buf = nullptr);
+        // TODO:
+        // EditableMap(AceMap &existing);
+        // void copy(AceMap &existing);
+
+        void read(uint8_t *buf);
+        std::vector<uint8_t> write();
+        size_t write(std::vector<uint8_t> &v, int *sx, int *sy, int columns = -1);
+
+        bool set_block(int x, int y, int z, bool solid, uint32_t color = 0, bool wrapped = false);
+        bool get_block(int x, int y, int z, uint32_t *color, bool wrapped = false) override;
+
+        bool set_solid(int x, int y, int z, bool solid, bool wrapped = false);
+        bool is_solid(int x, int y, int z, bool wrapped = false) const override;
+
+        // FORMAT: 0xAARRGGBB
+        void set_color(int x, int y, int z, uint32_t color, bool wrapped = false);
+        uint32_t get_color(int x, int y, int z, bool wrapped = false) override;
     private:
         bool is_surface(const int x, const int y, const int z) const {
-            if (!this->is_solid_unchecked(get_pos(x, y, z))) return false;
+            if (!this->is_solid(x, y, z)) return false;
             if (x     >     0 && !this->is_solid_unchecked(get_pos(x - 1, y, z))) return true;
             if (x + 1 < MAP_X && !this->is_solid_unchecked(get_pos(x + 1, y, z))) return true;
             if (y     >     0 && !this->is_solid_unchecked(get_pos(x, y - 1, z))) return true;
@@ -131,14 +172,6 @@ namespace ace {
 
         // TODO: This one requires x,y,z to calculate dirt color if needed. Maybe a separate wrapper for that.
         uint32_t get_color_unchecked(size_t pos, int x, int y, int z);
-
-        void notify_listeners(int x, int y, int z) {
-            for (auto &listener : this->listeners) {
-                listener->on_block_changed(x, y, z, *this);
-            }
-        }
-
-        std::vector<MapListener *> listeners;
 
         std::bitset<MAP_X * MAP_Y * MAP_Z> geometry; // x,y,z -> is_solid?
 

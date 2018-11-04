@@ -109,7 +109,7 @@ namespace ace { namespace world {
 
         std::vector<std::pair<double, glm::ivec3>> damaged_blocks; // {
 
-        AceMap map;
+        EditableMap map;
         draw::MapRenderer map_renderer;
         DebrisGroup &debris;
     };

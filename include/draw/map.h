@@ -54,7 +54,7 @@ namespace ace { namespace draw {
         void draw(gl::ShaderProgram &s) const;
 
         gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B" };
-        glm::vec3 scale{ 1 }, rotation{ 0 }, position{ 0 }, centroid;
+        glm::vec3 scale{ 1 }, rotation{ 0 }, position{ 0 }, centroid{ 0 };
     private:
         void _gen_faces(const glm::vec3 &position, const glm::u8vec3 &color, uint8_t visibility);
     };
