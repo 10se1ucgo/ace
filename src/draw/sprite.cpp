@@ -51,13 +51,11 @@ namespace ace { namespace draw {
         if (tint.a <= 0.f) return;
 
         const glm::vec2 aligned_position(get_aligned_position(position, scale, { this->w(), this->h() }, align));
-        const glm::vec2 anchor(position - aligned_position);
 
         glm::mat3 model(1.0f);
-        model = translate(model, aligned_position);
-        model = translate(model, anchor);
+        model = translate(model, position);
         model = rotate(model, glm::radians(rotation));
-        model = translate(model, -anchor);
+        model = translate(model, aligned_position - position);
         model = glm::scale(model, scale);
         this->models->emplace_back(tint, model, region);
     }

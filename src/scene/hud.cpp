@@ -455,6 +455,7 @@ namespace ace { namespace scene {
         cm.type = this->cur_chat_type;
         cm.message = this->scene.client.input_buffer;
         this->scene.client.net.send_packet(cm);
+        this->scene.client.sound.play_local("chat.wav");
 
         this->cur_chat_type = net::CHAT::INVALID;
     }

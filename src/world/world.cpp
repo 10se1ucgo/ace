@@ -80,6 +80,9 @@ namespace ace { namespace world {
     }
 
     bool World::destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed) {
+        auto start = std::chrono::high_resolution_clock::now();
+
+
         if (!draw::valid_build_pos(x, y, z)) return false;
 
         bool ok = this->map.set_solid(x, y, z, false);
@@ -90,6 +93,12 @@ namespace ace { namespace world {
             if (draw::valid_build_pos(node.x, node.y, node.z)) {
                 this->check_floating(node.x, node.y, node.z, destroyed);
             }
+        }
+
+        auto end = std::chrono::high_resolution_clock::now();
+        double seconds = std::chrono::duration<double>(end - start).count();
+        if(seconds > 1) {
+            fmt::print("BLOCK DESTROY TIME: {}s??\n", seconds);
         }
 
         return ok;

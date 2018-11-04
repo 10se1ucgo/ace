@@ -108,7 +108,7 @@ namespace ace {
     };
 
     // TODO: This is a crap load of code duplication.
-    // Eventually, DrawPlayer will be renamed to something less arbritrary and this will act as the drawable component
+    // Eventually, DrawPlayer will be renamed to something less arbitrary and this will act as the drawable component
     struct PlayerModel {
         PlayerModel(scene::GameScene &scene);
         void draw(glm::vec3 color, bool local = false);
