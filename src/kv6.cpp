@@ -17,13 +17,12 @@ using namespace detail;
 namespace {
     // adapted from SLAB6.C by Ken Silverman (http://advsys.net/ken)
     constexpr float GOLDRAT = 0.3819660112501052f;
-    constexpr float PI = 3.141592653589793f;
     constexpr int TABLE_SIZE = 256;
 
     glm::vec3 equiind2vec(long i, float zmulk, float zaddk) {
         float z = i * zmulk + zaddk;
         float r = sqrtf(1.f - z * z);
-        float v = i * (GOLDRAT * PI * 2);
+        float v = i * (GOLDRAT * ace::PI * 2);
         float x = cos(v) * r;
         float y = sin(v) * r;
         return { -x, z, -y };

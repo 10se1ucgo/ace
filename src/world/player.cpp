@@ -272,7 +272,7 @@ namespace ace { namespace world {
     };
 
     void DrawPlayer::update(double dt) {
-        if (!this->alive || this->team == net::TEAM::SPECTATOR) return;
+        if (!this->alive || this->_team == net::TEAM::SPECTATOR) return;
 
         if (this->local_player && !this->get_tool()->available()) {
             this->set_tool(net::TOOL(uint8_t(this->held_tool) - 1));
@@ -326,7 +326,7 @@ namespace ace { namespace world {
     }
 
     long DrawPlayer::fixed_update(double dt) {
-        if (this->team == net::TEAM::SPECTATOR) return -2;
+        if (this->_team == net::TEAM::SPECTATOR) return -2;
 
         if (this->jump && !this->airborne && this->alive) {
             this->play_sound(this->wade ? "waterjump.wav" : "jump.wav");
@@ -440,7 +440,15 @@ namespace ace { namespace world {
     }
 
     void DrawPlayer::set_team(net::TEAM team) {
-        this->team = team;
+        this->_team = team;
+    }
+
+    void DrawPlayer::set_team(scene::Team &team) {
+        this->set_team(team.id);
+    }
+
+    scene::Team &DrawPlayer::team(bool other) const {
+        return this->scene.get_team(this->_team, other);
     }
 
     void DrawPlayer::set_alive(bool value) {
@@ -458,13 +466,13 @@ namespace ace { namespace world {
     }
 
     void DrawPlayer::draw() {
-        if (this->team == net::TEAM::SPECTATOR) return;
+        if (this->_team == net::TEAM::SPECTATOR) return;
 
         this->transform();
         auto tool = this->get_tool();
         tool->transform();
 
-        this->scene.shaders.model.uniform("replacement_color", this->scene.teams[this->team].desaturated_color);
+        this->scene.shaders.model.uniform("replacement_color", this->team().desaturated_color);
         if(!this->alive) {
             if(!this->local_player) this->mdl_dead.draw(this->scene.shaders.model);
             return;

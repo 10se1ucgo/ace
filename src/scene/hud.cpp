@@ -119,7 +119,7 @@ namespace ace { namespace scene {
                 if (p.x < -64 || p.x > 64 || p.y < -64 || p.y > 64) continue;
             }
 
-            auto color = ply->local_player ? glm::vec4(0, 1.0f, 1.0f, 1.0f) : glm::vec4(this->hud.scene.get_team(ply->team).float_color, 1.0f);
+            auto color = ply->local_player ? glm::vec4(0, 1.0f, 1.0f, 1.0f) : glm::vec4(ply->team().float_color, 1.0f);
             this->marker->draw(color, offset + p, dir2ang(ply->draw_forward).x + 90.f, {1, 1}, draw::Align::CENTER);
         }
 
@@ -260,8 +260,6 @@ namespace ace { namespace scene {
         this->wep_change_menu.update(dt);
         this->team_change_menu.update(dt);
 
-        this->big_message_time = std::max(0.0, this->big_message_time - dt);
-
         if (!this->scene.ply) return;
 
         if (!this->scene.ply->alive) {
@@ -309,7 +307,9 @@ namespace ace { namespace scene {
 
         if (this->scene.client.keyboard.keys[SDL_SCANCODE_F6]) return;
 
-        if(this->scene.ply && this->scene.ply->team != net::TEAM::SPECTATOR) {
+        
+
+        if(this->scene.ply && this->scene.ply->team().id != net::TEAM::SPECTATOR) {
             if(this->scene.ply->alive) {
                 this->sys48->draw_shadowed(std::to_string(this->scene.ply->health), { scene.client.width() / 2.f, scene.client.height() - 20 }, scene.ply->health <= 20 ? glm::vec3{ 1, 0, 0 } : glm::vec3{ 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
 
@@ -331,6 +331,9 @@ namespace ace { namespace scene {
 
                 this->ammo_icon.draw();
 
+                float sight_transform = 0.25f * (std::max(this->scene.ply->weapon_obj->next_primary - this->scene.time, 0.0) / this->scene.ply->weapon_obj->primary_rate());
+                this->weapon_sight.scale = glm::vec2{ float(this->scene.client.height()) / this->weapon_sight.group->h() } + sight_transform;
+
                 if (this->scene.ply->secondary_fire && this->scene.ply->weapon_equipped && !this->scene.ply->weapon_obj->reloading)
                     this->weapon_sight.draw();
                 else
@@ -342,15 +345,11 @@ namespace ace { namespace scene {
 
         scene::RaycastResult result = this->scene.cast_ray(draw2vox(this->scene.cam.position), draw2vox(this->scene.cam.forward), this->scene.ply);
         if(result.ply) {
-            this->sys16->draw(result.ply->name, { scene.client.width() / 2.f, scene.client.height() / 2.f + 20 }, glm::vec3(result.ply->color) / 255.f, { 1, 1 }, draw::Align::CENTER);
+            this->sys16->draw(result.ply->name, { this->scene.client.width() / 2.f, 0.75 * this->scene.client.height() }, result.ply->team().float_color, { 1, 1 }, draw::Align::CENTER);
         }
 
         if(this->is_exitting) {
             this->sys48->draw("LEAVE GAME? Y/N", { this->scene.client.width() / 2.f, this->scene.client.height() / 2.5f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
-        }
-
-        if(this->big_message_time > 0.f) {
-            this->sys48->draw(big_message, { this->scene.client.width() / 2.f, this->scene.client.height() / 1.75f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         }
 
         if (this->first_join == FirstJoin::No) {
@@ -498,7 +497,7 @@ namespace ace { namespace scene {
         if(victim.local_player || killer.local_player) {
             color.r = 1;
         } else {
-            color = this->scene.get_team(killer.team).float_color;
+            color = killer.team().float_color;
         }
 
         this->add_killfeed_message(message.str(),  color);
@@ -512,8 +511,12 @@ namespace ace { namespace scene {
     }
 
     void HUD::set_big_message(std::string message) {
-        this->big_message = std::move(message);
-        this->big_message_time = 4.0f;
+        this->scene.client.tasks.schedule(0, [this, message = std::move(message)](util::Task &t) {
+            this->sys48->draw(message, { this->scene.client.width() / 2.f, this->scene.client.height() / 1.75f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
+            if(t.time() <= 4) {
+                t.keep_going();
+            }
+        });
     }
 
     void HUD::set_hit(glm::vec3 source) {

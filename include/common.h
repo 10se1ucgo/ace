@@ -80,6 +80,8 @@ namespace ace {
         }
     }
 
+    constexpr float PI = 3.141592653589793f;
+
     inline glm::vec3 rand_normalized() {
         float z = random::random(-1.f, 1.f);
         float v = random::random(0.f, glm::two_pi<float>());

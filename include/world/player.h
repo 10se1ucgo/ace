@@ -9,6 +9,7 @@
 namespace ace { 
     namespace scene {
         class GameScene;
+        struct Team;
     }
 
     namespace world {
@@ -58,7 +59,11 @@ namespace ace {
         void set_tool(net::TOOL tool);
         void set_weapon(net::WEAPON weapon);
         void set_color(glm::u8vec3 color);
+
         void set_team(net::TEAM team);
+        void set_team(scene::Team &team);
+        scene::Team &team(bool other = false) const;
+
         void set_alive(bool value);
         void restock(bool primary = false);
 
@@ -83,7 +88,7 @@ namespace ace {
         uint8_t pid{}, health{};
         net::WEAPON equipped_weapon{net::WEAPON::INVALID};
         net::TOOL held_tool{net::TOOL::INVALID};
-        net::TEAM team{net::TEAM::SPECTATOR};
+        
         uint32_t kills{};
         glm::u8vec3 color{112, 112, 112};
         std::string name;
@@ -104,6 +109,7 @@ namespace ace {
 
         double switch_time{}, next_footstep{};
     private:
+        net::TEAM _team{ net::TEAM::SPECTATOR };
         void transform();
     };
 

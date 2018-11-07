@@ -51,7 +51,7 @@ namespace ace { namespace scene {
 
     class GameScene final : public Scene {
     public:
-        GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name="Deuce", uint8_t *buf=nullptr);
+        GameScene(GameClient &client, const net::StateData &state_data, uint8_t *map_data=nullptr);
         // GameScene(GameClient& client, const std::string& map_name);
         ~GameScene();
 
@@ -91,6 +91,8 @@ namespace ace { namespace scene {
         RaycastResult cast_ray(glm::vec3 origin, glm::vec3 dir, world::DrawPlayer *exclude = nullptr);
 
         void respawn_entities();
+
+        void save_map_to(const std::string &file_name);
 
         gl::ShaderManager &shaders;
         gl::experimental::ubo<Uniforms3D> uniforms;
@@ -140,9 +142,5 @@ namespace ace { namespace scene {
                 id = id == net::TEAM::TEAM1 ? net::TEAM::TEAM2 : net::TEAM::TEAM1;
             return this->teams[id];
         }
-
-        // util::TaskScheduler::loop_type pd_upd, od_upd;
-        std::string ply_name;
     };
-
 }}

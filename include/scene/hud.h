@@ -90,7 +90,7 @@ namespace ace { namespace scene {
         TeamChangeMenu team_change_menu;
 
         int color_index = 0;
-        float respawn_time = 0.0f, big_message_time = 0.0f;
+        float respawn_time = 0.0f;
 
         glm::vec3 last_hit;
     private:
@@ -122,7 +122,6 @@ namespace ace { namespace scene {
         net::CHAT cur_chat_type{ net::CHAT::INVALID };
         draw::Font *sys48, *sys13, *sys15, *sys16;
         std::deque<Message> chat_messages, killfeed;
-        std::string big_message;
 
         friend MapDisplay;
         friend WeaponChangeMenu;

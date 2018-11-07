@@ -129,7 +129,7 @@ namespace ace { namespace scene {
     void LoadingScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) {
         if(type == net::PACKET::StateData) {
             auto buf(net::inflate(client.net.map_writer.vec.data(), client.net.map_writer.vec.size()));
-            this->game_scene = std::make_unique<GameScene>(this->client, *reinterpret_cast<net::StateData *>(packet.get()), this->client.config.json.value("name", "Deuce").substr(0, 15), buf.data());
+            this->game_scene = std::make_unique<GameScene>(this->client, *reinterpret_cast<net::StateData *>(packet.get()), buf.data());
             this->frame.start_button->enable(true);
             this->frame.frame.set_title("READY!");
             this->frame.status_text.set_str("Ready.");

@@ -17,14 +17,14 @@ namespace ace { namespace scene {
         this->players.clear();
         for (const auto &kv : scene.players) {
             auto *ply = kv.second.get();
-            if(ply->team == this->id) {
+            if(ply->team().id == this->id) {
                 this->players.push_back(ply);
             }
         }
         std::sort(this->players.begin(), this->players.end(), [](const auto *a, const auto *b) { return a->kills > b->kills; });
     }
 
-    GameScene::GameScene(GameClient &client, const net::StateData &state_data, std::string ply_name, uint8_t *buf) :
+    GameScene::GameScene(GameClient &client, const net::StateData &state_data, uint8_t *buf) :
         Scene(client),
         shaders(*client.shaders),
         uniforms(this->shaders.create_ubo<Uniforms3D>("SceneUniforms")),
@@ -34,8 +34,7 @@ namespace ace { namespace scene {
         state_data(state_data),
         thirdperson(this->cam.thirdperson),
         teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color, net::TEAM::TEAM1)},
-            {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }),
-        ply_name(std::move(ply_name)) {
+            {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }) {
 
         this->set_fog_color(glm::vec3(state_data.fog_color) / 255.f);
 
@@ -98,7 +97,7 @@ namespace ace { namespace scene {
 
 #ifndef NDEBUG 
         if(this->ply) 
-            this->debug.draw_ray(vox2draw(this->ply->e), this->ply->draw_forward * 25.f, this->get_team(this->ply->team).float_color);
+            this->debug.draw_ray(vox2draw(this->ply->e), this->ply->draw_forward * 25.f, this->ply->team().float_color);
 #endif
 
         this->shaders.billboard.bind();
@@ -116,7 +115,7 @@ namespace ace { namespace scene {
 #ifdef NDEBUG
         this->thirdperson = !this->ply || !this->ply->alive || this->ply->team == net::TEAM::SPECTATOR;
 #else
-        this->thirdperson |= !this->ply || !this->ply->alive || this->ply->team == net::TEAM::SPECTATOR;
+        this->thirdperson |= !this->ply || !this->ply->alive || this->ply->team().id == net::TEAM::SPECTATOR;
 #endif
 
 
@@ -158,38 +157,25 @@ namespace ace { namespace scene {
         this->hud.on_key(scancode, modifiers, pressed);
 
         if (pressed) {
-#ifndef NDEBUG
-            net::WEAPON wep = net::WEAPON::INVALID;
-#endif
             if (this->ply) {
                 switch (scancode) {
                 case SDL_SCANCODE_1: this->ply->set_tool(net::TOOL::SPADE); break;
                 case SDL_SCANCODE_2: this->ply->set_tool(net::TOOL::BLOCK); break;
                 case SDL_SCANCODE_3: this->ply->set_tool(net::TOOL::WEAPON); break;
                 case SDL_SCANCODE_4: this->ply->set_tool(net::TOOL::GRENADE); break;
+                case SDL_SCANCODE_F1: this->save_map_to("./vxl/lastsav.vxl");
+#ifndef NDEBUG
+                case SDL_SCANCODE_F2: this->thirdperson = !this->thirdperson; break;
+                case SDL_SCANCODE_F3: if (this->ply) this->ply->alive = !this->ply->alive; break;
+#endif
                 default: break;
                 }
 
                 if (scancode == this->client.config.get_key("reload", SDL_SCANCODE_R))
                     this->ply->get_tool()->reload();
             }
-
-#ifndef NDEBUG
-            switch(scancode) {
-            case SDL_SCANCODE_5: wep = net::WEAPON::SEMI; break;
-            case SDL_SCANCODE_6: wep = net::WEAPON::SMG; break;
-            case SDL_SCANCODE_7: wep = net::WEAPON::SHOTGUN; break;
-            case SDL_SCANCODE_F2: this->thirdperson = !this->thirdperson; break;
-            case SDL_SCANCODE_F3: if(this->ply) this->ply->alive = !this->ply->alive; break;
-            default: break;
-            }
-
-            if(wep != net::WEAPON::INVALID) {
-                this->send_this_player(net::TEAM::TEAM1, wep);
-            }
-#endif
         }
-    };
+    }
 
     void GameScene::on_mouse_motion(int x, int y, int dx, int dy) {
         this->hud.on_mouse_motion(x, y, dx, dy);
@@ -226,7 +212,7 @@ namespace ace { namespace scene {
             ply->set_weapon(pkt->weapon);
             ply->set_tool(net::TOOL::WEAPON);
             ply->set_position(pkt->position);
-            ply->set_alive(ply->team != net::TEAM::SPECTATOR);
+            ply->set_alive(ply->team().id != net::TEAM::SPECTATOR);
         } break;
         case net::PACKET::ExistingPlayer: {
             auto *pkt = static_cast<net::ExistingPlayer *>(loader);
@@ -357,11 +343,11 @@ namespace ace { namespace scene {
             std::string msg;
             glm::vec3 color;
             if(pkt->type == net::CHAT::ALL) {
-                msg = fmt::format("{} ({}): {}", ply->name, teams[ply->team].name, pkt->message);
+                msg = fmt::format("{} ({}): {}", ply->name, ply->team().name, pkt->message);
                 color = {1, 1, 1};
             } else {
                 msg = fmt::format("{}: {}", ply->name, pkt->message);
-                color = teams[ply->team].float_color;
+                color = ply->team().float_color;
             }
             this->hud.add_chat_message(msg, color);
             fmt::print("{}\n", msg);
@@ -385,15 +371,15 @@ namespace ace { namespace scene {
 
             if (!pkt->winning) {
                 if (ply != nullptr) {
-                    auto msg = fmt::format("{} captured the {} team Intel!", ply->name, this->get_team(ply->team, true).name);
+                    auto msg = fmt::format("{} captured the {} team Intel!", ply->name, ply->team(true).name);
                     this->hud.add_chat_message(msg, { 1, 0, 0 });
                 }
             } else {
-                this->hud.set_big_message(fmt::format("{} Team Wins!", this->get_team(ply->team).name));
+                this->hud.set_big_message(fmt::format("{} Team Wins!", ply->team().name));
             }
 
             ply->kills += 10;
-            this->get_team(ply->team).score++;
+            ply->team().score++;
 
             this->client.sound.play_local(pkt->winning ? "horn.wav" : "pickup.wav");
         } break;
@@ -402,11 +388,11 @@ namespace ace { namespace scene {
 
             auto *ply = this->get_ply(pkt->pid, false);
             if (ply != nullptr) {
-                auto msg = fmt::format("{} has the {} Intel", ply->name, this->get_team(ply->team, true).name);
+                auto msg = fmt::format("{} has the {} Intel", ply->name, ply->team(true).name);
                 this->hud.add_chat_message(msg, { 1, 0, 0 });
             }
             this->client.sound.play_local("pickup.wav");
-            auto *ent = this->get_ent(uint8_t(ply->team == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG));
+            auto *ent = this->get_ent(uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG));
             if(ent != nullptr)
                 ent->set_carrier(ply->pid);
         } break;
@@ -414,10 +400,10 @@ namespace ace { namespace scene {
             auto *pkt = static_cast<net::IntelDrop *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
             if (ply != nullptr) {
-                auto msg = fmt::format("{} has dropped the {} Intel", ply->name, this->get_team(ply->team, true).name);
+                auto msg = fmt::format("{} has dropped the {} Intel", ply->name, ply->team(true).name);
                 this->hud.add_chat_message(msg, { 1, 0, 0 });
             }
-            auto *ent = this->get_ent(uint8_t(ply->team == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG));
+            auto *ent = this->get_ent(uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG));
             if (ent == nullptr) return;
             ent->set_carrier(-1);
             ent->set_position(pkt->pos);
@@ -563,7 +549,7 @@ namespace ace { namespace scene {
 
     void GameScene::send_this_player(net::TEAM team, net::WEAPON weapon) const {
         net::ExistingPlayer ep;
-        ep.name = this->ply_name;
+        ep.name = this->client.config.json.value("name", "Deuce").substr(0, 15);
         ep.team = team;
         ep.weapon = weapon;
         this->client.net.send_packet(ep);
@@ -600,6 +586,11 @@ namespace ace { namespace scene {
             auto &t2 = this->get_team(net::TEAM::TEAM2);
             t2.score = mode.team2_score; t2.max_score = mode.cap_limit;
         }
+    }
+
+    void GameScene::save_map_to(const std::string &file_name) {
+        this->world.save_to(file_name);
+        this->hud.set_big_message(fmt::format("Map saved to {}", file_name));
     }
 
     void GameScene::set_fog_color(glm::vec3 color) {

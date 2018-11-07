@@ -62,8 +62,8 @@ namespace ace { namespace draw {
     struct Pillar {
         Pillar(AceMap &map, size_t x, size_t y);
 
-        void update(bool use_ao = true);
-        void draw(bool update_with_ao = true);
+        void update(bool use_ao = true, bool use_sunblock = true);
+        void draw(bool update_with_ao = true, bool use_sunblock = true);
 
         bool contains(glm::vec3 pos) const {
             return this->x <= pos.x && pos.x <= this->x + PILLAR_SIZE && this->y <= pos.y && pos.y <= this->y + PILLAR_SIZE;
@@ -78,7 +78,7 @@ namespace ace { namespace draw {
     };
 
     struct MapRenderer : MapListener {
-        MapRenderer(AceMap &map, bool use_ao = true);
+        MapRenderer(AceMap &map, bool use_ao = true, bool use_sunblock = true);
 
         // TODO: DIRTY!!! how do i get the view frustum normally without being tied to the scene??
         void draw(gl::ShaderProgram &shader, Camera &camera);
@@ -96,7 +96,7 @@ namespace ace { namespace draw {
 
         AceMap &map;
         std::vector<Pillar> pillars;
-        bool use_ao;
+        bool use_ao, use_sunblock;
     };
 
 

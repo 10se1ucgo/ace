@@ -259,7 +259,7 @@ namespace ace { namespace draw {
     Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {
     }
 
-    void Pillar::update(bool use_ao) {
+    void Pillar::update(bool use_ao, bool use_sunblock) {
         std::array<bool, 27> surrounding;
         // bool use_ao = this->scene.client.config.json["graphics"].value("ambient_occlusion", true);
         for (size_t ax = this->x; ax < this->x + PILLAR_SIZE; ax++) {
@@ -272,7 +272,7 @@ namespace ace { namespace draw {
                     uint8_t r, g, b, a;
                     unpack_bytes(this->map.get_color(ax, ay, az), &a, &r, &g, &b);
 
-                    const glm::u8vec3 color(glm::vec3{ r, g, b } * (this->sunblock(ax, ay, az) / 127.f) * (a / 127.f));
+                    const glm::u8vec3 color(glm::vec3{ r, g, b } * (use_sunblock ? (this->sunblock(ax, ay, az) / 127.f) : 1.f) * (a / 127.f));
 
                     if(use_ao) {
                         get_surrounding(this->map, ax, ay, az, surrounding);
@@ -288,8 +288,8 @@ namespace ace { namespace draw {
         this->dirty = false;
     }
 
-    void Pillar::draw(bool update_with_ao) {
-        if (this->dirty) this->update(update_with_ao);
+    void Pillar::draw(bool update_with_ao, bool use_sunblock) {
+        if (this->dirty) this->update(update_with_ao, use_sunblock);
 
         this->mesh.draw();
     }
@@ -306,7 +306,7 @@ namespace ace { namespace draw {
         return i;
     }
     
-    MapRenderer::MapRenderer(AceMap &map, bool use_ao) : map(map), use_ao(use_ao) {
+    MapRenderer::MapRenderer(AceMap &map, bool use_ao, bool use_sunblock) : map(map), use_ao(use_ao), use_sunblock(use_sunblock) {
         map.add_listener(*this);
         this->gen_pillars();
     }

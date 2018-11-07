@@ -75,6 +75,8 @@ namespace ace { namespace world {
         }
 
         void create_debris(glm::vec3 position, glm::u8vec3 color, float velocity_mod, int number) const;
+
+        void save_to(const std::string &file_name);
     private:
         // Destroy block AND check for floating structures, adding any removed floating blocks to the `destroyed` vector. -> success
         bool destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed);
@@ -111,6 +113,6 @@ namespace ace { namespace world {
 
         EditableMap map;
         draw::MapRenderer map_renderer;
-        DebrisGroup &debris;
+        world::DebrisGroup &debris;
     };
 }}

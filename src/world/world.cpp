@@ -79,6 +79,13 @@ namespace ace { namespace world {
         this->debris.add(position, color, velocity_mod, number);
     }
 
+    void World::save_to(const std::string &file_name) {
+        FILE *f = fopen(file_name.c_str(), "wb");
+        std::vector<uint8_t> v(this->map.write());
+        fwrite(v.data(), 1, v.size(), f);
+        fclose(f);
+    }
+
     bool World::destroy_block(int x, int y, int z, std::vector<VXLBlock> &destroyed) {
         auto start = std::chrono::high_resolution_clock::now();
 

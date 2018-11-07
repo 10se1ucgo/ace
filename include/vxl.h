@@ -55,7 +55,6 @@ namespace ace {
     };
 
     class AceMap;
-    class EditableMap;
 
     // lets take a page out of Minecraft's book
     struct MapListener {
@@ -116,9 +115,15 @@ namespace ace {
             this->listeners.erase(std::remove(this->listeners.begin(), this->listeners.end(), &listener), this->listeners.end());
         }
     protected:
-        virtual void notify_listeners(int x, int y, int z) {
+        virtual void notify_block_changed(int x, int y, int z) {
             for (auto &listener : this->listeners) {
                 listener->on_block_changed(x, y, z, *this);
+            }
+        }
+
+        virtual void notify_all_changed() {
+            for (auto &listener : this->listeners) {
+                listener->all_changed(*this);
             }
         }
 

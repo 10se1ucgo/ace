@@ -157,6 +157,8 @@ namespace ace {
         auto end = std::chrono::high_resolution_clock::now();
 
         fmt::print("MAP READ TIME: {}\n", std::chrono::duration<double>(end - start).count());
+
+        this->notify_all_changed();
     }
 
     std::vector<uint8_t> EditableMap::write() {
@@ -260,7 +262,7 @@ namespace ace {
         else
             this->colors.erase(pos); // TODO wrap this in something
 
-        this->notify_listeners(x, y, z);
+        this->notify_block_changed(x, y, z);
 
         return true;
     }
@@ -289,7 +291,7 @@ namespace ace {
         if(!is_valid_pos(pos) || !(this->set_solid_unchecked(pos, solid), true)) {
             return false;
         }
-        this->notify_listeners(x, y, z);
+        this->notify_block_changed(x, y, z);
         return true;
     }
 
@@ -314,7 +316,7 @@ namespace ace {
 
         this->set_color_unchecked(pos, color);
 
-        this->notify_listeners(x, y, z);
+        this->notify_block_changed(x, y, z);
     }
 
     uint32_t EditableMap::get_color(int x, int y, int z, bool wrapped) {
@@ -343,7 +345,7 @@ namespace ace {
         glm::ivec3 c{ x1, y1, z1 };
         glm::ivec3 d{ x2 - x1, y2 - y1, z2 - z1 };
         long ixi, iyi, izi, dx, dy, dz, dxi, dyi, dzi;
-        const size_t VSID = MAP_X;
+        constexpr size_t VSID = MAP_X;
     
         if (d.x < 0) ixi = -1;
         else ixi = 1;
