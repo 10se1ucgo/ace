@@ -279,7 +279,7 @@ namespace ace { namespace gl {
                 this->lower = glm::min(this->lower, { x, y });
                 this->upper = glm::max(this->upper, { x + 1, y + 1 });
 
-                this->_pixels[y * this->height + x] = pixel;
+                this->_pixels[y * this->width + x] = pixel;
                 this->dirty = true;
             }
 
@@ -291,13 +291,18 @@ namespace ace { namespace gl {
                 if (x < 0 || y < 0 || x >= this->width || y >= this->height) {
                     throw std::out_of_range(fmt::format("x: {}/y: {} out of range ({}, {})", x, y, this->width, this->height));
                 }
-                return this->_pixels[y * this->height + x];
+                return this->_pixels[y * this->width + x];
             }
 
             glm::u8vec4 get_pixel(int x, int y) const {
                 glm::u8vec4 ret;
                 unpack_bytes(this->get_rgba(x, y), &ret.a, &ret.b, &ret.g, &ret.r);
                 return ret;
+            }
+
+            void fill_pixels(uint8_t value) {
+                std::memset(this->_pixels.get(), value, this->w() * this->h() * sizeof(texture2d::pixel_type));
+                this->dirty = true;
             }
 
             void set_wrap_mode(GLenum mode) {
