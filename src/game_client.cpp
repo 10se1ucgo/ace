@@ -68,7 +68,7 @@ namespace ace {
     // }
 
     GameClient::GameClient(std::string caption /*, int w, int h, WINDOW_STYLE style */):
-        net(*this), sound(*this), tasks(*this), window_title(std::move(caption)) {
+        net(*this), sound(*this), window_title(std::move(caption)) {
 
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
             SDL_ERROR("SDL_Init");
@@ -182,7 +182,7 @@ namespace ace {
 
         this->poll_events();
         this->update_fps();
-        this->tasks.update(dt);
+        this->tasks.update(this->time, dt);
         this->net.update(dt);
         this->url.update(dt);
         this->sound.update(dt);
