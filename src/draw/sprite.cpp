@@ -33,6 +33,16 @@ namespace ace { namespace draw {
         this->tex.copy_from_surface(converted);
         SDL_FreeSurface(converted);
 
+        this->init_buffer();
+    }
+
+    SpriteGroup::SpriteGroup(const std::string &file_name, gl::experimental::texture2d texture, int order):
+        order(order),
+        tex(std::move(texture)) {
+        this->init_buffer();
+    }
+
+    void SpriteGroup::init_buffer() {
         this->vbo->emplace_back(0.0f, 0.0f);
         this->vbo->emplace_back(0.0f, this->h());
         this->vbo->emplace_back(this->w(), 0.0f);
@@ -40,7 +50,7 @@ namespace ace { namespace draw {
         this->vbo.upload();
 
         this->vao.attrib_pointer("2f", this->vbo.handle)
-                 .attrib_pointer("4f,4f,3x3f", this->models.handle, 1);
+            .attrib_pointer("4f,4f,3x3f", this->models.handle, 1);
     }
 
     void SpriteGroup::draw(glm::vec4 tint, glm::mat3 model, glm::vec4 region) {
@@ -89,14 +99,18 @@ namespace ace { namespace draw {
 
     SpriteGroup *SpriteManager::get(const std::string &name) {
         try {
-            return &sprites.at(name);
+            return &this->sprites.at(name);
         } catch (std::out_of_range &) {
-            return &sprites.emplace(name, get_resource_path("png/" + name)).first->second;
+            return &this->sprites.emplace(name, get_resource_path("png/" + name)).first->second;
         }
     }
 
     SpriteGroup *SpriteManager::get(const std::string &name, SDL_Surface *data) {
-        return &insert_or_assign(sprites, name, SpriteGroup{ name, data }).first->second;
+        return &insert_or_assign(this->sprites, name, SpriteGroup{ name, data }).first->second;
+    }
+
+    SpriteGroup *SpriteManager::get(const std::string &name, gl::experimental::texture2d tex) {
+        return &insert_or_assign(this->sprites, name, SpriteGroup{ name, std::move(tex) }).first->second;
     }
 
     void SpriteManager::flush(gl::ShaderProgram &s) {

@@ -25,6 +25,7 @@ namespace ace { namespace draw {
         // i REALLY hate intializer lists lol
         SpriteGroup(const std::string &file_name, const std::pair<SDL_Surface *, bool> params, int order = 0) : SpriteGroup(file_name, params.first, params.second, order) {}
         SpriteGroup(const std::string &file_name, SDL_Surface *data, bool color_key = false, int order = 0);
+        SpriteGroup(const std::string &file_name, gl::experimental::texture2d texture, int order = 0);
 
         void draw(glm::vec4 tint, glm::mat3 model, glm::vec4 region = { 0, 0, 1, 1 });
         void draw(glm::vec4 tint, glm::vec2 position, float rotation, glm::vec2 scale = { 1.0, 1.0 }, Align align = Align::TOP_LEFT, glm::vec4 region = { 0, 0, 1, 1 });
@@ -50,6 +51,8 @@ namespace ace { namespace draw {
         gl::experimental::vao vao;
         gl::experimental::vbo<glm::vec2> vbo;
         gl::experimental::vbo<SpriteVert> models{ GL_STREAM_DRAW };
+
+        void init_buffer();
     };
 
     inline glm::vec2 get_aligned_position(glm::vec2 position, const glm::vec2 &scale, const glm::vec2 &size, Align alignment) {
@@ -120,6 +123,7 @@ namespace ace { namespace draw {
     struct SpriteManager {
         SpriteGroup *get(const std::string &name);
         SpriteGroup *get(const std::string &name, SDL_Surface *data);
+        SpriteGroup *get(const std::string &name, gl::experimental::texture2d tex);
 
         void flush(gl::ShaderProgram &s);
     private:
