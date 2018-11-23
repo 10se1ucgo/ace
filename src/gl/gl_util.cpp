@@ -124,9 +124,9 @@ namespace ace { namespace gl {
 
             if (this->_pixels == nullptr) {
                 this->_pixels = std::make_unique<pixel_type[]>(this->width * this->height);
-            } else {
-                this->full_upload();
             }
+
+            this->full_upload();
 
             this->set_filter_mode(GL_LINEAR);
             this->set_wrap_mode(GL_CLAMP_TO_EDGE);
