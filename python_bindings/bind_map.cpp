@@ -39,22 +39,22 @@ void bind_map(py::module &a) {
 
     py::class_<EditableMap>(m, "AceMap")
         .def("set_block", [](EditableMap &self, int x, int y, int z, bool solid, glm::u8vec3 color, bool wrapped) {
-            self.set_block(x, y, z, solid, ace::pack_bytes(0x7F, color.r, color.g, color.b), wrapped);
+            self.set_block(x, y, z, solid, glm::u8vec4(color, 0x7F), wrapped);
         }, "x"_a, "y"_a, "z"_a, "solid"_a, "color"_a = glm::u8vec3(0), "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
         .def("get_block", [](EditableMap &self, int x, int y, int z, bool wrapped) {
-            uint32_t color;
+            glm::u8vec4 color;
             bool solid = self.get_block(x, y, z, &color, wrapped);
-            return py::make_tuple(solid, ace::unpack_argb(color));
+            return py::make_tuple(solid, color);
         }, "x"_a, "y"_a, "z"_a, "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
 
         .def("set_solid", &EditableMap::set_solid, "x"_a, "y"_a, "z"_a, "solid"_a, "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
         .def("is_solid", &EditableMap::is_solid, "x"_a, "y"_a, "z"_a, "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
 
         .def("set_color", [](EditableMap &self, int x, int y, int z, glm::u8vec3 color, bool wrapped) {
-            self.set_color(x, y, z, ace::pack_bytes(0x7F, color.r, color.g, color.b), wrapped);
+            self.set_color(x, y, z, glm::u8vec4(color, 0x7F), wrapped);
         }, "x"_a, "y"_a, "z"_a, "color"_a = glm::u8vec3(0), "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
         .def("get_color", [](EditableMap &self, int x, int y, int z, bool wrapped) {
-            return ace::unpack_argb(self.get_color(x, y, z, wrapped));
+            return self.get_color(x, y, z, wrapped);
         }, "x"_a, "y"_a, "z"_a, "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
         .def("get_z", &EditableMap::get_z, "x"_a, "y"_a, "start"_a = 0, "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
         .def("get_vis", &EditableMap::get_vis, "x"_a, "y"_a, "z"_a, "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())

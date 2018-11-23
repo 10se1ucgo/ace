@@ -209,7 +209,7 @@ namespace ace { namespace draw {
         }
     }
 
-    VXLBlocks::VXLBlocks(glm::u8vec3 color): centroid(0) {
+    VXLBlocks::VXLBlocks(glm::u8vec3 color) {
         this->_gen_faces(glm::vec3(0), color, 0b11111111);
         this->mesh.upload();
     }
@@ -246,7 +246,7 @@ namespace ace { namespace draw {
         this->mesh.upload();
     }
 
-    void VXLBlocks::draw(gl::ShaderProgram& s) const {
+    void VXLBlocks::draw(gl::ShaderProgram &s) const {
         s.uniform("model", model_matrix(this->position, this->rotation, this->scale));
         this->mesh.draw();
     }
@@ -269,10 +269,8 @@ namespace ace { namespace draw {
                     if (az == MAP_Z - 1) vis &= 1 << int(Face::TOP);
                     if (vis == 0) continue;
 
-                    uint8_t r, g, b, a;
-                    unpack_bytes(this->map.get_color(ax, ay, az), &a, &r, &g, &b);
-
-                    const glm::u8vec3 color(glm::vec3{ r, g, b } * (use_sunblock ? (this->sunblock(ax, ay, az) / 127.f) : 1.f) * (a / 127.f));
+                    glm::u8vec4 rgba(this->map.get_color(ax, ay, az));
+                    const glm::u8vec3 color(glm::vec3(rgba) * (use_sunblock ? (this->sunblock(ax, ay, az) / 127.f) : 1.f) * (rgba.a / 127.f));
 
                     if(use_ao) {
                         get_surrounding(this->map, ax, ay, az, surrounding);
@@ -319,7 +317,7 @@ namespace ace { namespace draw {
 //             }
 // #endif
             if (camera.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
-                p.draw(this->use_ao);
+                p.draw(this->use_ao, this->use_sunblock);
             }
         }
     }

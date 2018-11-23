@@ -69,9 +69,9 @@ namespace ace {
         virtual ~AceMap() = default;
 
         virtual bool is_solid(int x, int y, int z, bool wrapped = false) const = 0;
-        virtual uint32_t get_color(int x, int y, int z, bool wrapped = false) = 0;
+        virtual glm::u8vec4 get_color(int x, int y, int z, bool wrapped = false) = 0;
 
-        virtual bool get_block(int x, int y, int z, uint32_t *color, bool wrapped = false) {
+        virtual bool get_block(int x, int y, int z, glm::u8vec4 *color, bool wrapped = false) {
             if (wrapped) {
                 x &= MAP_X - 1;
                 y &= MAP_Y - 1;
@@ -142,15 +142,15 @@ namespace ace {
         std::vector<uint8_t> write();
         size_t write(std::vector<uint8_t> &v, int *sx, int *sy, int columns = -1);
 
-        bool set_block(int x, int y, int z, bool solid, uint32_t color = 0, bool wrapped = false);
-        bool get_block(int x, int y, int z, uint32_t *color, bool wrapped = false) override;
+        bool set_block(int x, int y, int z, bool solid, glm::u8vec4 color = glm::u8vec4(0), bool wrapped = false);
+        bool get_block(int x, int y, int z, glm::u8vec4 *color, bool wrapped = false) override;
 
         bool set_solid(int x, int y, int z, bool solid, bool wrapped = false);
         bool is_solid(int x, int y, int z, bool wrapped = false) const override;
 
         // FORMAT: 0xAARRGGBB
-        void set_color(int x, int y, int z, uint32_t color, bool wrapped = false);
-        uint32_t get_color(int x, int y, int z, bool wrapped = false) override;
+        void set_color(int x, int y, int z, glm::u8vec4 color, bool wrapped = false);
+        glm::u8vec4 get_color(int x, int y, int z, bool wrapped = false) override;
     private:
         bool is_surface(const int x, const int y, const int z) const {
             if (!this->is_solid(x, y, z)) return false;

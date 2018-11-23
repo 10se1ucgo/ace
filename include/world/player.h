@@ -96,7 +96,7 @@ namespace ace {
         KV6 mdl_head, mdl_torso, mdl_legr, mdl_legl, mdl_arms, mdl_dead;
         bool local_player{false};
 
-        glm::vec3 draw_forward{1, 0, 0}, draw_right{0, 0, 1};
+        glm::vec3 draw_forward{1, 0, 0}, draw_right{0, 0, 1}, draw_up{0, 1, 0};
 
         BlockTool blocks;
         SpadeTool spade;

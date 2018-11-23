@@ -148,9 +148,9 @@ namespace ace { namespace scene {
     void MainMenu::update(double dt) {
         Menu::update(dt);
         
-        this->splash.scale = glm::vec2(wave(this->scene.time, 0.49f, 0.52f));
+        this->splash.scale = glm::vec2(coswave(this->scene.time, 0.49f, 0.52f));
 //            this->button2->set_size({ wave(this->scene.time, 200, 300), wave(this->scene.time * 2, 55, 75) });
-        this->pb->value = int(wave(this->scene.time, 0.f, 100.f));
+        this->pb->value = int(coswave(this->scene.time, 0.f, 100.f));
     }
 
     void MainMenu::draw() {

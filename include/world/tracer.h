@@ -18,4 +18,14 @@ namespace ace { namespace world {
         constexpr static float SPEED = 256.f, LIFESPAN = 0.5f;
         float time_alive = 0.0f;
     };
+
+    // struct Casing : WorldObject {
+    //     Casing(scene::GameScene &scene, const std::string &mesh, glm::vec3 position, glm::vec3 orientation, glm::vec3 velocity);
+    //
+    //     bool update(double dt) override;
+    //     void draw() override;
+    //
+    //     KV6 mesh;
+    //     glm::vec3 position, orientation, velocity;
+    // };
 }}

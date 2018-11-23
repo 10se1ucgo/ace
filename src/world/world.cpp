@@ -28,7 +28,7 @@ namespace ace { namespace world {
     }
 
     bool World::build_block(int x, int y, int z, glm::u8vec3 color, bool force) {
-        bool ok = this->map.set_block(x, y, z, true, pack_bytes(0x7F, color.r, color.g, color.b));
+        bool ok = this->map.set_block(x, y, z, true, glm::u8vec4(color, 0x7F));
         return ok;
     }
 
@@ -59,17 +59,17 @@ namespace ace { namespace world {
     }
 
     bool World::damage_block(int x, int y, int z, int damage, bool allow_destroy) {
-        uint32_t color;
+        glm::u8vec4 color;
         if (!draw::valid_build_pos(x, y, z) || !this->map.get_block(x, y, z, &color)) return false;
 
-        int health = color >> 24;
+        int health = color.a;
         health -= damage;
         if (health <= 0) {
             if(allow_destroy) this->destroy_block(x, y, z, net::ACTION::DESTROY);
             return true;
         }
 
-        color = ((std::max(health, 0) & 0xFF) << 24) | (color & 0x00FFFFFF);
+        color.a = (std::max(health, 0) & 0xFF);
         this->map.set_color(x, y, z, color);
         this->damaged_blocks.push_back({ this->scene.time + 10, { x, y, z } });
         return false;
@@ -131,9 +131,9 @@ namespace ace { namespace world {
         }
 
         for (const auto pos : marked) {
-            uint32_t color;
+            glm::u8vec4 color;
             if (this->map.get_block(pos.x, pos.y, pos.z, &color)) {
-                floating.push_back({ pos, color });
+                floating.push_back({ pos, pack_rgba(color) });
                 this->map.set_solid(pos.x, pos.y, pos.z, !destroy);
             }
         }
@@ -143,7 +143,9 @@ namespace ace { namespace world {
         for (auto i = this->damaged_blocks.begin(); i != this->damaged_blocks.end();) {
             if (this->scene.time >= i->first) {
                 auto pos = i->second;
-                this->map.set_color(pos.x, pos.y, pos.z, (0x7F << 24) | (this->map.get_color(pos.x, pos.y, pos.z) & 0x00FFFFFF));
+                auto color = this->map.get_color(pos.x, pos.y, pos.z);
+                color.a = 0x7F; // alpha = health
+                this->map.set_color(pos.x, pos.y, pos.z, color);
                 i = this->damaged_blocks.erase(i);
             } else {
                 ++i;

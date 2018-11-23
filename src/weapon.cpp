@@ -226,7 +226,7 @@ namespace ace {
         if(!this->ply.local_player || this->ply.scene.world.hitscan(this->ply.e, this->ply.f, &hit) == Face::INVALID) {
             return false;
         }
-        this->ply.set_color(glm::u8vec3(unpack_argb(this->ply.scene.world.get_color(hit.x, hit.y, hit.z, true))));
+        this->ply.set_color(glm::u8vec3(this->ply.scene.world.get_color(hit.x, hit.y, hit.z, true)));
         this->next_primary = this->ply.scene.time + this->use_rate();
         return true;
     }
@@ -338,7 +338,10 @@ namespace ace {
         }
     }
 
-    Weapon::Weapon(world::DrawPlayer& ply, const std::string &model) : Tool(ply), mdl(ply.scene.models.get(model), 0.05f) {
+    Weapon::Weapon(world::DrawPlayer& ply, const std::string &model) :
+        Tool(ply),
+        mdl(ply.scene.models.get(model), 0.05f)
+        /* ,mdl_casing(ply.scene.models.get("semicasing.kv6"), 0.01f) */ {
     }
 
     void Weapon::update(double dt) {
@@ -351,6 +354,7 @@ namespace ace {
         } else {
             this->mdl.draw_local(this->ply.scene.shaders.model);
         }
+        // this->mdl_casing.draw(this->ply.scene.shaders.model);
     }
 
     bool Weapon::reload() {
@@ -438,7 +442,7 @@ namespace ace {
                 this->ply.scene.world.create_debris(ply_hit.hit, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
 #ifndef NDEBUG
                 this->ply.scene.client.tasks.schedule(0.0, [this, hit = ply_hit.hit](util::Task &t) {
-                    this->ply.scene.debug.draw_cube(vox2draw(hit), glm::vec3(0.25), draw::colors::red());
+                    this->ply.scene.debug.draw_cube(vox2draw(hit), glm::vec3(0.25), draw::color::red());
                     if(t.time() < 5) {
                         t.keep_going();
                     }
@@ -485,7 +489,7 @@ namespace ace {
         if(!this->ply.local_player || this->ply.scene.thirdperson) {
             if (transform < 0)
                 this->ply.mdl_arms.rotation.x += transform * 45;
-
+                                                            // this->ply.draw_forward
             this->mdl.position = this->ply.mdl_arms.position + ang2dir(90 - this->ply.mdl_arms.rotation.y, -this->ply.mdl_arms.rotation.x) + this->ply.draw_right * -0.4f;
             this->mdl.rotation = this->ply.mdl_arms.rotation;
 
@@ -501,5 +505,10 @@ namespace ace {
             this->mdl.rotation = this->ply.mdl_arms.rotation;
             this->mdl.lighting_rotation = this->ply.mdl_arms.lighting_rotation;
         }
+
+        // glm::vec3 pos = { this->ply.e.x, -this->ply.e.z - (this->ply.crouch ? 0.4f : 0.5f), this->ply.e.y };
+        // this->mdl_casing.position = pos + this->ply.draw_forward * 0.75f + this->ply.draw_right * -0.4f + this->ply.draw_up * 0.20f;
+        // glm::vec2 angles = dir2ang(this->ply.draw_forward);
+        // this->mdl_casing.rotation = glm::vec3(-angles.y, -angles.x + 90, 0);
     }
 }

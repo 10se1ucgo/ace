@@ -350,7 +350,8 @@ namespace ace { namespace world {
     void DrawPlayer::set_orientation(glm::vec3 orientation) {
         AcePlayer::set_orientation(orientation.x, orientation.y, orientation.z);
         this->draw_forward = vox2draw(this->f);
-        this->draw_right = glm::normalize(cross(this->scene.cam.world_up, this->draw_forward));
+        this->draw_right = normalize(cross(this->scene.cam.world_up, this->draw_forward));
+        this->draw_up = normalize(cross(this->draw_forward, this->draw_right));
     }
 
     bool DrawPlayer::set_walk(bool mf, bool mb, bool ml, bool mr) {

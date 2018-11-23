@@ -29,7 +29,7 @@ namespace ace { namespace world {
         // Damage a block, subtracting `damage` from its health. If health <= 0 after, optionally destroy. -> success
         bool damage_block(int x, int y, int z, int damage, bool allow_destroy);
 
-        uint32_t get_color(int x, int y, int z, bool wrapped = false) {
+        glm::u8vec4 get_color(int x, int y, int z, bool wrapped = false) {
             return this->map.get_color(x, y, z, wrapped);
         }
 
@@ -37,7 +37,7 @@ namespace ace { namespace world {
             return this->map.is_solid(x, y, z, wrapped);
         }
 
-        bool get_block(int x, int y, int z, uint32_t *color, bool wrapped = false) {
+        bool get_block(int x, int y, int z, glm::u8vec4 *color, bool wrapped = false) {
             return this->map.get_block(x, y, z, color, wrapped);
         }
 
@@ -102,8 +102,7 @@ namespace ace { namespace world {
 
         scene::GameScene &scene;
 
-        std::vector<std::unique_ptr<world::WorldObject>> objects;
-        std::vector<std::unique_ptr<world::WorldObject>> queued_objects;
+        std::vector<std::unique_ptr<world::WorldObject>> objects, queued_objects;
 
         // Floating block detection
         std::vector<glm::ivec3> nodes;

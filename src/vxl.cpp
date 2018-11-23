@@ -9,12 +9,12 @@
 
 namespace ace {
     namespace {
-        void write_color(std::vector<uint8_t> &vec, uint32_t color) {
+        void write_color(std::vector<uint8_t> &vec, glm::u8vec4 color) {
             //    char *val = reinterpret_cast<char *>(&item);
-            vec.push_back(static_cast<uint8_t>(color >> 0));
-            vec.push_back(static_cast<uint8_t>(color >> 8));
-            vec.push_back(static_cast<uint8_t>(color >> 16));
-            vec.push_back(static_cast<uint8_t>(0x7F)); // ignore lighting byte; I use it to store block health.
+            vec.push_back(static_cast<uint8_t>(color.b));
+            vec.push_back(static_cast<uint8_t>(color.g));
+            vec.push_back(static_cast<uint8_t>(color.r));
+            vec.push_back(static_cast<uint8_t>(color.a)); // ignore lighting byte; I use it to store block health.
         }
 
         // adapted from VOXLAP5.C by Ken Silverman <http://advsys.net/ken/>
@@ -247,7 +247,7 @@ namespace ace {
         return v.size() - initial_size;
     }
 
-    bool EditableMap::set_block(int x, int y, int z, bool solid, uint32_t color, bool wrapped) {
+    bool EditableMap::set_block(int x, int y, int z, bool solid, glm::u8vec4 color, bool wrapped) {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
@@ -258,7 +258,7 @@ namespace ace {
 
         this->set_solid_unchecked(pos, solid);
         if (solid)
-            this->set_color_unchecked(pos, color);
+            this->set_color_unchecked(pos, pack_argb(color));
         else
             this->colors.erase(pos); // TODO wrap this in something
 
@@ -267,7 +267,7 @@ namespace ace {
         return true;
     }
 
-    bool EditableMap::get_block(int x, int y, int z, uint32_t *color, bool wrapped) {
+    bool EditableMap::get_block(int x, int y, int z, glm::u8vec4 *color, bool wrapped) {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
@@ -276,7 +276,7 @@ namespace ace {
         auto pos = get_pos(x, y, z);
         if (!is_valid_pos(pos)) return false;
 
-        *color = this->get_color_unchecked(pos, x, y, z);
+        *color = unpack_argb(this->get_color_unchecked(pos, x, y, z));
         return this->is_solid_unchecked(pos);
     }
 
@@ -305,7 +305,7 @@ namespace ace {
         return is_valid_pos(pos) && this->is_solid_unchecked(pos);
     }
 
-    void EditableMap::set_color(int x, int y, int z, uint32_t color, bool wrapped) {
+    void EditableMap::set_color(int x, int y, int z, glm::u8vec4 color, bool wrapped) {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
@@ -314,21 +314,21 @@ namespace ace {
         auto pos = get_pos(x, y, z);
         if (!is_valid_pos(pos) || !this->is_solid_unchecked(pos)) return;
 
-        this->set_color_unchecked(pos, color);
+        this->set_color_unchecked(pos, pack_argb(color));
 
         this->notify_block_changed(x, y, z);
     }
 
-    uint32_t EditableMap::get_color(int x, int y, int z, bool wrapped) {
+    glm::u8vec4 EditableMap::get_color(int x, int y, int z, bool wrapped) {
         if (wrapped) {
             x &= MAP_X - 1;
             y &= MAP_Y - 1;
         }
 
         auto pos = get_pos(x, y, z);
-        if (!is_valid_pos(pos)) return 0;
+        if (!is_valid_pos(pos)) return glm::u8vec4(0);
 
-        return this->get_color_unchecked(pos, x, y, z);
+        return unpack_argb(this->get_color_unchecked(pos, x, y, z));
     }
 
     uint32_t EditableMap::get_color_unchecked(size_t pos, int x, int y, int z) {

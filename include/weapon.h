@@ -164,6 +164,7 @@ namespace ace {
 
         virtual std::string model() const = 0;
         virtual std::string tracer() const = 0;
+        virtual std::string casing() const = 0;
 
         virtual std::string shoot_sound() const = 0;
         virtual std::string reload_sound() const = 0;
@@ -190,7 +191,7 @@ namespace ace {
 
         bool reloading = false;
 
-        KV6 mdl;
+        KV6 mdl/*, mdl_casing*/;
     };
 
     struct SemiWeapon final : Weapon {
@@ -203,6 +204,7 @@ namespace ace {
 
         std::string model() const final { return "semi.kv6"; }
         std::string tracer() const final { return "semitracer.kv6"; }
+        std::string casing() const final { return "semicasing.kv6"; }
 
         std::string shoot_sound() const final { return "semishoot.wav"; }
         std::string reload_sound() const final { return "semireload.wav"; }
@@ -229,6 +231,7 @@ namespace ace {
 
         std::string model() const final { return "smg.kv6"; }
         std::string tracer() const final { return "smgtracer.kv6"; }
+        std::string casing() const final { return "smgcasing.kv6"; }
 
         std::string shoot_sound() const final { return "smgshoot.wav"; }
         std::string reload_sound() const final { return "smgreload.wav"; }
@@ -260,6 +263,7 @@ namespace ace {
 
         std::string model() const final { return "shotgun.kv6"; }
         std::string tracer() const final { return "shotguntracer.kv6"; }
+        std::string casing() const final { return "shotguncasing.kv6"; }
 
         std::string shoot_sound() const final { return "shotgunshoot.wav"; }
         std::string reload_sound() const final { return "shotgunreload.wav"; }

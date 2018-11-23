@@ -143,20 +143,19 @@ namespace ace { namespace scene {
         int p = 0;
         for (int y = 0; y < MAP_Y; y++) {
             for (int x = 0; x < MAP_X; x++) {
-                uint8_t r, g, b;
+                glm::u8vec3 color;
                 if (x == 0 || y == 0 || x == MAP_X - 1 || y == MAP_Y - 1) {
-                    r = g = b = 0;
+                    color = glm::u8vec3(0);
                 } else if ((x & 63) == 0 || (y & 63) == 0) {
-                    r = g = b = 255;
+                    color = glm::u8vec3(255);
                 } else {
-                    uint8_t a;
-                    unpack_bytes(this->hud.scene.world.get_color(x, y, this->hud.scene.world.get_z(x, y)), &a, &r, &g, &b);
+                    color = glm::u8vec3(this->hud.scene.world.get_color(x, y, this->hud.scene.world.get_z(x, y)));
                 }
 
-                pixels[p++] = r; pixels[p++] = g; pixels[p++] = b;
+                pixels[p++] = color.r; pixels[p++] = color.g; pixels[p++] = color.b;
             }
         }
-        auto overview = this->hud.scene.client.sprites.get("map_overview", SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
+        auto overview = this->hud.sprites.get("map_overview", SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
         overview->set_antialias(false);
         return overview;
     }
@@ -174,11 +173,23 @@ namespace ace { namespace scene {
     }
 
     void MapDisplay::on_block_changed(int x, int y, int z, AceMap &map) {
+        this->update_overview(x, y);
+    }
+
+    void MapDisplay::all_changed(AceMap &map) {
+        for (int y = 0; y < MAP_Y; y++) {
+            for (int x = 0; x < MAP_X; x++) {
+                this->update_overview(x, y);
+            }
+        }
+    }
+
+    void MapDisplay::update_overview(int x, int y) {
         if (x == MAP_X - 1 || y == MAP_Y - 1 || !(x & 63) || !(y & 63)) {
             return;
         }
 
-        glm::u8vec4 pixel = unpack_argb(this->hud.scene.world.get_color(x, y, this->hud.scene.world.get_z(x, y)));
+        glm::u8vec4 pixel = this->hud.scene.world.get_color(x, y, this->hud.scene.world.get_z(x, y));
         pixel.a = 255;
         this->map->tex.set_pixel(x, y, pixel);
     }

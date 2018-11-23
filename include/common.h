@@ -126,12 +126,24 @@ namespace ace {
     }
 
     // cosine wave generator
-    inline float wave(float x, float a, float b) {
-        return (glm::cos(x * glm::pi<float>()) * (a - b) + (a + b)) / 2.f;
+    inline float coswave(float x, float a, float b) {
+        return (glm::cos(x * glm::pi<float>()) * (a - b) + (a + b)) * 0.5f;
+    }
+
+    inline float triwave(float x, float a, float b, float linger = 0) {
+        return glm::clamp(glm::abs(glm::mod(x, 2.f) - 1.f) * ((a + linger) - (b - linger)) + (b - linger), a, b);
     }
 
     constexpr uint32_t pack_bytes(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {
         return uint32_t(a) << 24 | uint32_t(r) << 16 | uint32_t(g) << 8 | uint32_t(b) << 0;
+    }
+
+    inline uint32_t pack_argb(glm::u8vec4 color) {
+        return pack_bytes(color.a, color.r, color.g, color.b);
+    }
+
+    inline uint32_t pack_rgba(glm::u8vec4 color) {
+        return pack_bytes(color.r, color.g, color.b, color.a);
     }
 
     constexpr void unpack_bytes(uint32_t color, uint8_t *a, uint8_t *r, uint8_t *g, uint8_t *b) {

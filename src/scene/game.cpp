@@ -457,7 +457,7 @@ namespace ace { namespace scene {
 
     bool GameScene::damage_point(int x, int y, int z, uint8_t damage, Face f, bool allow_destroy) {
         if(f != Face::INVALID) {
-            this->world.create_debris(draw::get_face(x, y, z, f), glm::vec3(unpack_argb(this->world.get_color(x, y, z))), 0.25f, 4);
+            this->world.create_debris(draw::get_face(x, y, z, f), glm::u8vec3(this->world.get_color(x, y, z)), 0.25f, 4);
         }
 
         if(damage && this->world.damage_block(x, y, z, damage, false) && allow_destroy) {
