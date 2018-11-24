@@ -30,6 +30,8 @@ namespace ace { namespace scene {
         void draw_map_grid(glm::vec2 offset) const;
 
         void on_block_changed(int x, int y, int z, AceMap &map) override;
+        void all_changed(AceMap &map) override;
+        void update_overview(int x, int y);
     };
 
     struct WeaponChangeMenu {
