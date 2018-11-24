@@ -9,17 +9,19 @@ using namespace ace::gl::literals;
 namespace py = pybind11;
 
 namespace ace { namespace scene {
-    std::unique_ptr<uint8_t[]> read_file(const std::string &file_path) {
-        FILE *f = fopen(file_path.c_str(), "rb");
-        if (!f) THROW_ERROR("COULD NOT READ MAP FILE {}\n", file_path);
+    namespace {
+        std::unique_ptr<uint8_t[]> read_file(const std::string &file_path) {
+            FILE *f = fopen(file_path.c_str(), "rb");
+            if (!f) THROW_ERROR("COULD NOT READ MAP FILE {}\n", file_path);
 
-        fseek(f, 0, SEEK_END);
-        long len = ftell(f);
-        rewind(f);
-        auto buf = std::make_unique<uint8_t[]>(len);
-        fread(buf.get(), len, 1, f);
-        fclose(f);
-        return buf;
+            fseek(f, 0, SEEK_END);
+            long len = ftell(f);
+            rewind(f);
+            auto buf = std::make_unique<uint8_t[]>(len);
+            fread(buf.get(), len, 1, f);
+            fclose(f);
+            return buf;
+        }
     }
 
     MapEditor::MapEditor(GameClient &client, const std::string &map_name) :
@@ -57,7 +59,7 @@ namespace ace { namespace scene {
 
         glm::ivec3 hit;
         this->map.hitscan(draw2vox(this->cam.position), draw2vox(this->cam.forward), &hit);
-        glm::u8vec3 color = unpack_argb(this->map.get_color(hit.x, hit.y, hit.z));
+        glm::u8vec3 color(this->map.get_color(hit.x, hit.y, hit.z));
         
         auto fnt = this->client.fonts.get("Vera.ttf", 18);
         // auto p = fnt->draw(fmt::format("Cursor: {}\n", hit), glm::vec2{ 30, 10 }, draw::colors::red(), { 1, 1 }, draw::Align::TOP_LEFT);

@@ -1,6 +1,6 @@
 #pragma once
-#include "draw/font.h"
 #ifdef USE_PYBIND11
+#include "draw/font.h"
 #include "scene/scene.h"
 #include "camera.h"
 #include "draw/map.h"
