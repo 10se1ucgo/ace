@@ -25,6 +25,7 @@ void bind_client(py::module &m) {
             }
         }, py::call_guard<py::gil_scoped_release>())
         .def_readwrite("input_buffer", &GameClient::input_buffer)
-        .def_readwrite("input_cursor", &GameClient::input_cursor)
-        .def_property_readonly("shaders", [](const GameClient &self) { return self.shaders.get(); }, py::call_guard<py::gil_scoped_release>());
+        .def_readwrite("input_cursor", &GameClient::input_cursor);
+    // .def_property_readonly("shaders", [](const GameClient &self) -> gl::ShaderManager * { return self.shaders.get(); }, py::call_guard<py::gil_scoped_release>(), py::return_value_policy::reference_internal)
+    // idk why but this doesnt want to compile because of some std::pair stuff (the unordered_map storing unique_ptrs to shaders)
 }

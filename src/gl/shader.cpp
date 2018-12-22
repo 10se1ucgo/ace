@@ -11,13 +11,18 @@
 
 
 namespace ace { namespace gl {
-    Shader::Shader(const std::string &file, GLenum type): handle(glCreateShader(type)) {
-        std::ifstream in(file, std::ios::in | std::ios::binary);
-        if(in.fail()) {
-            THROW_ERROR("Could not read shader file {}", file);
-        }
-        std::string source{std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>()};
+    namespace {
+        bool read_file(const std::string &file_path, std::string &buffer) {
+            std::ifstream in(file_path, std::ios::in | std::ios::binary);
+            if (in.fail()) return false;
 
+            buffer = { std::istreambuf_iterator<char>(in), std::istreambuf_iterator<char>() };
+            return true;
+        }
+    }
+
+
+    Shader::Shader(const std::string &source, GLenum type): handle(glCreateShader(type)) {
         const GLchar *source_buff = source.c_str();
         glShaderSource(this->handle, 1, &source_buff, nullptr);
         glCompileShader(this->handle);
@@ -39,11 +44,24 @@ namespace ace { namespace gl {
 
     GLuint ShaderProgram::bound_program = 0;
 
-    ShaderProgram::ShaderProgram(std::initializer_list<Shader> shaders) : program(glCreateProgram()) {
-        for (const Shader &s : shaders) {
-            glAttachShader(this->program, s.handle);
-        }
+    ShaderProgram::ShaderProgram(): program(glCreateProgram()) {
+    }
 
+    ShaderProgram::ShaderProgram(std::initializer_list<Shader> shaders) : ShaderProgram() {
+        for (const Shader &s : shaders) {
+            this->add(s);
+        }
+    }
+
+    ShaderProgram::~ShaderProgram() {
+        glDeleteProgram(this->program);
+    }
+
+    void ShaderProgram::add(const Shader &s) {
+        glAttachShader(this->program, s.handle);
+    }
+
+    void ShaderProgram::link() {
         glLinkProgram(this->program);
 
         GLint status;
@@ -57,37 +75,49 @@ namespace ace { namespace gl {
         }
     }
 
-    ShaderProgram::~ShaderProgram() {
-        glDeleteProgram(this->program);
-    }
+    // ShaderManager::ShaderManager() :
+    //     model(this->get("model")),
+    //     map(this->get("map")),
+    //     sprite(this->get("sprite")),
+    //     billboard(this->get("bb")),
+    //     text(this->get("text")),
+    //     line(this->get("line")),
+    //     hm2(this->get("hm2")) {
+    // }
 
     ShaderManager::ShaderManager():
-        model({
-            { get_resource_path("shaders/model.vert"), GL_VERTEX_SHADER },
-            { get_resource_path("shaders/model.frag"), GL_FRAGMENT_SHADER }
-        }), 
-        map({
-            { get_resource_path("shaders/map.vert"), GL_VERTEX_SHADER },
-            { get_resource_path("shaders/map.frag"), GL_FRAGMENT_SHADER }
-        }), 
-        sprite({
-            { get_resource_path("shaders/sprite.vert"), GL_VERTEX_SHADER },
-            { get_resource_path("shaders/sprite.frag"), GL_FRAGMENT_SHADER }
-        }),
-        billboard({
-            { get_resource_path("shaders/bb.vert"), GL_VERTEX_SHADER },
-            { get_resource_path("shaders/bb.geom"), GL_GEOMETRY_SHADER },
-            { get_resource_path("shaders/bb.frag"), GL_FRAGMENT_SHADER }
-        }), 
-        text({
-            { get_resource_path("shaders/text.vert"), GL_VERTEX_SHADER },
-            { get_resource_path("shaders/text.geom"), GL_GEOMETRY_SHADER },
-            { get_resource_path("shaders/text.frag"), GL_FRAGMENT_SHADER }
-        }),
-        line({
-            { get_resource_path("shaders/line.vert"), GL_VERTEX_SHADER },
-            { get_resource_path("shaders/line.frag"), GL_FRAGMENT_SHADER }
-        }) {
+        model(get("model")),
+        map(get("map")),
+        sprite(get("sprite")),
+        billboard(get("bb")),
+        text(get("text")),
+        line(get("line")),
+        hm2(get("hm2")) {
+    }
+
+    ShaderProgram &ShaderManager::get(const std::string &name) {
+        try {
+            return *this->programs.at(name);
+        } catch (std::out_of_range &) {
+            auto path(get_resource_path("shaders/" + name));
+        
+            auto program(std::make_unique<ShaderProgram>());
+        
+            std::string source_buffer;
+        
+            if (read_file(path + ".vert", source_buffer)) {
+                program->add(Shader{ source_buffer, GL_VERTEX_SHADER });
+            }
+            if (read_file(path + ".frag", source_buffer)) {
+                program->add(Shader{ source_buffer, GL_FRAGMENT_SHADER });
+            }
+            if (read_file(path + ".geom", source_buffer)) {
+                program->add(Shader{ source_buffer, GL_GEOMETRY_SHADER });
+            }
+            program->link();
+            
+            return *this->programs.emplace(name, std::move(program)).first->second;
+        }
     }
 }}
 

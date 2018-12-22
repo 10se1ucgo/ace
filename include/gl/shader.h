@@ -56,9 +56,13 @@ namespace ace { namespace gl {
     };
 
     struct ShaderProgram {
+        ShaderProgram();
         ShaderProgram(std::initializer_list<Shader> shaders);
         ~ShaderProgram();
         ACE_NO_COPY_MOVE(ShaderProgram)
+
+        void add(const Shader &s);
+        void link();
 
         void bind() const {
             if (bound_program == this->program) return;
@@ -140,6 +144,8 @@ namespace ace { namespace gl {
     struct ShaderManager {
         ShaderManager();
 
+        ShaderProgram &get(const std::string &name);
+
         template<typename T>
         experimental::ubo<T> create_ubo(const std::string &name, int index = 0) {
             experimental::ubo<T> ubo;
@@ -149,17 +155,20 @@ namespace ace { namespace gl {
             glGetIntegerv(GL_MAX_UNIFORM_BUFFER_BINDINGS, &num);
             fmt::print("INDEX: {}, MAX: {}\n", index, num);
 
-            for (ShaderProgram *s : { &model, &map, &sprite, &billboard, &text }) {
-                auto bi = glGetUniformBlockIndex(s->program, name.c_str());
+            for (const auto &s : programs) {
+                auto bi = glGetUniformBlockIndex(s.second->program, name.c_str());
                 if (bi == GL_INVALID_INDEX) continue;
                 fmt::print("BI: {}\n", bi);
-                glUniformBlockBinding(s->program, bi, index);
+                glUniformBlockBinding(s.second->program, bi, index);
             }
 
             return ubo;
         }
-        
-        ShaderProgram model, map, sprite, billboard, text, line;
+
+    private:
+        std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> programs;
+    public:
+        ShaderProgram &model, &map, &sprite, &billboard, &text, &line, &hm2;
     };
 
     #undef DECLARE_UNIFORM
