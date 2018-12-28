@@ -114,7 +114,7 @@ namespace ace { namespace net {
             event.data = 0;
             this->on_disconnect(event);
         } else {
-            enet_peer_disconnect(this->peer, 0);
+            enet_peer_disconnect_later(this->peer, 0);
             this->already_requested_disconnect = true;
         }
     }

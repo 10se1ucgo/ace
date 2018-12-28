@@ -168,7 +168,7 @@ namespace ace { namespace gl {
     private:
         std::unordered_map<std::string, std::unique_ptr<ShaderProgram>> programs;
     public:
-        ShaderProgram &model, &map, &sprite, &billboard, &text, &line, &hm2;
+        ShaderProgram &model, &map, &sprite, &billboard, &text, &line;
     };
 
     #undef DECLARE_UNIFORM

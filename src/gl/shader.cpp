@@ -75,24 +75,13 @@ namespace ace { namespace gl {
         }
     }
 
-    // ShaderManager::ShaderManager() :
-    //     model(this->get("model")),
-    //     map(this->get("map")),
-    //     sprite(this->get("sprite")),
-    //     billboard(this->get("bb")),
-    //     text(this->get("text")),
-    //     line(this->get("line")),
-    //     hm2(this->get("hm2")) {
-    // }
-
-    ShaderManager::ShaderManager():
-        model(get("model")),
-        map(get("map")),
-        sprite(get("sprite")),
-        billboard(get("bb")),
-        text(get("text")),
-        line(get("line")),
-        hm2(get("hm2")) {
+    ShaderManager::ShaderManager() :
+        model(this->get("model")),
+        map(this->get("map")),
+        sprite(this->get("sprite")),
+        billboard(this->get("bb")),
+        text(this->get("text")),
+        line(this->get("line")) {
     }
 
     ShaderProgram &ShaderManager::get(const std::string &name) {
