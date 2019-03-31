@@ -109,7 +109,7 @@ namespace ace { namespace scene {
         for (auto &kv : this->hud.scene.players) {
             auto &ply = kv.second;
 #ifdef NDEBUG
-            if (this->hud.scene.ply && ply->team != this->hud.scene.ply->team) continue;
+            if (this->hud.scene.ply && ply->team().id != this->hud.scene.ply->team().id) continue;
 #endif
             if (!ply->alive) continue;
 

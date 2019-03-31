@@ -95,11 +95,6 @@ namespace ace { namespace scene {
             kv.second->draw();
         }
 
-#ifndef NDEBUG 
-        if(this->ply) 
-            this->debug.draw_ray(vox2draw(this->ply->e), this->ply->draw_forward * 25.f, this->ply->team().float_color);
-#endif
-
         this->shaders.billboard.bind();
         this->billboards.flush(this->shaders.billboard);
 
@@ -113,7 +108,7 @@ namespace ace { namespace scene {
         Scene::update(dt);
 
 #ifdef NDEBUG
-        this->thirdperson = !this->ply || !this->ply->alive || this->ply->team == net::TEAM::SPECTATOR;
+        this->thirdperson = !this->ply || !this->ply->alive || this->ply->team().id == net::TEAM::SPECTATOR;
 #else
         this->thirdperson |= !this->ply || !this->ply->alive || this->ply->team().id == net::TEAM::SPECTATOR;
 #endif

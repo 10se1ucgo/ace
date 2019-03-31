@@ -133,7 +133,7 @@ namespace ace { namespace world {
         for (const auto pos : marked) {
             glm::u8vec4 color;
             if (this->map.get_block(pos.x, pos.y, pos.z, &color)) {
-                floating.push_back({ pos, pack_rgba(color) });
+                floating.push_back({ pos, pack_argb(color) });
                 this->map.set_solid(pos.x, pos.y, pos.z, !destroy);
             }
         }

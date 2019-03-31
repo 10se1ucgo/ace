@@ -425,9 +425,10 @@ namespace ace {
             glm::ivec3 block_hit;
             Face f = this->ply.scene.world.hitscan(this->ply.e, dir, &block_hit);
             if (f != Face::INVALID) {
-                // damage 0 if != local_ply just to have particles
                 this->ply.scene.client.sound.play("impact.wav", vox2draw(block_hit) + .5f);
-                block_destroyed |= this->ply.scene.damage_point(block_hit.x, block_hit.y, block_hit.z, this->ply.local_player ? this->block_damage() : 0, f, !block_destroyed);
+                // damage 0 if not local_ply just to have particles
+                auto damage = this->ply.local_player ? this->block_damage() : 0;
+                block_destroyed |= this->ply.scene.damage_point(block_hit.x, block_hit.y, block_hit.z, damage, f, !block_destroyed);
             }
 
             scene::RaycastResult ply_hit = this->ply.scene.cast_ray(this->ply.e, dir, &this->ply);
@@ -440,14 +441,6 @@ namespace ace {
                 // TODO: prevent being able to shoot through blocks
 
                 this->ply.scene.world.create_debris(ply_hit.hit, glm::vec3{ 127, 0, 0 }, 0.25f, 4);
-#ifndef NDEBUG
-                this->ply.scene.client.tasks.schedule(0.0, [this, hit = ply_hit.hit](util::Task &t) {
-                    this->ply.scene.debug.draw_cube(vox2draw(hit), glm::vec3(0.25), draw::color::red());
-                    if(t.time() < 5) {
-                        t.keep_going();
-                    }
-                });
-#endif
                 if (this->ply.local_player) {
                     net::HitPacket hp;
                     hp.pid = ply_hit.ply->pid;
