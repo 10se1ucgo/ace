@@ -68,7 +68,10 @@ namespace ace {
     // }
 
     GameClient::GameClient(std::string caption /*, int w, int h, WINDOW_STYLE style */):
-        net(*this), sound(*this), window_title(std::move(caption)) {
+        net(*this),
+        sound(*this),
+        tasks(),
+        window_title(std::move(caption)) {
 
         if (SDL_Init(SDL_INIT_VIDEO) < 0)
             SDL_ERROR("SDL_Init");
@@ -116,7 +119,7 @@ namespace ace {
             SDL_GL_SetAttribute(SDL_GL_CONTEXT_MINOR_VERSION, 3);
             this->context = SDL_GL_CreateContext(this->window);
             fmt::print("Couldn't load OpenGL 4.3, falling back to 3.3...\n");
-            if(this->context == nullptr) {
+            if (this->context == nullptr) {
                 THROW_ERROR("OpenGL 3.3 or above REQUIRED! Please update your drivers and try again.\nSDL_GL_CreateContext: {}", SDL_GetError());
             }
         }
@@ -128,7 +131,7 @@ namespace ace {
         SDL_GL_MakeCurrent(this->window, this->context);
         SDL_GL_SetSwapInterval(this->config.json["graphics"].value("vsync", false));
 
-        if(GLAD_GL_VERSION_4_3 && this->config.json["graphics"].value("debug", false)) {
+        if (GLAD_GL_VERSION_4_3 && this->config.json["graphics"].value("debug", false)) {
             glEnable(GL_DEBUG_OUTPUT);
             glEnable(GL_DEBUG_OUTPUT_SYNCHRONOUS);
             glDebugMessageCallback(gl_error, nullptr);

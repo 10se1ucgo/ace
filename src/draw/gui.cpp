@@ -18,30 +18,30 @@ namespace ace { namespace draw {
 
     void BaseButton::on_mouse_motion(int x, int y, int dx, int dy) {
         if(!this->enabled()) {
-            this->hovering = this->pressed = false;
+            this->_hovering = this->_pressed = false;
             return;
         }
 
-        bool was_hovering = this->hovering;
-        this->hovering = this->hit_test({ x, y });
-        if(!was_hovering && this->hovering) {
+        bool was_hovering = this->_hovering;
+        this->_hovering = this->hit_test({ x, y });
+        if(!was_hovering && this->_hovering) {
             this->fire("hover_start");
-        } else if(was_hovering && !this->hovering) {
+        } else if(was_hovering && !this->_hovering) {
             this->fire("hover_end");
         }
     }
 
     void BaseButton::on_mouse_button(int button, bool pressed) {
         if (!this->enabled()) {
-            this->hovering = this->pressed = false;
+            this->_hovering = this->_pressed = false;
             return;
         }
 
-        bool was_pressed = this->pressed;
-        this->pressed = pressed && button == SDL_BUTTON_LEFT && this->hovering;
-        if(was_pressed && !this->pressed) {
+        bool was_pressed = this->_pressed;
+        this->_pressed = pressed && button == SDL_BUTTON_LEFT && this->_hovering;
+        if(was_pressed && !this->_pressed) {
             this->fire("press_end");
-        } else if(!was_pressed && this->pressed) {
+        } else if(!was_pressed && this->_pressed) {
             this->fire("press_start");
         }
     }
@@ -93,9 +93,9 @@ namespace ace { namespace draw {
     }
 
     void IconButton::update_images() {
-        if (this->pressed) {
+        if (this->_pressed) {
             this->button.group = this->press;
-        } else if (this->hovering) {
+        } else if (this->_hovering) {
             this->button.group = this->hover;
         } else {
             this->button.group = this->normal;
@@ -112,7 +112,7 @@ namespace ace { namespace draw {
 
         if (this->image.group) {
             this->image.position = this->_pos + this->_size / 2.f;
-            if (this->pressed) {
+            if (this->_pressed) {
                 this->image.position.y += 5 * button.scale.y;
             }
         }
@@ -168,7 +168,7 @@ namespace ace { namespace draw {
         this->text.position += glm::vec2(icon_size.x, text_size.y / 2.f);
         this->icon.position.y += icon_size.y / 2.f;
 
-        this->icon.tint = !this->hovering ? glm::vec4(1.0f) : glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
+        this->icon.tint = !this->_hovering ? glm::vec4(1.0f) : glm::vec4(0.7f, 0.7f, 0.7f, 1.0f);
         this->text.set_color(glm::vec3(this->icon.tint) * (glm::vec3(189, 169, 74) / 255.f));
     }
 
@@ -191,11 +191,11 @@ namespace ace { namespace draw {
     }
 
     void Button::update_images() {
-        if (this->pressed) {
+        if (this->_pressed) {
             this->left.group = this->images.left_press;
             this->mid.group = this->images.mid_press;
             this->right.group = this->images.right_press;
-        } else if (this->hovering) {
+        } else if (this->_hovering) {
             this->left.group = this->images.left_hover;
             this->mid.group = this->images.mid_hover;
             this->right.group = this->images.right_hover;
@@ -219,7 +219,7 @@ namespace ace { namespace draw {
         this->right.position = { this->mid.position.x + this->mid.w(), this->_pos.y };
 
         this->label.position = this->mid.position + this->mid.size() / 2.f;
-        if (!this->pressed) {
+        if (!this->_pressed) {
             this->label.position.y -= 5 * mid.scale.y;
         }
 
@@ -267,6 +267,7 @@ namespace ace { namespace draw {
     ScrollBar::ScrollBar(scene::Scene &scene, glm::vec2 position, glm::vec2 size) : GUIWidget(scene, position, size), 
         up(scene, position, glm::vec2{ size.x }, "ui/common_elements/scroll_bar/scroll_bar_arrow_up.png", glm::vec2(0.6)),
         down(scene, position + glm::vec2(0, size.y - size.x), glm::vec2{ size.x }, "ui/common_elements/scroll_bar/scroll_bar_arrow_down.png", glm::vec2(0.6)),
+        thumb(scene, position, size),
         bottom(scene.client.sprites.get("ui/common_elements/scroll_bar/scroll_bar_bottom.png")),
         mid(scene.client.sprites.get("ui/common_elements/scroll_bar/scroll_bar_mid.png")), 
         top(scene.client.sprites.get("ui/common_elements/scroll_bar/scroll_bar_top.png")) {
@@ -288,44 +289,56 @@ namespace ace { namespace draw {
         if(this->mid.scale.x > 0 && this->mid.scale.y > 0)
             this->mid.draw();
         this->bottom.draw();
+        this->thumb.draw();
     }
 
     void ScrollBar::update(double dt) {
         this->up.update(dt);
         this->down.update(dt);
+        this->thumb.update(dt);
     }
 
     void ScrollBar::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
         this->up.on_key(scancode, modifiers, pressed);
         this->down.on_key(scancode, modifiers, pressed);
-//
-//        this->_thumb_position += pressed;
-//        this->layout();
+        this->thumb.on_key(scancode, modifiers, pressed);
     }
 
     void ScrollBar::on_mouse_button(int button, bool pressed) {
         this->up.on_mouse_button(button, pressed);
         this->down.on_mouse_button(button, pressed);
+        this->thumb.on_mouse_button(button, pressed);
     }
 
     void ScrollBar::on_mouse_motion(int x, int y, int dx, int dy) {
         this->up.on_mouse_motion(x, y, dx, dy);
         this->down.on_mouse_motion(x, y, dx, dy);
+        this->thumb.on_mouse_motion(x, y, dx, dy);
+
+        if (this->thumb.pressed()) {
+            auto tp = int(round((y - this->top.h() - this->_pos.y - this->up.size().y) / this->_bar_size.y));
+            this->set_value(tp);
+        }
     }
 
     void ScrollBar::layout() {
-        auto bar_size = this->_size;
-        bar_size.y = (this->_size.y - (this->up.size().y + this->down.size().y)) / this->_thumb_range;
-        auto bar_pos = this->_pos;
-        bar_pos.y += this->up.size().y + (float(this->_thumb_position) / this->_thumb_range * (bar_size.y * this->_thumb_range));
-        this->top.scale = glm::vec2(bar_size.x / this->top.group->w());
-        this->bottom.scale = glm::vec2(bar_size.x / this->bottom.group->w());
-        this->mid.scale.y = std::max(0.f, (bar_size.y - (this->top.h() + this->bottom.h())) / mid.group->h());
+        this->_bar_size = this->_size;
+        this->_bar_size.y = (this->_size.y - (this->up.size().y + this->down.size().y)) / this->_thumb_range;
+
+        this->top.scale = glm::vec2(this->_bar_size.x / this->top.group->w());
+        this->bottom.scale = glm::vec2(this->_bar_size.x / this->bottom.group->w());
+        this->mid.scale.y = std::max(0.f, (this->_bar_size.y - (this->top.h() + this->bottom.h())) / mid.group->h());
         this->mid.scale.x = this->top.scale.x;
 
-        this->top.position = bar_pos;
-        this->mid.position = { bar_pos.x, this->top.position.y + this->top.h() };
-        this->bottom.position = { bar_pos.x, this->mid.position.y + this->mid.h() };
+        this->_bar_position = this->_pos;
+        this->_bar_position.y += this->up.size().y + this->_thumb_position * this->_bar_size.y;
+
+        this->top.position = this->_bar_position;
+        this->mid.position = { this->_bar_position.x, this->top.position.y + this->top.h() };
+        this->bottom.position = { this->_bar_position.x, this->mid.position.y + this->mid.h() };
+
+        this->thumb.set_position(this->_bar_position);
+        this->thumb.set_size({ this->_bar_size.x, this->top.h() + this->mid.h() + this->bottom.h() });
     }
 
     void ScrollBar::update_thumb() {

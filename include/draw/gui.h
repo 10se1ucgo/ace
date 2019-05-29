@@ -86,8 +86,11 @@ namespace ace { namespace draw {
 
         void on_mouse_motion(int x, int y, int dx, int dy) override;
         void on_mouse_button(int button, bool pressed) override;
+
+        bool hovering() const { return this->_hovering; }
+        bool pressed() const { return this->_pressed; }
     protected:
-        bool hovering{ false }, pressed{ false };
+        bool _hovering{ false }, _pressed{ false };
 
         virtual bool hit_test(glm::vec2 mouse_position);
     };
@@ -304,8 +307,10 @@ namespace ace { namespace draw {
         void update_thumb();
 
         IconButton up, down;
+        BaseButton thumb;
         draw::Sprite bottom, mid, top;
         int _thumb_position{ 0 }, _thumb_range{ 50 };
+        glm::vec2 _bar_position, _bar_size;
     };
 
     // I was considering writing a generic List widget but that's gonna be a huge pain in the ass in C++ (tuples and crap)
