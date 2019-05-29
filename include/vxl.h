@@ -135,7 +135,7 @@ namespace ace {
     public:
         EditableMap(uint8_t *buf = nullptr);
         // TODO:
-        // EditableMap(AceMap &existing);
+        EditableMap(AceMap &existing);
         // void copy(AceMap &existing);
 
         void read(uint8_t *buf);
@@ -193,7 +193,18 @@ namespace ace {
         std::unordered_map<size_t, uint32_t> colors; // x,y,z -> color
     };
 
-    std::vector<glm::ivec3> block_line(int x1, int y1, int z1, int x2, int y2, int z2);
+    void block_line(int x1, int y1, int z1, int x2, int y2, int z2, std::vector<glm::ivec3> &ret);
+
+    inline void block_line(const glm::ivec3 start, const glm::ivec3 end, std::vector<glm::ivec3> &ret) {
+        return block_line(start.x, start.y, start.z, end.x, end.y, end.z, ret);
+    }
+
+    inline std::vector<glm::ivec3> block_line(int x1, int y1, int z1, int x2, int y2, int z2) {
+        std::vector<glm::ivec3> ret;
+        block_line(x1, y1, z1, x2, y2, z2, ret);
+        return ret;
+    }
+
     inline std::vector<glm::ivec3> block_line(const glm::ivec3 start, const glm::ivec3 end) {
         return block_line(start.x, start.y, start.z, end.x, end.y, end.z);
     }

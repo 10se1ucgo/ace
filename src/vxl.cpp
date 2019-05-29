@@ -105,6 +105,17 @@ namespace ace {
         this->read(buf);
     }
 
+    EditableMap::EditableMap(AceMap &existing) {
+        // TODO: make this not bad
+        for (int y = 0; y < MAP_Y; ++y) {
+            for (int x = 0; x < MAP_X; ++x) {
+                for (int z = 0; z < MAP_Z; ++z) {
+                    this->set_block(x, y, z, existing.is_solid(x, y, z), existing.get_color(x, y, z));
+                }
+            }
+        }
+    }
+
     void EditableMap::read(uint8_t *buf) {
         fmt::print("READING MAP\n");
         if (!buf) return;
@@ -339,9 +350,7 @@ namespace ace {
         return color->second;
     }
 
-    std::vector<glm::ivec3> block_line(const int x1, const int y1, const int z1, const int x2, const int y2, const int z2) {
-        std::vector<glm::ivec3> ret;
-    
+    void block_line(const int x1, const int y1, const int z1, const int x2, const int y2, const int z2, std::vector<glm::ivec3> &ret) {
         glm::ivec3 c{ x1, y1, z1 };
         glm::ivec3 d{ x2 - x1, y2 - y1, z2 - z1 };
         long ixi, iyi, izi, dx, dy, dz, dxi, dyi, dzi;
@@ -415,7 +424,6 @@ namespace ace {
                 }
             }
         }
-        return ret;
     }
 
     // void AceMap::get_random_point(int *x, int *y, int *z, const int x1, const int y1, const int x2, const int y2) const {

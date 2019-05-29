@@ -22,7 +22,7 @@ struct pyenum_info {
             try {
                 // not cached
                 return this->enum_cache.emplace(v, this->type(v)).first->second;
-            } catch (pybind11::error_already_set &e) {
+            } catch (pybind11::error_already_set &) {
                 return {};
             }
         }

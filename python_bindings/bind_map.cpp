@@ -38,6 +38,10 @@ void bind_map(py::module &a) {
     m.def("block_line", py::overload_cast<const glm::ivec3, const glm::ivec3>(ace::block_line), py::call_guard<py::gil_scoped_release>());
 
     py::class_<EditableMap>(m, "AceMap")
+        .def("read", [](EditableMap &self, char *b) {
+            self.read(reinterpret_cast<uint8_t *>(b));
+        }, py::call_guard<py::gil_scoped_release>())
+
         .def("set_block", [](EditableMap &self, int x, int y, int z, bool solid, glm::u8vec3 color, bool wrapped) {
             self.set_block(x, y, z, solid, glm::u8vec4(color, 0x7F), wrapped);
         }, "x"_a, "y"_a, "z"_a, "solid"_a, "color"_a = glm::u8vec3(0), "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
@@ -56,8 +60,10 @@ void bind_map(py::module &a) {
         .def("get_color", [](EditableMap &self, int x, int y, int z, bool wrapped) {
             return self.get_color(x, y, z, wrapped);
         }, "x"_a, "y"_a, "z"_a, "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
+        
         .def("get_z", &EditableMap::get_z, "x"_a, "y"_a, "start"_a = 0, "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
         .def("get_vis", &EditableMap::get_vis, "x"_a, "y"_a, "z"_a, "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
+        
         .def("hitscan", [](EditableMap &self, glm::vec3 p, glm::vec3 d) {
             glm::ivec3 hit;
             ace::Face f = self.hitscan(p, d, &hit);
