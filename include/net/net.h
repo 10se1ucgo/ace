@@ -8,7 +8,7 @@
 namespace ace { class GameClient; }
 
 namespace ace { namespace net {
-    std::vector<uint8_t> inflate(uint8_t *data, size_t len, size_t initial_size = 2 << 16);
+    std::vector<uint8_t> inflate(const uint8_t *data, size_t len, size_t initial_size = 2 << 16);
 
     enum class NetState {
         UNCONNECTED,
@@ -102,7 +102,7 @@ namespace ace { namespace net {
         //     ByteWriter writer;
         //     writer.write(static_cast<uint8_t>(TLoader::packet_id2));
         //     pkt.write(writer);
-        //     this->send(writer.vec.data(), writer.vec.size(), flags);
+        //     this->send_packet(writer, flags);
         // }
 
         ace::GameClient &client;

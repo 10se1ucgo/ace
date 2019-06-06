@@ -1,5 +1,6 @@
 #include "net/net.h"
 
+#define ZLIB_CONST
 #include "zlib.h"
 
 #include "game_client.h"
@@ -8,7 +9,7 @@
 #include "scene/menu.h"
 
 namespace ace { namespace net {
-    std::vector<uint8_t> inflate(uint8_t *data, size_t len, size_t initial_size) {
+    std::vector<uint8_t> inflate(const uint8_t *data, size_t len, size_t initial_size) {
         z_stream stream;
 
         stream.zalloc = Z_NULL;
@@ -165,16 +166,14 @@ namespace ace { namespace net {
         switch (packet_id) {
         case PACKET::MapStart: {
             this->map_writer.clear();
-            this->map_writer.vec.reserve(br.read<uint32_t>());
+            this->map_writer.reserve(br.read<uint32_t>());
             this->set_state(NetState::MAP_TRANSFER);
             break;
         } 
         case PACKET::MapChunk: {
             if (this->state != NetState::MAP_TRANSFER)
                 fmt::print(stderr, "Receiving map chunks before map start???");
-            size_t len;
-            uint8_t *data = br.get(&len);
-            this->map_writer.write(data, len);
+            this->map_writer.write(br.data(), br.size());
             break;
         } 
         case PACKET::HandShakeInit: {
@@ -210,7 +209,7 @@ namespace ace { namespace net {
     void NetworkClient::send_packet(const ByteWriter &writer, enet_uint32 flags) const {
 //        if(id != PACKET::PositionData && id != PACKET::OrientationData && id != PACKET::InputData && id != PACKET::WeaponInput)
 //            fmt::print("SENDING PACKET WITH ID {}\n", id);
-        this->send(writer.vec.data(), writer.vec.size(), flags);
+        this->send(writer.data(), writer.size(), flags);
     }
 
     void NetworkClient::set_state(NetState state) {

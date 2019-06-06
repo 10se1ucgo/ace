@@ -7,30 +7,33 @@
 
 namespace ace { namespace net {
     struct ByteReader {
-        ByteReader(uint8_t *data, size_t size) : start(data), pos(start), end(start + size) {
+        ByteReader(const uint8_t *data, size_t size) : start(data), pos(start), end(start + size) {
         }
 
-        uint8_t *read(size_t num) {
+        const uint8_t *read(size_t num) {
             if (this->pos + num > this->end) {
                 THROW_ERROR("NO DATA LEFT READING PKT {}\n", this->to_hex_str());
             }
 
-            uint8_t *pos = this->pos;
+            const uint8_t *pos = this->pos;
             this->pos += num;
             return pos;
         }
 
-        uint8_t *get(size_t *len) const {
-            *len = this->end - this->pos;
+        const uint8_t *data() const {
             return this->pos;
         }
 
         size_t size() const {
-            return this->end - this->start;
+            return this->end - this->pos;
         }
 
-        size_t remaining() const {
-            return this->end - this->pos;
+        const uint8_t *total_data() const {
+            return this->start;
+        }
+
+        size_t total_size() const {
+            return this->end - this->start;
         }
 
         std::string to_hex_str(int start = 0) const {
@@ -43,13 +46,13 @@ namespace ace { namespace net {
 
         template<typename T>
         T read() {
-            return *reinterpret_cast<T *>(this->read(sizeof(T)));
+            return *reinterpret_cast<const T *>(this->read(sizeof(T)));
         }
 
         std::string read_str(size_t length = 0, bool strip_null = false) {
-            uint8_t *str;
+            const uint8_t *str;
             if (length == 0) {
-                length = strnlen(reinterpret_cast<char *>(this->pos), this->end - this->pos);
+                length = strnlen(reinterpret_cast<const char *>(this->pos), this->end - this->pos);
                 str = this->read(length + 1); // read past null terminator
             } else {
                 str = this->read(length);
@@ -78,14 +81,33 @@ namespace ace { namespace net {
             return { col.b, col.g, col.r };
         }
 
-        uint8_t *start, *pos, *end;
+    private:
+        const uint8_t *start, *pos, *end;
     };
 
     struct ByteWriter {
-        std::vector<uint8_t> vec;
-
         void write(const uint8_t *buf, size_t size) {
             this->vec.insert(this->vec.end(), buf, buf + size);
+        }
+
+        const uint8_t *data() const {
+            return this->vec.data();
+        }
+
+        size_t size() const {
+            return this->vec.size();
+        }
+
+        size_t capacity() const {
+            return this->vec.capacity();
+        }
+
+        void reserve(size_t capacity) {
+            this->vec.reserve(capacity);
+        }
+
+        void clear() {
+            this->vec.clear();
         }
 
         template<typename T>
@@ -141,9 +163,8 @@ namespace ace { namespace net {
             this->write(value.r);
         }
 
-        void clear() {
-            this->vec.clear();
-        }
+    private:
+        std::vector<uint8_t> vec;
     };
 
     enum class PACKET : uint8_t {
@@ -313,7 +334,7 @@ namespace ace { namespace net {
             this->items.clear();
 
             // sometimes all 32 aren't sent? not sure why.
-            int num = int(reader.remaining()) / 24; // 4 bytes per float * 6 floats
+            int num = int(reader.size()) / 24; // 4 bytes per float * 6 floats
             for (int i = 0; i < num; ++i) {
                 glm::vec3 p = reader.read_vec3<float>();
                 glm::vec3 o = reader.read_vec3<float>();

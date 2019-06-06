@@ -109,8 +109,8 @@ namespace ace { namespace scene {
             this->game_scene->update(dt);
         }
 
-        this->frame.progress_bar->value = client.net.map_writer.vec.size();
-        this->frame.progress_bar->range = std::max(size_t(1), client.net.map_writer.vec.capacity());
+        this->frame.progress_bar->value = this->client.net.map_writer.size();
+        this->frame.progress_bar->range = std::max(size_t(1), this->client.net.map_writer.capacity());
         if(this->game_scene) {
             this->frame.progress_bar->value = this->frame.progress_bar->range;
         }
@@ -123,12 +123,12 @@ namespace ace { namespace scene {
     // }
 
     void LoadingScene::on_window_resize(int ow, int oh) {
-        projection = glm::ortho(0.f, float(client.width()), float(client.height()), 0.0f);
+        this->projection = glm::ortho(0.f, float(this->client.width()), float(this->client.height()), 0.0f);
     }
 
     void LoadingScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) {
         if(type == net::PACKET::StateData) {
-            auto buf(net::inflate(client.net.map_writer.vec.data(), client.net.map_writer.vec.size()));
+            auto buf(net::inflate(this->client.net.map_writer.data(), this->client.net.map_writer.size()));
             this->game_scene = std::make_unique<GameScene>(this->client, *reinterpret_cast<net::StateData *>(packet.get()), buf.data());
             this->frame.start_button->enable(true);
             this->frame.frame.set_title("READY!");
