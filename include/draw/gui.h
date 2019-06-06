@@ -295,21 +295,21 @@ namespace ace { namespace draw {
         void on_mouse_button(int button, bool pressed) override;
         void on_mouse_motion(int x, int y, int dx, int dy) override;
 
-        int value() const { return this->_thumb_position; }
-        int range() const { return this->_thumb_range; }
+        int value() const { return this->_scroll_value; }
+        int range() const { return this->_scroll_range; }
 
-        void set_value(int value) { this->_thumb_position = value; this->update_thumb(); }
-        void set_range(int range) { this->_thumb_range = range; this->update_thumb(); }
+        void set_value(int value) { this->_scroll_value = value; this->update_scroll(); }
+        void set_range(int range) { this->_scroll_range = range; this->update_scroll(); }
 
-        void set_thumb(int value, int range) { this->_thumb_position = value; this->_thumb_range = range; this->update_thumb(); }
+        void set_scroll(int value, int range) { this->_scroll_value = value; this->_scroll_range = range; this->update_scroll(); }
     private:
         void layout() override;
-        void update_thumb();
+        void update_scroll();
 
         IconButton up, down;
         BaseButton thumb;
         draw::Sprite bottom, mid, top;
-        int _thumb_position{ 0 }, _thumb_range{ 50 };
+        int _scroll_value{ 0 }, _scroll_range{ 50 };
         glm::vec2 _bar_position, _bar_size;
     };
 

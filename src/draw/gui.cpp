@@ -323,7 +323,7 @@ namespace ace { namespace draw {
 
     void ScrollBar::layout() {
         this->_bar_size = this->_size;
-        this->_bar_size.y = (this->_size.y - (this->up.size().y + this->down.size().y)) / this->_thumb_range;
+        this->_bar_size.y = (this->_size.y - (this->up.size().y + this->down.size().y)) / this->_scroll_range;
 
         this->top.scale = glm::vec2(this->_bar_size.x / this->top.group->w());
         this->bottom.scale = glm::vec2(this->_bar_size.x / this->bottom.group->w());
@@ -331,7 +331,7 @@ namespace ace { namespace draw {
         this->mid.scale.x = this->top.scale.x;
 
         this->_bar_position = this->_pos;
-        this->_bar_position.y += this->up.size().y + this->_thumb_position * this->_bar_size.y;
+        this->_bar_position.y += this->up.size().y + this->_scroll_value * this->_bar_size.y;
 
         this->top.position = this->_bar_position;
         this->mid.position = { this->_bar_position.x, this->top.position.y + this->top.h() };
@@ -341,8 +341,8 @@ namespace ace { namespace draw {
         this->thumb.set_size({ this->_bar_size.x, this->top.h() + this->mid.h() + this->bottom.h() });
     }
 
-    void ScrollBar::update_thumb() {
-        this->_thumb_position = glm::clamp(this->_thumb_position, 0, this->_thumb_range);
+    void ScrollBar::update_scroll() {
+        this->_scroll_value = glm::clamp(this->_scroll_value, 0, this->_scroll_range);
         this->layout();
         this->fire("bar_change");
     }
@@ -445,7 +445,7 @@ namespace ace { namespace draw {
 
     void ListCtrl::update_sb() const {
         if (!this->sb) return;
-        this->sb->set_thumb(this->offset, this->entries.size());
+        this->sb->set_scroll(this->offset, this->entries.size());
     }
 
 #undef LIST_PREDICATE
