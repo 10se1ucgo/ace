@@ -115,6 +115,8 @@ namespace ace {
 
     // TODO: This is a crap load of code duplication.
     // Eventually, DrawPlayer will be renamed to something less arbitrary and this will act as the drawable component
+    // Similar to the transformation of AceMap => DrawMap to AceMap (map data) => World (building, destroying, falling, etc logic) + MapRenderer
+    // AcePlayer => DrawPlayer to AcePlayer (world movement) => Player (tools, weapons, multiplayer data, etc logic) + PlayerModel 
     struct PlayerModel {
         PlayerModel(scene::GameScene &scene);
         void draw(glm::vec3 color, bool local = false);

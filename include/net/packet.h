@@ -12,7 +12,7 @@ namespace ace { namespace net {
 
         uint8_t *read(size_t num) {
             if (this->pos + num > this->end) {
-                THROW_ERROR("NO DATA LEFT READING PKT {}\n", std::string(this->start, this->end));
+                THROW_ERROR("NO DATA LEFT READING PKT {}\n", this->to_hex_str());
             }
 
             uint8_t *pos = this->pos;
@@ -23,6 +23,22 @@ namespace ace { namespace net {
         uint8_t *get(size_t *len) const {
             *len = this->end - this->pos;
             return this->pos;
+        }
+
+        size_t size() const {
+            return this->end - this->start;
+        }
+
+        size_t remaining() const {
+            return this->end - this->pos;
+        }
+
+        std::string to_hex_str(int start = 0) const {
+            fmt::MemoryWriter hex_data;
+            for (auto i = start; i < this->end - this->start; i++) {
+                hex_data.write("\\x{:02X}", reinterpret_cast<const char *>(this->start)[i]);
+            }
+            return hex_data.str();
         }
 
         template<typename T>
@@ -294,13 +310,18 @@ namespace ace { namespace net {
         std::vector<std::pair<glm::vec3, glm::vec3>> items;
 
         void read(ByteReader &reader) override {
-            items.clear();
-            for (int i = 0; i < 32; ++i) {
+            this->items.clear();
+
+            // sometimes all 32 aren't sent? not sure why.
+            int num = int(reader.remaining()) / 24; // 4 bytes per float * 6 floats
+            for (int i = 0; i < num; ++i) {
                 glm::vec3 p = reader.read_vec3<float>();
                 glm::vec3 o = reader.read_vec3<float>();
-                items.emplace_back(p, o);
+                this->items.emplace_back(p, o);
             }
         }
+
+        // todo
         void write(ByteWriter &writer) const override {
             
         }
@@ -906,8 +927,8 @@ namespace ace { namespace net {
     inline std::unique_ptr<Loader> get_loader(PACKET id) {
         switch(id) {
             case PACKET::PositionData: return std::make_unique<PositionData>();
-            case PACKET::OrientationData: return std::make_unique< OrientationData>();
-            case PACKET::WorldUpdate: return std::make_unique< WorldUpdate>();
+            case PACKET::OrientationData: return std::make_unique<OrientationData>();
+            case PACKET::WorldUpdate: return std::make_unique<WorldUpdate>();
             case PACKET::InputData: return std::make_unique<InputData>();
             case PACKET::WeaponInput: return std::make_unique<WeaponInput>();
             case PACKET::SetHP: return std::make_unique<SetHP>();
@@ -934,8 +955,8 @@ namespace ace { namespace net {
             case PACKET::Restock: return std::make_unique<Restock>();
             case PACKET::FogColor: return std::make_unique<FogColor>();
             case PACKET::WeaponReload: return std::make_unique<WeaponReload>();
-            case PACKET::ChangeTeam: std::make_unique<ChangeTeam>();
-            case PACKET::ChangeWeapon: std::make_unique<ChangeWeapon>();
+            case PACKET::ChangeTeam: return std::make_unique<ChangeTeam>();
+            case PACKET::ChangeWeapon: return std::make_unique<ChangeWeapon>();
             default: return nullptr;
         }
     }

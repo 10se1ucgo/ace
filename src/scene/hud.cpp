@@ -80,7 +80,8 @@ namespace ace { namespace scene {
         
         this->big.alignment = draw::Align::CENTER;
         this->mini.alignment = draw::Align::TOP_RIGHT;
-        this->mini.scale = glm::vec2{ 0.25f };
+        this->big.scale = glm::vec2{ this->hud.scale };
+        this->mini.scale = this->big.scale * 0.25f;
 
         this->hud.scene.world.add_listener(*this);
     }
@@ -120,7 +121,7 @@ namespace ace { namespace scene {
             }
 
             auto color = ply->local_player ? glm::vec4(0, 1.0f, 1.0f, 1.0f) : glm::vec4(ply->team().float_color, 1.0f);
-            this->marker->draw(color, offset + p, dir2ang(ply->draw_forward).x + 90.f, {1, 1}, draw::Align::CENTER);
+            this->marker->draw(color, offset + p * this->big.scale, dir2ang(ply->draw_forward).x + 90.f, this->big.scale, draw::Align::CENTER);
         }
 
         for(auto &kv : this->hud.scene.entities) {
@@ -134,7 +135,7 @@ namespace ace { namespace scene {
 
             auto *spr = this->hud.sprites.get(ent->icon());
             spr->order = this->marker->order + 1;
-            spr->draw(glm::vec4(ent->team().float_color, 1.0f), offset + p, 0, { 1, 1 }, draw::Align::CENTER);
+            spr->draw(glm::vec4(ent->team().float_color, 1.0f), offset + p * this->big.scale, 0, this->big.scale, draw::Align::CENTER);
         }
     }
 
@@ -162,12 +163,12 @@ namespace ace { namespace scene {
 
     void MapDisplay::draw_map_grid(glm::vec2 offset) const {
         for (char c = 'A'; c <= 'H'; c++) {
-            float x = (offset.x + (32 + 64 * (c - 'A'))) * this->big.scale.x;
+            float x = offset.x + (32 + 64 * (c - 'A')) * this->big.scale.x;
             this->hud.sys15->draw(std::string(1, c), { x, offset.y }, { 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         }
 
         for (int c = 1; c <= 8; c++) {
-            float y = offset.y + (32 + 64 * (c - 1));
+            float y = offset.y + (32 + 64 * (c - 1)) * this->big.scale.y;
             this->hud.sys15->draw(std::to_string(c), { offset.x, y }, { 1, 1, 1 }, { 1,1 }, draw::Align::BOTTOM_RIGHT);
         }
     }
@@ -243,16 +244,17 @@ namespace ace { namespace scene {
 
     HUD::HUD(GameScene& s) :
         scene(s),
+        scale(this->scene.client.height() / 600.f),
         sprites(scene.client.sprites), reticle(sprites.get("target.png")), pal(gen_palette(sprites)), palret(gen_palret(sprites)),
         hit_indicator(sprites.get("indicator.bmp")), weapon_sight(sprites.get("semi.png")),
         ammo_icon(sprites.get("semi.bmp")),
         map_display(*this),
         wep_change_menu(*this),
         team_change_menu(*this),
-        sys48(scene.client.fonts.get("fixedsys.ttf", 48, false)),
-        sys13(scene.client.fonts.get("fixedsys.ttf", 13, false)),
-        sys15(scene.client.fonts.get("fixedsys.ttf", 15, false)),
-        sys16(scene.client.fonts.get("fixedsys.ttf", 16, false)) {
+        sys48(scene.client.fonts.get("fixedsys.ttf", 48 * this->scale, false)),
+        sys13(scene.client.fonts.get("fixedsys.ttf", 13 * this->scale, false)),
+        sys15(scene.client.fonts.get("fixedsys.ttf", 15 * this->scale, false)),
+        sys16(scene.client.fonts.get("fixedsys.ttf", 16 * this->scale, false)) {
        
         this->reticle.alignment = draw::Align::CENTER;
         this->hit_indicator.alignment = draw::Align::CENTER;
@@ -611,7 +613,7 @@ namespace ace { namespace scene {
             int index = i - chat_messages.begin() + 1;
             glm::vec2 pos;
             pos.x = 25;
-            pos.y = (scene.client.height() - 15 * index) - 20;
+            pos.y = (scene.client.height() - this->sys13->line_height() * index) - 20;
             this->sys13->draw(i->message, pos, i->color);
         }
 
@@ -630,7 +632,7 @@ namespace ace { namespace scene {
             int index = i - this->killfeed.begin() + 1;
             glm::vec2 pos;
             pos.x = 25;
-            pos.y = 15 * index + 20;
+            pos.y = this->sys13->line_height() * index + 20;
             this->sys13->draw(i->message, pos, i->color);
         }
     }

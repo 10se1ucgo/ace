@@ -85,7 +85,8 @@ namespace ace { namespace draw {
         glm::vec2 get_aligned_position(glm::vec2 pos, glm::vec2 size, Align alignment) const;
         glm::vec2 measure(const std::string &str, glm::vec2 scale) const;
 
-        int size() const { return size_; }
+        int size() const { return this->size_; }
+        int line_height() const { return this->_line_height; }
     private:
         glm::vec2 render(const std::string &str, glm::vec2 pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const;
         void add_glyph(char c, glm::vec2 &pos, glm::vec3 color, glm::vec2 scale, std::vector<detail::GlyphVertex> &v) const;

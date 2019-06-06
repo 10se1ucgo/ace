@@ -158,7 +158,7 @@ namespace ace { namespace scene {
                 case SDL_SCANCODE_2: this->ply->set_tool(net::TOOL::BLOCK); break;
                 case SDL_SCANCODE_3: this->ply->set_tool(net::TOOL::WEAPON); break;
                 case SDL_SCANCODE_4: this->ply->set_tool(net::TOOL::GRENADE); break;
-                case SDL_SCANCODE_F1: this->save_map_to("./vxl/lastsav.vxl");
+                case SDL_SCANCODE_F1: this->save_map_to("./vxl/lastsav.vxl"); break;
 #ifndef NDEBUG
                 case SDL_SCANCODE_F2: this->thirdperson = !this->thirdperson; break;
                 case SDL_SCANCODE_F3: if (this->ply) this->ply->alive = !this->ply->alive; break;

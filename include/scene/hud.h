@@ -82,6 +82,8 @@ namespace ace { namespace scene {
 
         GameScene &scene;
 
+        float scale = 1.0f;
+
         draw::SpriteManager &sprites;
 
         draw::Sprite reticle, pal, palret, hit_indicator, weapon_sight, ammo_icon;

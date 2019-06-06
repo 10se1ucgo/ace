@@ -197,7 +197,7 @@ namespace ace { namespace net {
         default: {
             auto packet = get_loader(packet_id);
             if (packet == nullptr) {
-                fmt::print("CRITICAL: UNHANDLED PACKET WITH ID {}\n", packet_id);
+                fmt::print("CRITICAL: UNKNOWN PACKET WITH ID {}\n", packet_id);
                 break;
             }
             packet->read(br);
