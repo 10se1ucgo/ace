@@ -289,6 +289,10 @@ struct mat_binder<TMat<T, P>> {
 #define BIND_VEC_TYPE(name) auto py_##name(vec_binder<glm::name>::bind(m, #name))
 #define BIND_MAT_TYPE(name) auto py_##name(mat_binder<glm::name>::bind(m, #name))
 
+
+// FROM t1 TO t2
+#define EXPLICIT_CONVERSION(t1, t2, ...) py_##t2.def(py::init<const glm::t1 &, ##__VA_ARGS__>())
+
 // FROM t1 TO t2
 #define IMPLICIT_CONVERSION(t1, t2) \
     py_##t2.def(py::init<const glm::t1 &>()); \
@@ -303,42 +307,134 @@ void bind_glm(py::module &a) {
     BIND_VEC_TYPE(ivec2);
     BIND_VEC_TYPE(ivec3);
     BIND_VEC_TYPE(ivec4);
-    BIND_VEC_TYPE(uvec2);
-    BIND_VEC_TYPE(uvec3);
-    BIND_VEC_TYPE(uvec4);
-
-    // i am disgusted with myself.
-    // IMPLICIT_CONVERSION(vec2, vec3);
-    // IMPLICIT_CONVERSION(vec2, vec4);
-    //
-    // IMPLICIT_CONVERSION(vec3, vec4);
-    
-    // IMPLICIT_CONVERSION(ivec2, ivec3);
-    // IMPLICIT_CONVERSION(ivec2, ivec4);
-    IMPLICIT_CONVERSION(ivec2, vec2);
-    // IMPLICIT_CONVERSION(ivec2, vec3);
-    // IMPLICIT_CONVERSION(ivec2, vec4);
-    
-    // IMPLICIT_CONVERSION(ivec3, ivec4);
-    IMPLICIT_CONVERSION(ivec3, vec3);
-    // IMPLICIT_CONVERSION(ivec3, vec4);
-    
-    IMPLICIT_CONVERSION(ivec4, vec4);
-    
-    // IMPLICIT_CONVERSION(uvec2, uvec3);
-    // IMPLICIT_CONVERSION(uvec2, uvec4);
-    IMPLICIT_CONVERSION(uvec2, vec2);
-    // IMPLICIT_CONVERSION(uvec2, vec3);
-    // IMPLICIT_CONVERSION(uvec2, vec4);
-    
-    // IMPLICIT_CONVERSION(uvec3, uvec4);
-    IMPLICIT_CONVERSION(uvec3, vec3);
-    // IMPLICIT_CONVERSION(uvec3, vec4);
-    
-    IMPLICIT_CONVERSION(uvec4, vec4);
-
+    // FOR COLORS (u8vec2 just because why not)
+    BIND_VEC_TYPE(u8vec2);
     BIND_VEC_TYPE(u8vec3);
     BIND_VEC_TYPE(u8vec4);
+
+    // i am disgusted with myself.
+    // TODO: There has to be a better way to do this
+
+    using float_t = glm::vec3::value_type;
+    using int_t = glm::ivec3::value_type;
+    using u8int_t = glm::u8vec3::value_type;
+
+    // VEC2
+    EXPLICIT_CONVERSION(vec2, ivec2);
+    EXPLICIT_CONVERSION(vec2, ivec3, int_t);
+    EXPLICIT_CONVERSION(vec2, ivec4, int_t, int_t);
+    // 
+    EXPLICIT_CONVERSION(vec2, u8vec2);
+    EXPLICIT_CONVERSION(vec2, u8vec3, u8int_t);
+    EXPLICIT_CONVERSION(vec2, u8vec4, u8int_t, u8int_t);
+    //
+    EXPLICIT_CONVERSION(vec2, vec3, float_t);
+    EXPLICIT_CONVERSION(vec2, vec4, float_t, float_t);
+
+    // VEC3
+    EXPLICIT_CONVERSION(vec3, ivec2);
+    EXPLICIT_CONVERSION(vec3, ivec3);
+    EXPLICIT_CONVERSION(vec3, ivec4, int_t);
+    //
+    EXPLICIT_CONVERSION(vec3, u8vec2);
+    EXPLICIT_CONVERSION(vec3, u8vec3);
+    EXPLICIT_CONVERSION(vec3, u8vec4, u8int_t);
+    //
+    EXPLICIT_CONVERSION(vec3, vec2);
+    EXPLICIT_CONVERSION(vec3, vec4, float_t);
+
+    // VEC4
+    EXPLICIT_CONVERSION(vec4, ivec2);
+    EXPLICIT_CONVERSION(vec4, ivec3);
+    EXPLICIT_CONVERSION(vec4, ivec4);
+    //
+    EXPLICIT_CONVERSION(vec4, u8vec2);
+    EXPLICIT_CONVERSION(vec4, u8vec3);
+    EXPLICIT_CONVERSION(vec4, u8vec4);
+    //
+    EXPLICIT_CONVERSION(vec4, vec2);
+    EXPLICIT_CONVERSION(vec4, vec3);
+
+    // IVEC2
+    EXPLICIT_CONVERSION(ivec2, vec2);
+    EXPLICIT_CONVERSION(ivec2, vec3, float_t);
+    EXPLICIT_CONVERSION(ivec2, vec4, float_t, float_t);
+    // 
+    EXPLICIT_CONVERSION(ivec2, u8vec2);
+    EXPLICIT_CONVERSION(ivec2, u8vec3, u8int_t);
+    EXPLICIT_CONVERSION(ivec2, u8vec4, u8int_t, u8int_t);
+    //
+    EXPLICIT_CONVERSION(ivec2, ivec3, int_t);
+    EXPLICIT_CONVERSION(ivec2, ivec4, int_t, int_t);
+
+    // IVEC3
+    EXPLICIT_CONVERSION(ivec3, vec2);
+    EXPLICIT_CONVERSION(ivec3, vec3);
+    EXPLICIT_CONVERSION(ivec3, vec4, float_t);
+    //
+    EXPLICIT_CONVERSION(ivec3, u8vec2);
+    EXPLICIT_CONVERSION(ivec3, u8vec3);
+    EXPLICIT_CONVERSION(ivec3, u8vec4, u8int_t);
+    //
+    EXPLICIT_CONVERSION(ivec3, ivec2);
+    EXPLICIT_CONVERSION(ivec3, ivec4, int_t);
+
+    // IVEC4
+    EXPLICIT_CONVERSION(ivec4, vec2);
+    EXPLICIT_CONVERSION(ivec4, vec3);
+    EXPLICIT_CONVERSION(ivec4, vec4);
+    //
+    EXPLICIT_CONVERSION(ivec4, u8vec2);
+    EXPLICIT_CONVERSION(ivec4, u8vec3);
+    EXPLICIT_CONVERSION(ivec4, u8vec4);
+    //
+    EXPLICIT_CONVERSION(ivec4, ivec2);
+    EXPLICIT_CONVERSION(ivec4, ivec3);
+
+    // U8VEC2
+    EXPLICIT_CONVERSION(u8vec2, ivec2);
+    EXPLICIT_CONVERSION(u8vec2, ivec3, int_t);
+    EXPLICIT_CONVERSION(u8vec2, ivec4, int_t, int_t);
+    //
+    EXPLICIT_CONVERSION(u8vec2, vec2);
+    EXPLICIT_CONVERSION(u8vec2, vec3, float_t);
+    EXPLICIT_CONVERSION(u8vec2, vec4, float_t, float_t);
+    //
+    EXPLICIT_CONVERSION(u8vec2, u8vec3, u8int_t);
+    EXPLICIT_CONVERSION(u8vec2, u8vec4, u8int_t, u8int_t);
+
+    // U8VEC3
+    EXPLICIT_CONVERSION(u8vec3, ivec2);
+    EXPLICIT_CONVERSION(u8vec3, ivec3);
+    EXPLICIT_CONVERSION(u8vec3, ivec4, int_t);
+    //
+    EXPLICIT_CONVERSION(u8vec3, vec2);
+    EXPLICIT_CONVERSION(u8vec3, vec3);
+    EXPLICIT_CONVERSION(u8vec3, vec4, float_t);
+    //
+    EXPLICIT_CONVERSION(u8vec3, u8vec2);
+    EXPLICIT_CONVERSION(u8vec3, u8vec4, u8int_t);
+
+    // U8VEC4
+    EXPLICIT_CONVERSION(u8vec4, ivec2);
+    EXPLICIT_CONVERSION(u8vec4, ivec3);
+    EXPLICIT_CONVERSION(u8vec4, ivec4);
+    //
+    EXPLICIT_CONVERSION(u8vec4, vec2);
+    EXPLICIT_CONVERSION(u8vec4, vec3);
+    EXPLICIT_CONVERSION(u8vec4, vec4);
+    //
+    EXPLICIT_CONVERSION(u8vec4, u8vec2);
+    EXPLICIT_CONVERSION(u8vec4, u8vec3);
+
+
+    IMPLICIT_CONVERSION(ivec2, vec2);
+    IMPLICIT_CONVERSION(ivec3, vec3);
+    IMPLICIT_CONVERSION(ivec4, vec4);
+
+
+    // BIND_VEC_TYPE(u8vec3);
+    // BIND_VEC_TYPE(u8vec4);
 
     // BIND_MAT_TYPE(mat2);
     BIND_MAT_TYPE(mat3);

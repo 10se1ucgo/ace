@@ -17,6 +17,9 @@ void bind_client(py::module &m) {
         .def("size", &GameClient::size)
         .def("width", &GameClient::width)
         .def("height", &GameClient::height)
+        .def("shader", [](GameClient &self, const std::string &shader) {
+            return &self.shaders->get(shader);
+        }, py::call_guard<py::gil_scoped_release>(), py::return_value_policy::reference_internal)
         // .def("set_exclusive_mouse", &GameClient::set_exclusive_mouse)
         .def_property("exclusive_mouse", &GameClient::exclusive_mouse, &GameClient::set_exclusive_mouse, py::call_guard<py::gil_scoped_release>())
         .def_property("text_input_active", &GameClient::text_input_active, [](GameClient &self, bool active) {

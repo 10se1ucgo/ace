@@ -4,12 +4,6 @@
 namespace py = pybind11;
 using namespace py::literals;
 
-
-void test(int y) {
-
-}
-
-
 void bind_sdl(py::module &m) {
     {
         pyenum34<SDL_Scancode>(m, "Key")

@@ -45,6 +45,18 @@ void bind_map(py::module &a) {
         .def("set_block", [](EditableMap &self, int x, int y, int z, bool solid, glm::u8vec3 color, bool wrapped) {
             self.set_block(x, y, z, solid, glm::u8vec4(color, 0x7F), wrapped);
         }, "x"_a, "y"_a, "z"_a, "solid"_a, "color"_a = glm::u8vec3(0), "wrapped"_a = false, py::call_guard<py::gil_scoped_release>())
+        .def("set_blocks", [](EditableMap &self, const std::vector<std::pair<glm::ivec3, glm::u8vec3>> &blocks) {
+            // is looping in Python and calling into C++ each iteration slower than copying the block data to C++ and doing it here?
+            // yes, marginally.
+            for(const auto &b : blocks) {
+                self.set_block(b.first.x, b.first.y, b.first.z, true, glm::u8vec4(b.second, 0x7F));
+            }
+        }, py::call_guard<py::gil_scoped_release>())
+        .def("set_blocks", [](EditableMap &self, const std::vector<glm::ivec3> &blocks, glm::u8vec3 color) {
+            for(const auto &b : blocks) {
+                self.set_block(b.x, b.y, b.z, true, glm::u8vec4(color, 0x7F));
+            }
+        }, py::call_guard<py::gil_scoped_release>())
         .def("get_block", [](EditableMap &self, int x, int y, int z, bool wrapped) {
             glm::u8vec4 color;
             bool solid = self.get_block(x, y, z, &color, wrapped);
