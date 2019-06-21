@@ -173,7 +173,7 @@ namespace ace { namespace net {
         case PACKET::MapChunk: {
             if (this->state != NetState::MAP_TRANSFER)
                 fmt::print(stderr, "Receiving map chunks before map start???");
-            this->map_writer.write(br.data(), br.size());
+            this->map_writer.write(br.remaining_data(), br.remaining_size());
             break;
         } 
         case PACKET::HandShakeInit: {

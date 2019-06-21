@@ -20,11 +20,11 @@ namespace ace { namespace net {
             return pos;
         }
 
-        const uint8_t *data() const {
+        const uint8_t *remaining_data() const {
             return this->pos;
         }
 
-        size_t size() const {
+        size_t remaining_size() const {
             return this->end - this->pos;
         }
 
@@ -296,25 +296,24 @@ namespace ace { namespace net {
     };
 
 // BADMACROBADMACROBADMACRO
-#define _PACKET_ID(PacketName) \
-    PACKET packet_id() const final { return PACKET::PacketName; }
+#define _PACKET_ID(PacketName) PACKET packet_id() const final { return PACKET::PacketName; }
 //    static constexpr PACKET packet_id2 = PACKET::PacketName;
 // BADMACROBADMACROBADMACRO
 
     struct PositionData final : Loader  {
         glm::vec3 position;
 
-        void read(ByteReader &reader) final {
+        void read(ByteReader &reader) override {
             this->position = reader.read_vec3<float>();
         }
-        void write(ByteWriter &writer) const final {
+        void write(ByteWriter &writer) const override {
             writer.write(position);
         }
 
         _PACKET_ID(PositionData)
     };
 
-    struct OrientationData : Loader {
+    struct OrientationData final : Loader {
         glm::vec3 orientation;
 
         void read(ByteReader &reader) override {
@@ -327,14 +326,14 @@ namespace ace { namespace net {
         _PACKET_ID(OrientationData)
     };
 
-    struct WorldUpdate : Loader {
+    struct WorldUpdate final : Loader {
         std::vector<std::pair<glm::vec3, glm::vec3>> items;
 
         void read(ByteReader &reader) override {
             this->items.clear();
 
             // sometimes all 32 aren't sent? not sure why.
-            int num = int(reader.size()) / 24; // 4 bytes per float * 6 floats
+            int num = int(reader.remaining_size()) / 24; // 4 bytes per float * 6 floats
             for (int i = 0; i < num; ++i) {
                 glm::vec3 p = reader.read_vec3<float>();
                 glm::vec3 o = reader.read_vec3<float>();
@@ -384,7 +383,7 @@ namespace ace { namespace net {
         _PACKET_ID(InputData)
     };
 
-    struct WeaponInput : Loader {
+    struct WeaponInput final : Loader {
         uint8_t pid;
         bool primary : 1, secondary : 1;
 
@@ -403,7 +402,7 @@ namespace ace { namespace net {
         _PACKET_ID(WeaponInput)
     };
 
-    struct HitPacket : Loader {
+    struct HitPacket final : Loader {
         uint8_t pid;
         HIT value;
 
@@ -419,7 +418,7 @@ namespace ace { namespace net {
         _PACKET_ID(HitPacket)
     };
 
-    struct SetHP : Loader {
+    struct SetHP final : Loader {
         uint8_t hp;
         DAMAGE type;
         glm::vec3 source;
@@ -438,7 +437,7 @@ namespace ace { namespace net {
         _PACKET_ID(SetHP)
     };
 
-    struct GrenadePacket : Loader {
+    struct GrenadePacket final : Loader {
         uint8_t pid;
         float fuse;
         glm::vec3 position, velocity;
@@ -459,7 +458,7 @@ namespace ace { namespace net {
         _PACKET_ID(GrenadePacket)
     };
 
-    struct SetTool : Loader {
+    struct SetTool final : Loader {
         uint8_t pid;
         TOOL tool;
 
@@ -475,7 +474,7 @@ namespace ace { namespace net {
         _PACKET_ID(SetTool)
     };
 
-    struct SetColor : Loader {
+    struct SetColor final : Loader {
         uint8_t pid;
         glm::u8vec3 color;
 
@@ -491,7 +490,7 @@ namespace ace { namespace net {
         _PACKET_ID(SetColor)
     };
 
-    struct ExistingPlayer : Loader {
+    struct ExistingPlayer final : Loader {
         uint8_t pid;
         TEAM team;
         WEAPON weapon;
@@ -522,7 +521,7 @@ namespace ace { namespace net {
         _PACKET_ID(ExistingPlayer)
     };
 
-    struct ShortPlayerData : Loader {
+    struct ShortPlayerData final : Loader {
         uint8_t pid, weapon;
         int8_t team;
 
@@ -540,7 +539,7 @@ namespace ace { namespace net {
         _PACKET_ID(ShortPlayerData)
     };
 
-    struct MoveObject : Loader {
+    struct MoveObject final : Loader {
         OBJECT type;
         TEAM state;
         glm::vec3 position;
@@ -559,7 +558,7 @@ namespace ace { namespace net {
         _PACKET_ID(MoveObject)
     };
 
-    struct CreatePlayer : Loader {
+    struct CreatePlayer final : Loader {
         uint8_t pid;
         WEAPON weapon;
         TEAM team;
@@ -584,7 +583,7 @@ namespace ace { namespace net {
         _PACKET_ID(CreatePlayer)
     };
 
-    struct BlockAction : Loader {
+    struct BlockAction final : Loader {
         uint8_t pid;
         ACTION value;
         glm::i32vec3 position;
@@ -603,7 +602,7 @@ namespace ace { namespace net {
         _PACKET_ID(BlockAction)
     };
 
-    struct BlockLine : Loader {
+    struct BlockLine final : Loader {
         uint8_t pid;
         glm::i32vec3 start, end;
 
@@ -667,7 +666,7 @@ namespace ace { namespace net {
         } territories[16]; // 16 MAX
     };
 
-    struct StateData : Loader {
+    struct StateData final : Loader {
         uint8_t pid{0};
         glm::u8vec3 fog_color, team1_color, team2_color;
         std::string team1_name, team2_name;
@@ -709,7 +708,7 @@ namespace ace { namespace net {
         _PACKET_ID(StateData)
     };
 
-    struct KillAction : Loader {
+    struct KillAction final : Loader {
         uint8_t pid, killer;
         KILL type;
         uint8_t respawn_time;
@@ -730,7 +729,7 @@ namespace ace { namespace net {
         _PACKET_ID(KillAction)
     };
 
-    struct ChatMessage : Loader {
+    struct ChatMessage final : Loader {
         uint8_t pid;
         CHAT type;
         std::string message;
@@ -749,7 +748,7 @@ namespace ace { namespace net {
         _PACKET_ID(ChatMessage)
     };
 
-    struct PlayerLeft : Loader {
+    struct PlayerLeft final : Loader {
         uint8_t pid;
 
         void read(ByteReader &reader) override {
@@ -762,7 +761,7 @@ namespace ace { namespace net {
         _PACKET_ID(PlayerLeft)
     };
 
-    struct TerritoryCapture : Loader {
+    struct TerritoryCapture final : Loader {
         OBJECT object;
         TEAM winning;
         TEAM state;
@@ -781,7 +780,7 @@ namespace ace { namespace net {
         _PACKET_ID(TerritoryCapture)
     };
 
-    struct ProgressBar : Loader {
+    struct ProgressBar final : Loader {
         uint8_t object;
         TEAM team;
         int8_t rate;
@@ -803,7 +802,7 @@ namespace ace { namespace net {
         _PACKET_ID(ProgressBar)
     };
 
-    struct IntelCapture : Loader {
+    struct IntelCapture final : Loader {
         uint8_t pid, winning;
 
         void read(ByteReader &reader) override {
@@ -818,7 +817,7 @@ namespace ace { namespace net {
         _PACKET_ID(IntelCapture)
     };
 
-    struct IntelPickup : Loader {
+    struct IntelPickup final : Loader {
         uint8_t pid;
 
         void read(ByteReader &reader) override {
@@ -831,7 +830,7 @@ namespace ace { namespace net {
         _PACKET_ID(IntelPickup)
     };
 
-    struct IntelDrop : Loader {
+    struct IntelDrop final : Loader {
         uint8_t pid;
         glm::vec3 pos;
 
@@ -847,7 +846,7 @@ namespace ace { namespace net {
         _PACKET_ID(IntelDrop)
     };
 
-    struct Restock : Loader {
+    struct Restock final : Loader {
         uint8_t pid;
 
         void read(ByteReader &reader) override {
@@ -860,7 +859,7 @@ namespace ace { namespace net {
         _PACKET_ID(Restock)
     };
 
-    struct FogColor : Loader {
+    struct FogColor final : Loader {
         glm::u8vec4 color;
 
         void read(ByteReader &reader) override {
@@ -874,7 +873,7 @@ namespace ace { namespace net {
         _PACKET_ID(FogColor)
     };
 
-    struct WeaponReload : Loader {
+    struct WeaponReload final : Loader {
         uint8_t pid, primary, secondary;
 
         void read(ByteReader &reader) override {
@@ -891,7 +890,7 @@ namespace ace { namespace net {
         _PACKET_ID(WeaponReload)
     };
 
-    struct ChangeTeam : Loader {
+    struct ChangeTeam final : Loader {
         uint8_t pid;
         TEAM team;
 
@@ -907,7 +906,7 @@ namespace ace { namespace net {
         _PACKET_ID(ChangeTeam)
     };
 
-    struct ChangeWeapon : Loader {
+    struct ChangeWeapon final : Loader {
         uint8_t pid;
         WEAPON weapon;
 
@@ -923,7 +922,7 @@ namespace ace { namespace net {
         _PACKET_ID(ChangeWeapon)
     };
 
-    struct VersionResponse : Loader {
+    struct VersionResponse final : Loader {
         char client;
         // MAJOR.MINOR.PATCH
         glm::u8vec3 version;
