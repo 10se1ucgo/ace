@@ -361,7 +361,7 @@ namespace ace { namespace scene {
             this->sys16->draw(result.ply->name, { this->scene.client.width() / 2.f, 0.75 * this->scene.client.height() }, result.ply->team().float_color, { 1, 1 }, draw::Align::CENTER);
         }
 
-        if(this->is_exitting) {
+        if(this->is_exiting) {
             this->sys48->draw("LEAVE GAME? Y/N", { this->scene.client.width() / 2.f, this->scene.client.height() / 2.5f }, { 1, 0, 0 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);
         }
 
@@ -405,7 +405,7 @@ namespace ace { namespace scene {
             if (this->change_state != Change::None && this->first_join == FirstJoin::No) {
                 this->change_state = Change::None;
             } else {
-                this->is_exitting = !this->is_exitting;
+                this->is_exiting = !this->is_exiting;
             }
         }
         // } else if (scancode == SDL_SCANCODE_EQUALS) {
@@ -414,11 +414,11 @@ namespace ace { namespace scene {
         //     this->scene.client.config.json["volume"] = glm::clamp(this->scene.client.config.json.value("volume", 0.5f) - 0.1f, 0.0f, 1.0f);
         // }
 
-        if(this->is_exitting) {
+        if(this->is_exiting) {
             if (scancode == SDL_SCANCODE_Y)
                 return this->scene.client.net.disconnect();
             else if (scancode == SDL_SCANCODE_N)
-                this->is_exitting = false;
+                this->is_exiting = false;
         }
 
         if(this->change_state == Change::Team) {

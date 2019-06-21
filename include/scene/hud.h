@@ -111,7 +111,7 @@ namespace ace { namespace scene {
             YesTeam2
         } first_join = FirstJoin::Yes;
 
-        bool is_exitting = false;
+        bool is_exiting = false;
 
         void add_killfeed_message(std::string message, glm::vec3 color);
 
