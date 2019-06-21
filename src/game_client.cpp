@@ -282,6 +282,10 @@ namespace ace {
             case SDL_MOUSEMOTION:
                 this->scene->on_mouse_motion(event.motion.x, event.motion.y, event.motion.xrel, event.motion.yrel);
                 break;
+            case SDL_MOUSEWHEEL: {
+                int mult = event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1 : 1;
+                this->scene->on_mouse_scroll(event.wheel.y * mult, event.wheel.x * mult);
+            } break;
             case SDL_TEXTINPUT: {
                 std::string str(event.text.text);
                 if (this->scene->on_text_typing(str)) {

@@ -20,6 +20,7 @@ namespace ace { namespace draw {
         virtual void on_key(SDL_Scancode scancode, int modifiers, bool pressed) { }
         virtual void on_mouse_button(int button, bool pressed) { }
         virtual void on_mouse_motion(int x, int y, int dx, int dy) { }
+        virtual void on_mouse_scroll(int vertical, int horizontal) { }
 
         virtual bool on_text_typing(const std::string &text) { return true; }
         virtual void on_text_finished(bool cancelled) { }
