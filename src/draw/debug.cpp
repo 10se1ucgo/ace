@@ -35,6 +35,8 @@ namespace ace { namespace draw {
     }
 
     void DebugDraw::flush(const glm::mat4 &pv, gl::ShaderProgram &s) {
+        if (this->vbo->empty()) return;
+
         s.uniform("mvp", pv);
         this->vbo.upload();
         this->vao.draw(GL_LINES, this->vbo.draw_count, this->vbo.draw_offset);
