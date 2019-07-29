@@ -49,7 +49,7 @@ namespace ace { namespace gl {
         Components can also be <n>x<m> denoting a matrix with n colums and m rows.
         (Matrices use n vertex attribute indexes)
 
-        Valid types: f = GLfloat, d = GLdouble, b = GLbyte, s = GLshort, i = GLint.
+        Valid types: f = GLfloat, d = GLdouble (broken), b = GLbyte, s = GLshort, i = GLint.
         Capital denotes unsigned (only for integer types)
         'n' after the type denotes a normalized integer, mapped to a float in the range [0.0, 1.0] (unsigned) or [-1.0, 1.0] (signed)
         Ignored for float type.
@@ -83,10 +83,7 @@ namespace ace { namespace gl {
                 std::pair<GLenum, size_t> attrib(get_attrib_type(fmt.at(1 + offset)));
                 GLenum type = attrib.first;
                 size_t size = attrib.second;
-                bool normalized = false;
-                if(fmt.length() > 2u + offset && fmt.at(2 + offset) == 'n' && type != GL_FLOAT) {
-                    normalized = true;
-                }
+                bool normalized = fmt.length() > 2u + offset && fmt.at(2 + offset) == 'n' && type != GL_FLOAT;
 
                 if (size == 0) {
                     THROW_ERROR("INVALID VAO FORMAT STRING {}: UNRECOGNIZED TYPE IN '{}'\n", format, fmt);
