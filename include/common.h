@@ -25,9 +25,7 @@ namespace ace {
             // And making a string/bool pair is not CLEVER ENOUGH FOR ME
             PathFinder() {
                 char *base_path = SDL_GetBasePath();
-                if(base_path) {
-                    this->path.assign(base_path);
-                }
+                this->path.assign(base_path ? base_path : "./");
                 SDL_free(base_path);
             }
             std::string path;
