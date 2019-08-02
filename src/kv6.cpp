@@ -142,17 +142,14 @@ KV6Mesh::KV6Mesh(const std::string &name) {
         uint16_t height;
         fread(&height, sizeof(height), 1, f);
         uint8_t visibility = fgetc(f);
-        uint8_t normalindex = fgetc(f);
-        blocks[i] = { r, g, b, visibility, normalindex, height };
+        uint8_t normal = fgetc(f);
+        blocks[i] = { r, g, b, visibility, normal, height };
     }
-    fseek(f, xsiz * 4, SEEK_CUR);
 
-//    uint16_t *xyoffset = new uint16_t[xsiz * ysiz];
+    fseek(f, xsiz * 4, SEEK_CUR);
     std::unique_ptr<uint16_t[]> xyoffset(std::make_unique<uint16_t[]>(xsiz * ysiz));
-//    fread(&xyoffset, sizeof(uint16_t), xsiz * ysiz, f);
-    for (int i = 0; i < xsiz * ysiz; ++i) {
-        fread(&xyoffset[i], sizeof(decltype(xyoffset)::element_type), 1, f);
-    }
+    fread(xyoffset.get(), sizeof(xyoffset[0]), xsiz * ysiz, f);
+
     fclose(f);
     
 

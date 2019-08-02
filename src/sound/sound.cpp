@@ -82,7 +82,14 @@ namespace ace { namespace sound {
     }
 
     SoundManager::SoundManager(ace::GameClient &client) : client(client) {
-        alureInitDevice(nullptr, nullptr);
+        // this stuff just makes things sound muffled and bad
+        // thats most likely my fault but idk how to fix it
+        ALCint attrs[] = {
+            ALC_HRTF_SOFT, ALC_FALSE,
+            0
+        };
+        alureInitDevice(nullptr, attrs);
+
         alDistanceModel(AL_LINEAR_DISTANCE_CLAMPED);
         this->music = std::make_unique<Sound>(nullptr);
     }
