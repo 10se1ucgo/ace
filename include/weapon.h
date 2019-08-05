@@ -1,7 +1,7 @@
 #pragma once
 #include <string>
 
-#include "kv6.h"
+#include "draw/kv6.h"
 #include "draw/map.h"
 
 namespace ace {
@@ -84,7 +84,7 @@ namespace ace {
 
         void spade(bool secondary);
 
-        KV6 mdl;
+        draw::KV6 mdl;
         bool last_secondary;
     };
 
@@ -117,7 +117,7 @@ namespace ace {
 
         void ghost_block_line();
 
-        KV6 mdl;
+        draw::KV6 mdl;
         std::unique_ptr<draw::VXLBlocks> ghost_block;
         glm::ivec3 m1, m2;
         bool last_secondary;
@@ -147,7 +147,7 @@ namespace ace {
 
         void deploy() final;
 
-        KV6 mdl;
+        draw::KV6 mdl;
         bool last_primary;
         float fuse;
         constexpr static float MAX_FUSE = 3.f;
@@ -191,7 +191,7 @@ namespace ace {
 
         bool reloading = false;
 
-        KV6 mdl/*, mdl_casing*/;
+        draw::KV6 mdl/*, mdl_casing*/;
     };
 
     struct SemiWeapon final : Weapon {

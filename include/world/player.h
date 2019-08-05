@@ -3,7 +3,7 @@
 
 #include "world/world.h"
 #include "draw/map.h"
-#include "kv6.h"
+#include "draw/kv6.h"
 #include "weapon.h"
 
 namespace ace { 
@@ -93,7 +93,7 @@ namespace ace {
         glm::u8vec3 color{112, 112, 112};
         std::string name;
 
-        KV6 mdl_head, mdl_torso, mdl_legr, mdl_legl, mdl_arms, mdl_dead;
+        draw::KV6 mdl_head, mdl_torso, mdl_legr, mdl_legl, mdl_arms, mdl_dead;
         bool local_player{false};
 
         glm::vec3 draw_forward{1, 0, 0}, draw_right{0, 0, 1}, draw_up{0, 1, 0};
@@ -123,6 +123,6 @@ namespace ace {
         void transform(glm::vec3 pos, float yaw, float pitch, bool crouch = false);
 
         scene::GameScene &scene;
-        KV6 mdl_head, mdl_torso, mdl_legr, mdl_legl, mdl_arms, mdl_dead;
+        draw::KV6 mdl_head, mdl_torso, mdl_legr, mdl_legl, mdl_arms, mdl_dead;
     };
 }}

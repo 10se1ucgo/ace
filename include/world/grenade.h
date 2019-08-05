@@ -2,7 +2,7 @@
 #include "glm/glm.hpp"
 
 #include "world/world.h"
-#include "kv6.h"
+#include "draw/kv6.h"
 
 namespace ace { namespace world {
     struct Grenade : WorldObject {
@@ -11,7 +11,7 @@ namespace ace { namespace world {
         bool update(double dt) override;
         void draw() override;
 
-        KV6 mesh;
+        draw::KV6 mesh;
         glm::vec3 p, v;
         float fuse;
     private:

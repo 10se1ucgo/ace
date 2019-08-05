@@ -42,7 +42,7 @@ namespace ace { namespace scene {
         void draw_3d();
 
         HUD &hud;
-        KV6 semi, smg, shotgun;
+        draw::KV6 semi, smg, shotgun;
     };
 
     struct TeamChangeMenu {

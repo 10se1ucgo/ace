@@ -15,7 +15,7 @@
 #include "gl/shader.h"
 
 #include "camera.h"
-#include "kv6.h"
+#include "draw/kv6.h"
 #include "net/net.h"
 #include "util/event.h"
 #include "draw/debug.h"
@@ -98,7 +98,7 @@ namespace ace { namespace scene {
         gl::experimental::ubo<Uniforms3D> uniforms;
         draw::BillboardManager billboards;
         draw::DebugDraw debug;
-        KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
+        draw::KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
         Camera cam;
 
         world::World world;

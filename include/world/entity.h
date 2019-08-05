@@ -2,7 +2,7 @@
 #include "glm/glm.hpp"
 
 #include "world/world.h"
-#include "kv6.h"
+#include "draw/kv6.h"
 #include "player.h"
 
 namespace ace { 
@@ -38,7 +38,7 @@ namespace world {
         net::TEAM _team;
         uint8_t _carrier;
 
-        KV6 mesh;
+        draw::KV6 mesh;
 //        draw::SpriteGroup
     };
 

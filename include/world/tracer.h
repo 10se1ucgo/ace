@@ -3,7 +3,7 @@
 
 #include "world/world.h"
 #include "draw/map.h"
-#include "kv6.h"
+#include "draw/kv6.h"
 
 namespace ace { namespace world {
     struct Tracer : WorldObject {
@@ -12,7 +12,7 @@ namespace ace { namespace world {
         bool update(double dt) override;
         void draw() override;
 
-        KV6 mesh;
+        draw::KV6 mesh;
         glm::vec3 position, orientation;
 
         constexpr static float SPEED = 256.f, LIFESPAN = 0.5f;
