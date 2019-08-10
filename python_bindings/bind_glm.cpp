@@ -9,67 +9,6 @@
 namespace py = pybind11;
 using namespace pybind11::literals;
 
-template<typename T, glm::precision P>
-void bind_mat_members(py::class_<glm::tmat4x4<T, P>> &cls) {
-    using mat = glm::tmat4x4<T, P>;
-    using col_type = typename mat::col_type;
-
-    using T_CR = const T &;
-    cls.def(py::init<T_CR>(), "x"_a = 1) // scalar constructor
-        .def(py::init<
-             T_CR, T_CR, T_CR, T_CR,
-             T_CR, T_CR, T_CR, T_CR,
-             T_CR, T_CR, T_CR, T_CR,
-             T_CR, T_CR, T_CR, T_CR
-        >())
-        .def(py::init<const col_type &, const col_type &, const col_type &, const col_type &>())
-        .def(py::init<const mat &>()); // copy constructor
-     // TODO conversion to/from other mat types
-}
-
-template<typename T, glm::precision P>
-void bind_mat_members(py::class_<glm::tmat3x3<T, P>> &cls) {
-    using mat = glm::tmat3x3<T, P>;
-    using col_type = typename mat::col_type;
-
-    using T_CR = const T &;
-    cls.def(py::init<T_CR>(), "x"_a = 1) // scalar constructor
-        .def(py::init<
-             T_CR, T_CR, T_CR,
-             T_CR, T_CR, T_CR,
-             T_CR, T_CR, T_CR
-        >())
-        .def(py::init<const col_type &, const col_type &, const col_type &>())
-        .def(py::init<const mat &>()); // copy constructor
-     // TODO conversion to/from other mat types
-}
-
-#define DEF_MAT_OPERATOR(type, op) \
-    def( py::self op py::self ) \
-    .def( py::self op type{} ) \
-    .def( type{} op py::self ) \
-    .def( py::self op##= py::self ) \
-    .def( py::self op##= type{} )
-
-#define DEF_MAT_VEC_OPERATOR(type, op) 
-
-template<template<glm::length_t, glm::length_t, typename, glm::precision> class TMat, glm::length_t C, glm::length_t R, typename T, glm::precision P, typename = std::enable_if_t<glm::type<TMat<C, R, T, P>>::is_mat>>
-void bind_mat_operators_base(py::class_<TMat<C, R, T, P>> &cls) {
-    using mat = TMat<C, R, T, P>;
-    using col_type = typename mat::col_type;
-    using row_type = typename mat::row_type;
-
-    cls.DEF_MAT_OPERATOR(T, +)
-        .DEF_MAT_OPERATOR(T, -)
-        .DEF_MAT_OPERATOR(T, / )
-        .DEF_MAT_OPERATOR(T, *);
-
-    cls.def(py::self * row_type())
-        .def(col_type() * py::self)
-        .def(py::self / row_type())
-        .def(col_type() / py::self);
-}
-
 
 
 #define DEF_VEC_MEMBER(type, member) \
@@ -234,6 +173,69 @@ struct vec_binder<TVec<L, T, P>> {
         return std::move(vec);
     }
 };
+
+
+template<typename T, glm::precision P>
+void bind_mat_members(py::class_<glm::tmat4x4<T, P>> &cls) {
+    using mat = glm::tmat4x4<T, P>;
+    using col_type = typename mat::col_type;
+
+    using T_CR = const T &;
+    cls.def(py::init<T_CR>(), "x"_a = 1) // scalar constructor
+        .def(py::init<
+             T_CR, T_CR, T_CR, T_CR,
+             T_CR, T_CR, T_CR, T_CR,
+             T_CR, T_CR, T_CR, T_CR,
+             T_CR, T_CR, T_CR, T_CR
+        >())
+        .def(py::init<const col_type &, const col_type &, const col_type &, const col_type &>())
+        .def(py::init<const mat &>()); // copy constructor
+     // TODO conversion to/from other mat types
+}
+
+template<typename T, glm::precision P>
+void bind_mat_members(py::class_<glm::tmat3x3<T, P>> &cls) {
+    using mat = glm::tmat3x3<T, P>;
+    using col_type = typename mat::col_type;
+
+    using T_CR = const T &;
+    cls.def(py::init<T_CR>(), "x"_a = 1) // scalar constructor
+        .def(py::init<
+             T_CR, T_CR, T_CR,
+             T_CR, T_CR, T_CR,
+             T_CR, T_CR, T_CR
+        >())
+        .def(py::init<const col_type &, const col_type &, const col_type &>())
+        .def(py::init<const mat &>()); // copy constructor
+     // TODO conversion to/from other mat types
+}
+
+#define DEF_MAT_OPERATOR(type, op) \
+    def( py::self op py::self ) \
+    .def( py::self op type{} ) \
+    .def( type{} op py::self ) \
+    .def( py::self op##= py::self ) \
+    .def( py::self op##= type{} )
+
+#define DEF_MAT_VEC_OPERATOR(type, op) 
+
+template<template<glm::length_t, glm::length_t, typename, glm::precision> class TMat, glm::length_t C, glm::length_t R, typename T, glm::precision P, typename = std::enable_if_t<glm::type<TMat<C, R, T, P>>::is_mat>>
+void bind_mat_operators_base(py::class_<TMat<C, R, T, P>> &cls) {
+    using mat = TMat<C, R, T, P>;
+    using col_type = typename mat::col_type;
+    using row_type = typename mat::row_type;
+
+    cls.DEF_MAT_OPERATOR(T, +)
+        .DEF_MAT_OPERATOR(T, -)
+        .DEF_MAT_OPERATOR(T, / )
+        .DEF_MAT_OPERATOR(T, *);
+
+    cls.def(py::self * row_type())
+        .def(col_type() * py::self)
+        .def(py::self / row_type())
+        .def(col_type() / py::self);
+}
+
 
 // todo learn sfinae magic so mat_binder and vec_binder can just be binder and deduce type from the template arguments
 template<typename T>
