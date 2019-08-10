@@ -164,8 +164,8 @@ namespace ace {
 
 namespace fmt {
     // got tired of having to do glm::to_string zzz
-    template <typename ArgFormatter, template <typename, glm::precision> class matType, typename T, glm::precision P>
-    void format_arg(fmt::BasicFormatter<char, ArgFormatter> &f, const char *&format_str, const matType<T, P> &x) {
+    template <typename ArgFormatter, class matType>
+    void format_arg(fmt::BasicFormatter<char, ArgFormatter> &f, const char *&format_str, matType const& x) {
         f.writer() << glm::to_string(x);
     }
 }

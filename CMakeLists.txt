@@ -3,10 +3,7 @@ project(ace)
 set(CMAKE_SOURCE_DIR src)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-
 option(USE_PYBIND11 "Generate Python bindings with pybind11" OFF)
-
-
 
 if (MSVC)
     # TOTALLY not from iceball
@@ -25,6 +22,8 @@ if (MSVC)
 else (MSVC) # Just assume everyone on windows uses msvc for now
     set(LIBDL_LIBRARY dl)
 endif (MSVC)
+
+add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
 
 set(OpenGL_GL_PREFERENCE GLVND)
 find_package(SDL2 REQUIRED)

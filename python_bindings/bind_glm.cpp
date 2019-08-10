@@ -53,9 +53,9 @@ void bind_mat_members(py::class_<glm::tmat3x3<T, P>> &cls) {
 
 #define DEF_MAT_VEC_OPERATOR(type, op) 
 
-template<template<typename, glm::precision> class TMat, typename T, glm::precision P, typename = std::enable_if_t<glm::type<TMat, T, P>::is_mat>>
-void bind_mat_operators_base(py::class_<TMat<T, P>> &cls) {
-    using mat = TMat<T, P>;
+template<template<glm::length_t, glm::length_t, typename, glm::precision> class TMat, glm::length_t C, glm::length_t R, typename T, glm::precision P, typename = std::enable_if_t<glm::type<TMat<C, R, T, P>>::is_mat>>
+void bind_mat_operators_base(py::class_<TMat<C, R, T, P>> &cls) {
+    using mat = TMat<C, R, T, P>;
     using col_type = typename mat::col_type;
     using row_type = typename mat::row_type;
 
@@ -143,29 +143,32 @@ void bind_vec_members(py::class_<glm::tvec4<T, P>> &cls) {
         .DEF_VEC_MEMBER(vec, q);
 }
 
-template<template<typename, glm::precision> class TVec, typename T, glm::precision P, typename = std::enable_if_t<glm::type<TVec, T, P>::is_vec>>
-void bind_vec_operators_base(py::class_<TVec<T, P>> &cls) {
-    using vec = TVec<T, P>;
+// TODO: glm has drastically changed the template structure of its type traits, now accepting the full vec/mat type rather than each template argument separately
+// Meaning, I also no longer need access to all the template arguments, and can just ask for e.g. "typename TVec" and use type traits
+// to get the component type/length/precision
+template<template<glm::length_t, typename, glm::precision> class TVec, glm::length_t L, typename T, glm::precision P, typename = std::enable_if_t<glm::type<TVec<L, T, P>>::is_vec>>
+void bind_vec_operators_base(py::class_<TVec<L, T, P>> &cls) {
+    using vec = TVec<L, T, P>;
     cls.DEF_VEC_OPERATOR(T, +)
         .DEF_VEC_OPERATOR(T, -)
         .DEF_VEC_OPERATOR(T, / )
         .DEF_VEC_OPERATOR(T, *);
 }
 
-template<template<typename, glm::precision> class TVec, typename T, glm::precision P>
-std::enable_if_t<!std::is_integral<T>::value> bind_vec_operators(py::class_<TVec<T, P>> &cls, py::module &m) {
+template<template<glm::length_t, typename, glm::precision> class TVec, glm::length_t L, typename T, glm::precision P>
+std::enable_if_t<!std::is_integral<T>::value> bind_vec_operators(py::class_<TVec<L, T, P>> &cls, py::module &m) {
     bind_vec_operators_base(cls);
 
     // Geometric functions
     // m.def("cross", &glm::cross<T, P, TVec>, "x"_a, "y"_a, "Returns the cross product of x and y.");
-    m.def("distance", &glm::distance<T, P, TVec>, "x"_a, "y"_a, "Returns the distance between x and y, i.e., length(x - y).", py::call_guard<py::gil_scoped_release>());
-    m.def("dot", &glm::dot<T, P, TVec>, "x"_a, "y"_a, "Returns the dot product of x and y, i.e., result = x * y.", py::call_guard<py::gil_scoped_release>());
-    m.def("length", &glm::length<T, P, TVec>, "x"_a, "Returns the length of x, i.e., sqrt(x * x).", py::call_guard<py::gil_scoped_release>());
-    m.def("normalize", &glm::normalize<T, P, TVec>, "x"_a, "Returns a vector in the same direction as x but with length of 1.", py::call_guard<py::gil_scoped_release>());
+    m.def("distance", &glm::distance<L, T, P>, "x"_a, "y"_a, "Returns the distance between x and y, i.e., length(x - y).", py::call_guard<py::gil_scoped_release>());
+    m.def("dot", &glm::dot<L, T, P>, "x"_a, "y"_a, "Returns the dot product of x and y, i.e., result = x * y.", py::call_guard<py::gil_scoped_release>());
+    m.def("length", &glm::length<L, T, P>, "x"_a, "Returns the length of x, i.e., sqrt(x * x).", py::call_guard<py::gil_scoped_release>());
+    m.def("normalize", &glm::normalize<L, T, P>, "x"_a, "Returns a vector in the same direction as x but with length of 1.", py::call_guard<py::gil_scoped_release>());
 }
 
-template<template<typename, glm::precision> class TVec, typename T, glm::precision P>
-std::enable_if_t<std::is_integral<T>::value> bind_vec_operators(py::class_<TVec<T, P>> &cls, py::module &m) {
+template<template<glm::length_t, typename, glm::precision> class TVec, glm::length_t L, typename T, glm::precision P>
+std::enable_if_t<std::is_integral<T>::value> bind_vec_operators(py::class_<TVec<L, T, P>> &cls, py::module &m) {
     bind_vec_operators_base(cls);
     cls.DEF_VEC_OPERATOR(T, &)
         .DEF_VEC_OPERATOR(T, | )
@@ -178,16 +181,16 @@ template<typename T>
 struct vec_binder { };
 
 
-template<template<typename, glm::precision> class TVec, typename T, glm::precision P>
-struct vec_binder<TVec<T, P>> {
-    using vec_t = TVec<T, P>;
+template<template<glm::length_t, typename, glm::precision> class TVec, glm::length_t L, typename T, glm::precision P>
+struct vec_binder<TVec<L, T, P>> {
+    using vec_t = TVec<L, T, P>;
     using component_type = T;
     using index_t = typename vec_t::length_type;
     constexpr static auto precision = P;
-    constexpr static auto components = glm::type<TVec, T, P>::components;
+    constexpr static auto components = L;
 
-    static py::class_<TVec<T, P>> bind(py::module &m, const char *name) {
-        py::class_<TVec<T, P>> vec(m, name, py::buffer_protocol());
+    static py::class_<vec_t> bind(py::module &m, const char *name) {
+        py::class_<vec_t> vec(m, name, py::buffer_protocol());
         bind_vec_members(vec);
         bind_vec_operators(vec, m);
 
@@ -204,7 +207,7 @@ struct vec_binder<TVec<T, P>> {
             self[i] = v;
         });
         vec.def("__len__", [](const vec_t &) { return components; });
-        vec.def("__repr__", &glm::to_string<TVec, T, P>);
+        vec.def("__repr__", &glm::to_string<vec_t>);
         vec.def(hash(py::self));
         vec.def(py::self == py::self);
         vec.def(py::self != py::self);
@@ -216,14 +219,14 @@ struct vec_binder<TVec<T, P>> {
         });
 
         // Common Functions
-        m.def("min", py::overload_cast<const vec_t &, const vec_t &>(&glm::min<T, P, TVec>), "x"_a, "y"_a,
+        m.def("min", py::overload_cast<const vec_t &, const vec_t &>(&glm::min<L, T, P>), "x"_a, "y"_a,
               "Returns y if x < y; otherwise, it returns x.", py::call_guard<py::gil_scoped_release>());
-        m.def("min", py::overload_cast<const vec_t &, component_type>(&glm::min<T, P, TVec>), "x"_a, "y"_a,
+        m.def("min", py::overload_cast<const vec_t &, component_type>(&glm::min<L, T, P>), "x"_a, "y"_a,
               "Returns y if x < y; otherwise, it returns x.", py::call_guard<py::gil_scoped_release>());
 
-        m.def("max", py::overload_cast<const vec_t &, const vec_t &>(&glm::max<T, P, TVec>), "x"_a, "y"_a,
+        m.def("max", py::overload_cast<const vec_t &, const vec_t &>(&glm::max<L, T, P>), "x"_a, "y"_a,
               "Returns y if x < y; otherwise, it returns x.", py::call_guard<py::gil_scoped_release>());
-        m.def("max", py::overload_cast<const vec_t &, component_type>(&glm::max<T, P, TVec>), "x"_a, "y"_a,
+        m.def("max", py::overload_cast<const vec_t &, component_type>(&glm::max<L, T, P>), "x"_a, "y"_a,
               "Returns y if x < y; otherwise, it returns x.", py::call_guard<py::gil_scoped_release>());
 
 
@@ -238,20 +241,20 @@ struct mat_binder { };
 
 
 
-template<template<typename, glm::precision> class TMat, typename T, glm::precision P>
-struct mat_binder<TMat<T, P>> {
-    using mat_t = TMat<T, P>;
+template<template<glm::length_t, glm::length_t, typename, glm::precision> class TMat, glm::length_t C, glm::length_t R, typename T, glm::precision P>
+struct mat_binder<TMat<C, R, T, P>> {
+    using mat_t = TMat<C, R, T, P>;
     using component_t = T;
     using col_t = typename mat_t::col_type;
     using row_t = typename mat_t::row_type;
     using index_t = typename mat_t::length_type;
     constexpr static auto precision = P;
-    constexpr static auto cols = glm::type<TMat, T, P>::cols;
-    constexpr static auto rows = glm::type<TMat, T, P>::rows;
+    constexpr static auto cols = C;
+    constexpr static auto rows = R;
 
 
-    static py::class_<TMat<T, P>> bind(py::module &m, const char *name) {
-        py::class_<TMat<T, P>> mat(m, name, py::buffer_protocol());
+    static py::class_<mat_t> bind(py::module &m, const char *name) {
+        py::class_<mat_t> mat(m, name, py::buffer_protocol());
         bind_mat_members(mat);
         bind_mat_operators_base(mat);
 
@@ -268,7 +271,7 @@ struct mat_binder<TMat<T, P>> {
             self[i.first][i.second] = v;
         });
         mat.def("__len__", [](const mat_t &) { return cols; });
-        mat.def("__repr__", &glm::to_string<TMat, T, P>);
+        mat.def("__repr__", &glm::to_string<mat_t>);
         mat.def(hash(py::self));
         mat.def_buffer([](mat_t &self) {
             return py::buffer_info(

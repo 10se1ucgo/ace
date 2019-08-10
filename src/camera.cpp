@@ -10,8 +10,6 @@
 #include "game_client.h"
 #include "common.h"
 #include "scene/game.h"
-#include <glm/detail/type_mat.hpp>
-
 
 
 
