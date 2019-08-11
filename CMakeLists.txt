@@ -3,7 +3,7 @@ project(ace)
 set(CMAKE_SOURCE_DIR src)
 set(CMAKE_MODULE_PATH ${CMAKE_MODULE_PATH} "${CMAKE_CURRENT_SOURCE_DIR}/cmake")
 
-option(USE_PYBIND11 "Generate Python bindings with pybind11" OFF)
+option(USE_PYBIND11 "Embed Python interpreter + generate C++ bindings with pybind11" OFF)
 
 if (MSVC)
     # TOTALLY not from iceball
@@ -15,7 +15,6 @@ if (MSVC)
     set(CMAKE_SHARED_LINKER_FLAGS_DEBUG "${CMAKE_SHARED_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
     set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
     add_definitions(-DCURL_STATICLIB)
-    add_definitions(-DGLM_FORCE_NO_CTOR_INIT)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
     # CAN PYERRORS.H STOP MACROING SNPRINTF TO _SNPRINTF IT BREAKS NLOHMANN JSON
     add_definitions(-DHAVE_SNPRINTF=1)
