@@ -168,7 +168,7 @@ namespace ace { namespace scene {
         try {
             SDL_Surface *cursor(draw::load_image(get_resource_path("png/cursor.png")).first);
             SDL_SetCursor(SDL_CreateColorCursor(cursor, 0, 0));
-        } catch (ace::RuntimeException &err) {
+        } catch (ace::RuntimeException &) {
         }
     }
 
@@ -181,7 +181,7 @@ namespace ace { namespace scene {
 
         try {
             this->client.sound.play_music("test.ogg");
-        } catch (ace::RuntimeException &err) {
+        } catch (ace::RuntimeException &) {
         }
 
         this->client.net.disconnect();
