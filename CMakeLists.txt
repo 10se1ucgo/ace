@@ -16,11 +16,9 @@ if (MSVC)
     set(CMAKE_MODULE_LINKER_FLAGS_DEBUG "${CMAKE_MODULE_LINKER_FLAGS_DEBUG} /SAFESEH:NO")
     add_definitions(-DCURL_STATICLIB)
     add_definitions(-D_CRT_SECURE_NO_WARNINGS)
-    # CAN PYERRORS.H STOP MACROING SNPRINTF TO _SNPRINTF IT BREAKS NLOHMANN JSON
+    # If you are building C++14 with MSVC, you have snprintf.
+    # pyerrors.h can stop breaking code with its macro thank you VERY much.
     add_definitions(-DHAVE_SNPRINTF=1)
-    # THANKS JERK.
-else (MSVC) # Just assume everyone on windows uses msvc for now
-    set(LIBDL_LIBRARY dl)
 endif (MSVC)
 
 add_definitions(-DGLM_ENABLE_EXPERIMENTAL)
@@ -51,11 +49,13 @@ include_directories(include ${SDL2_INCLUDE_DIR} ${SDL2_IMAGE_INCLUDE_DIR}
                             ${JSON_INCLUDE_DIRS}
                             ${CURL_INCLUDE_DIRS})
 
-file(GLOB_RECURSE SRC_FILES src/*.c src/*.cpp src/*.cc)
-file(GLOB_RECURSE INC_FILES include/*.h include/*.hpp include/*.hh)
+# This is bad and I should feel bad, I know
+# Maybe one day I will rewrite this CMakeLists
+file(GLOB_RECURSE SRC_FILES CONFIGURE_DEPENDS src/*.c src/*.cpp src/*.cc)
+file(GLOB_RECURSE INC_FILES CONFIGURE_DEPENDS include/*.h include/*.hpp include/*.hh)
 
 if(USE_PYBIND11)
-    file(GLOB_RECURSE BINDING_FILES python_bindings/*.h python_bindings/*.cpp)
+    file(GLOB_RECURSE BINDING_FILES CONFIGURE_DEPENDS python_bindings/*.h python_bindings/*.cpp)
     include_directories(python_bindings)
 
     add_definitions(-DUSE_PYBIND11)
@@ -72,7 +72,7 @@ target_link_libraries(ace ${SDL2_LIBRARY} ${SDL2_IMAGE_LIBRARIES}
                           ${OPENAL_LIBRARY} ${ALURE_LIBRARY}
                           ${FREETYPE_LIBRARIES}
                           ${CURL_LIBRARIES}
-                          ${LIBDL_LIBRARY}
+                          ${CMAKE_DL_LIBS}
                           fmt::fmt)
 
 if(USE_PYBIND11)
