@@ -57,7 +57,6 @@ namespace ace { namespace gl {
 
     struct ShaderProgram {
         ShaderProgram();
-        ShaderProgram(std::initializer_list<Shader> shaders);
         ~ShaderProgram();
         ACE_NO_COPY_MOVE(ShaderProgram)
 
@@ -110,7 +109,6 @@ namespace ace { namespace gl {
         std::unordered_map<std::string, GLuint> uniform_cache;
 
         static GLuint bound_program;
-
     private:
         void uniforms() { }
     };

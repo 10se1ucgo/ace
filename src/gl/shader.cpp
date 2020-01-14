@@ -47,12 +47,6 @@ namespace ace { namespace gl {
     ShaderProgram::ShaderProgram(): program(glCreateProgram()) {
     }
 
-    ShaderProgram::ShaderProgram(std::initializer_list<Shader> shaders) : ShaderProgram() {
-        for (const Shader &s : shaders) {
-            this->add(s);
-        }
-    }
-
     ShaderProgram::~ShaderProgram() {
         glDeleteProgram(this->program);
     }
@@ -94,15 +88,13 @@ namespace ace { namespace gl {
         
             std::string source_buffer;
         
-            if (read_file(path + ".vert", source_buffer)) {
+            if (read_file(path + ".vert", source_buffer))
                 program->add(Shader{ source_buffer, GL_VERTEX_SHADER });
-            }
-            if (read_file(path + ".frag", source_buffer)) {
+            if (read_file(path + ".frag", source_buffer))
                 program->add(Shader{ source_buffer, GL_FRAGMENT_SHADER });
-            }
-            if (read_file(path + ".geom", source_buffer)) {
+            if (read_file(path + ".geom", source_buffer))
                 program->add(Shader{ source_buffer, GL_GEOMETRY_SHADER });
-            }
+
             program->link();
             
             return *this->programs.emplace(name, std::move(program)).first->second;
