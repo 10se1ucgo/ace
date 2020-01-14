@@ -231,47 +231,11 @@ namespace ace {
                 this->quit();
                 break;
             case SDL_KEYDOWN:
-                if(this->text_input_active()) {
-                    switch(event.key.keysym.scancode) {
-                    case SDL_SCANCODE_BACKSPACE:
-                        if (!this->input_buffer.empty() && this->input_cursor > 0) {
-                            this->input_buffer.erase(this->input_cursor - 1, 1);
-                            this->input_cursor = std::min<size_t>(this->input_cursor - 1, this->input_buffer.size());
-                        }
-                        break;
-                    case SDL_SCANCODE_RETURN:
-                        SDL_StopTextInput();
-                        this->scene->on_text_finished(false);
-                        this->input_buffer.clear();
-                        this->input_cursor = 0;
-                        break;
-                    case SDL_SCANCODE_ESCAPE:
-                        SDL_StopTextInput();
-                        this->scene->on_text_finished(true);
-                        this->input_buffer.clear();
-                        this->input_cursor = 0;
-                        break;
-                    case SDL_SCANCODE_LEFT:
-                        if(this->input_cursor > 0)
-                            this->input_cursor = std::min<size_t>(this->input_cursor - 1, this->input_buffer.size());
-                        break;
-                    case SDL_SCANCODE_RIGHT:
-                        this->input_cursor = std::min<size_t>(this->input_cursor + 1, this->input_buffer.size());
-                        break;
-                    default:
-                        break;
-                    }
-                    return;
-                }
-                if(!event.key.repeat) this->scene->on_key(event.key.keysym.scancode, event.key.keysym.mod, true);
-                handle_key_press(event);
-                break;
             case SDL_KEYUP:
-                if (this->text_input_active()) return;
-                if(!event.key.repeat) this->scene->on_key(event.key.keysym.scancode, event.key.keysym.mod, false);
+                this->handle_key_press(event);
                 break;
             case SDL_WINDOWEVENT:
-                handle_window_event(event);
+                this->handle_window_event(event);
                 break;
             case SDL_MOUSEBUTTONDOWN:
                 this->scene->on_mouse_button(event.button.button, true);
@@ -285,14 +249,11 @@ namespace ace {
             case SDL_MOUSEWHEEL: {
                 int mult = event.wheel.direction == SDL_MOUSEWHEEL_FLIPPED ? -1 : 1;
                 this->scene->on_mouse_scroll(event.wheel.y * mult, event.wheel.x * mult);
-            } break;
-            case SDL_TEXTINPUT: {
-                std::string str(event.text.text);
-                if (this->scene->on_text_typing(str)) {
-                    this->input_buffer.insert(std::min<size_t>(this->input_cursor, this->input_buffer.size()), str);
-                    this->input_cursor += str.length();
-                }
-            } break;
+                break;
+            }
+            case SDL_TEXTINPUT:
+                this->handle_text_input(event);
+                break;
             default:
                 break;
             }
@@ -303,19 +264,56 @@ namespace ace {
     }
 
     void GameClient::handle_key_press(const SDL_Event &event) {
-//        this->quit |= event.key.keysym.sym == SDLK_ESCAPE;
+        if (!event.key.repeat && !this->text_input_active())
+            return this->scene->on_key(event.key.keysym.scancode, event.key.keysym.mod, event.type == SDL_KEYDOWN);
+
+        if (event.type != SDL_KEYDOWN)
+            return;
+
+        // If we're in text input mode, assume any non-text keystrokes are for editing input.
+        switch (event.key.keysym.scancode) {
+        case SDL_SCANCODE_BACKSPACE:
+            if (!this->input_buffer.empty() && this->input_cursor > 0) {
+                this->input_buffer.erase(this->input_cursor - 1, 1);
+                this->input_cursor = std::min<size_t>(this->input_cursor - 1, this->input_buffer.size());
+            }
+            break;
+        case SDL_SCANCODE_RETURN:
+        case SDL_SCANCODE_ESCAPE:
+            SDL_StopTextInput();
+            this->scene->on_text_finished(event.key.keysym.scancode == SDL_SCANCODE_ESCAPE);
+            this->input_buffer.clear();
+            this->input_cursor = 0;
+            break;
+        case SDL_SCANCODE_LEFT:
+            if (this->input_cursor > 0)
+                this->input_cursor = std::min<size_t>(this->input_cursor - 1, this->input_buffer.size());
+            break;
+        case SDL_SCANCODE_RIGHT:
+            this->input_cursor = std::min<size_t>(this->input_cursor + 1, this->input_buffer.size());
+            break;
+        default:
+            break;
+        }
     }
 
     void GameClient::handle_window_event(const SDL_Event &event) {
         switch (event.window.event) {
         case SDL_WINDOWEVENT_SIZE_CHANGED: {
-            //        case SDL_WINDOWEVENT_RESIZED:
-            auto oldw = this->w, oldh = this->h;
+            auto old_w = this->w, old_h = this->h;
             this->w = event.window.data1;
             this->h = event.window.data2;
-            this->scene->on_window_resize(oldw, oldh);
+            this->scene->on_window_resize(old_w, old_h);
         } break;
         default: break;
+        }
+    }
+
+    void GameClient::handle_text_input(const SDL_Event &event) {
+        const std::string str(event.text.text);
+        if (this->scene->on_text_typing(str)) {
+            this->input_buffer.insert(std::min<size_t>(this->input_cursor, this->input_buffer.size()), str);
+            this->input_cursor += str.length();
         }
     }
 }

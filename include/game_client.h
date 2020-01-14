@@ -130,6 +130,7 @@ namespace ace {
         void poll_events();
         void handle_key_press(const SDL_Event &event);
         void handle_window_event(const SDL_Event &event);
+        void handle_text_input(const SDL_Event &event);
 
         int w, h;
         struct {
