@@ -639,7 +639,7 @@ namespace ace { namespace scene {
 
     inline void draw_scoreboard_players(Team &team, glm::vec2 offset, draw::Align alignment, draw::Font *f) {
         for (auto ply : team.players) {
-            f->draw(fmt::format("{:>15} #{:<2d} {:<3d}", ply->name, ply->pid, ply->kills), offset, { 1, 1, 1 }, { 1, 1 }, alignment);
+            f->draw(fmt::format("{:>15} #{:<2d} {:<3d}", ply->name, ply->pid, ply->score), offset, { 1, 1, 1 }, { 1, 1 }, alignment);
             offset.y += f->size();
         }
     }

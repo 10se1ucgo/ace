@@ -89,7 +89,7 @@ namespace ace {
         net::WEAPON equipped_weapon{net::WEAPON::INVALID};
         net::TOOL held_tool{net::TOOL::INVALID};
         
-        uint32_t kills{};
+        uint32_t score{};
         glm::u8vec3 color{112, 112, 112};
         std::string name;
 

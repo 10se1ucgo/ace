@@ -21,7 +21,7 @@ namespace ace { namespace scene {
                 this->players.push_back(ply);
             }
         }
-        std::sort(this->players.begin(), this->players.end(), [](const auto *a, const auto *b) { return a->kills > b->kills; });
+        std::sort(this->players.begin(), this->players.end(), [](const auto *a, const auto *b) { return a->score > b->score; });
     }
 
     GameScene::GameScene(GameClient &client, const net::StateData &state_data, uint8_t *buf) :
@@ -101,7 +101,7 @@ namespace ace { namespace scene {
         this->shaders.line.bind();
         this->debug.flush(this->cam.matrix(), this->shaders.line);
 
-        hud.draw();
+        this->hud.draw();
     }
 
     void GameScene::update(double dt) {
@@ -218,7 +218,7 @@ namespace ace { namespace scene {
             ply->set_weapon(pkt->weapon);
             ply->set_tool(pkt->tool);
             ply->set_color(pkt->color);
-            ply->kills = pkt->kills;
+            ply->score = pkt->kills;
         } break;
         case net::PACKET::WorldUpdate: {
             auto *pkt = static_cast<net::WorldUpdate *>(loader);
@@ -276,7 +276,7 @@ namespace ace { namespace scene {
             }
 
             if(ply != killer) {
-                killer->kills++;
+                killer->score++;
             }
         } break;
         case net::PACKET::PositionData: {
@@ -293,7 +293,7 @@ namespace ace { namespace scene {
         } break;
         case net::PACKET::SetHP: {
             auto *pkt = static_cast<net::SetHP *>(loader);
-            if (!this->ply) return;
+            if (!this->ply) break;
 
             this->ply->health = pkt->hp;
             if (pkt->type != net::DAMAGE::FALL) {
@@ -323,9 +323,9 @@ namespace ace { namespace scene {
         } break;
         case net::PACKET::ChatMessage: {
             auto *pkt = static_cast<net::ChatMessage *>(loader);
-            if(pkt->pid >= 32 || pkt->type == net::CHAT::SYSTEM) {
+            if (pkt->pid >= 32 || pkt->type == net::CHAT::SYSTEM) {
                 this->hud.add_chat_message(fmt::format("[*]: {}", pkt->message), {1, 0, 0});
-                return;
+                break;
             }
 
             auto *ply = this->get_ply(pkt->pid, false);
@@ -350,7 +350,8 @@ namespace ace { namespace scene {
         case net::PACKET::MoveObject: {
             auto *pkt = static_cast<net::MoveObject *>(loader);
             auto *ent = this->get_ent(uint8_t(pkt->type));
-            if (ent == nullptr) return; // ??? prob wrong gamemode
+
+            if (ent == nullptr) break; // ??? prob wrong gamemode
             ent->set_team(pkt->state);
             ent->set_position(pkt->position);
         } break;
@@ -364,50 +365,56 @@ namespace ace { namespace scene {
             auto *pkt = static_cast<net::IntelCapture *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
 
-            if (!pkt->winning) {
-                if (ply != nullptr) {
-                    auto msg = fmt::format("{} captured the {} team Intel!", ply->name, ply->team(true).name);
-                    this->hud.add_chat_message(msg, { 1, 0, 0 });
-                }
-            } else {
+            if (pkt->winning) {
                 this->hud.set_big_message(fmt::format("{} Team Wins!", ply->team().name));
-            }
+            } else if (ply != nullptr) {
+                ply->score += 10;
+                ply->team().score++;
 
-            ply->kills += 10;
-            ply->team().score++;
+                auto msg = fmt::format("{} captured the {} team Intel!", ply->name, ply->team(true).name);
+                this->hud.add_chat_message(msg, { 1, 0, 0 });
+            }
 
             this->client.sound.play_local(pkt->winning ? "horn.wav" : "pickup.wav");
         } break;
         case net::PACKET::IntelPickup: {
             auto *pkt = static_cast<net::IntelPickup *>(loader);
-
             auto *ply = this->get_ply(pkt->pid, false);
+
             if (ply != nullptr) {
                 auto msg = fmt::format("{} has the {} Intel", ply->name, ply->team(true).name);
                 this->hud.add_chat_message(msg, { 1, 0, 0 });
+
+                auto id = uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG);
+                auto *ent = this->get_ent(id);
+                if (ent != nullptr)
+                    ent->set_carrier(ply->pid);
             }
+
             this->client.sound.play_local("pickup.wav");
-            auto *ent = this->get_ent(uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG));
-            if(ent != nullptr)
-                ent->set_carrier(ply->pid);
         } break;
         case net::PACKET::IntelDrop: {
             auto *pkt = static_cast<net::IntelDrop *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
+
             if (ply != nullptr) {
                 auto msg = fmt::format("{} has dropped the {} Intel", ply->name, ply->team(true).name);
                 this->hud.add_chat_message(msg, { 1, 0, 0 });
+
+                auto id = uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG);
+                auto *ent = this->get_ent(id);
+
+                if (ent != nullptr) {
+                    ent->set_carrier(-1);
+                    ent->set_position(pkt->pos);
+                }
             }
-            auto *ent = this->get_ent(uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG));
-            if (ent == nullptr) return;
-            ent->set_carrier(-1);
-            ent->set_position(pkt->pos);
         } break;
         case net::PACKET::Restock: {
-//            net::Restock *pkt = static_cast<net::Restock *>(loader);
-//            auto *ply = this->get_ply(pkt->pid, false);
+            // net::Restock *pkt = static_cast<net::Restock *>(loader);
+            // auto *ply = this->get_ply(pkt->pid, false);
             // why does Restock have a pid field if it's never used??
-            if(this->ply) {
+            if (this->ply) {
                 this->ply->restock();
             }
         } break;
@@ -417,10 +424,10 @@ namespace ace { namespace scene {
         case net::PACKET::WeaponReload: {
             auto *pkt = static_cast<net::WeaponReload *>(loader);
             auto *ply = this->get_ply(pkt->pid, false);
-            if (!ply || !ply->weapon_obj) break;
-            ply->weapon_obj->on_reload(pkt);
+            if (ply && ply->weapon_obj)
+                ply->weapon_obj->on_reload(pkt);
         } break;
-        default: ;
+        default: break;
         }
     }
 

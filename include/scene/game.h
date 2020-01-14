@@ -118,9 +118,9 @@ namespace ace { namespace scene {
         world::DrawPlayer *get_ply(int pid, bool create = true, bool local_player = false) {
             auto ply = players.find(pid);
             world::DrawPlayer *ptr;
-            if(ply != players.end()) {
+            if (ply != players.end()) {
                 ptr = ply->second.get();
-            } else if(create) {
+            } else if (create) {
                 auto x = std::make_unique<world::DrawPlayer>(*this, local_player);
                 ptr = players.insert({ pid, std::move(x) }).first->second.get();
             } else {
