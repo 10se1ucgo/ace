@@ -46,7 +46,7 @@ namespace ace { namespace scene {
         glm::mat4 projection;
         draw::Font *font, *aldo;
 
-        net::Server server;
+        net::ServerAddress server;
         std::vector<std::pair<net::PACKET, std::unique_ptr<net::Loader>>> saved_loaders;
         std::unique_ptr<GameScene> game_scene;
         

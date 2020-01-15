@@ -140,7 +140,7 @@ namespace ace { namespace net {
         enet_host_compress_with_range_coder(this->host);
     }
 
-    void NetworkClient::connect(const Server &server) {
+    void NetworkClient::connect(const ServerAddress &server) {
         if(server.version != "0.75")
             THROW_ERROR("Ace of Spades {} unsupported!\n", server.version);
         
@@ -164,23 +164,20 @@ namespace ace { namespace net {
         const auto packet_id = PACKET(br.read<uint8_t>());
         
         switch (packet_id) {
-        case PACKET::MapStart: {
+        case PACKET::MapStart:
             this->map_writer.clear();
             this->map_writer.reserve(std::min<uint32_t>(br.read<uint32_t>(), 1024 * 1024));
             this->set_state(NetState::MAP_TRANSFER);
             break;
-        } 
-        case PACKET::MapChunk: {
+        case PACKET::MapChunk:
             if (this->state != NetState::MAP_TRANSFER)
                 fmt::print(stderr, "Receiving map chunks before map start???");
             this->map_writer.write(br.remaining_data(), br.remaining_size());
             break;
-        } 
         case PACKET::HandShakeInit: {
-            auto data = br.read<uint32_t>();
             ByteWriter bw;
             bw.write(static_cast<uint8_t>(PACKET::HandShakeReturn));
-            bw.write(data);
+            bw.write(br.read<uint32_t>());
             this->send_packet(bw);
             break;
         } 

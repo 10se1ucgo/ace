@@ -19,18 +19,18 @@ namespace ace { namespace net {
         // PACK_TRANSFER,
     };
 
-    struct Server {
+    struct ServerAddress {
         std::string ip;
         int port;
         std::string version;
 
-        Server(std::string ip, int port, std::string version) :
+        ServerAddress(std::string ip, int port, std::string version) :
             ip(std::move(ip)),
             port(port),
             version(std::move(version)) {
         }
 
-        Server(const std::string &identifier): port(32887), version("0.75") {
+        ServerAddress(const std::string &identifier): port(32887), version("0.75") {
             auto proto_pos = identifier.find(':', 0);
 
             if (identifier.substr(0, proto_pos) == "aos") {
@@ -43,15 +43,13 @@ namespace ace { namespace net {
 
                 uint32_t ip = std::stoul(identifier.substr(ip_pos, port_pos - ip_pos));
                 this->ip = fmt::format("{}.{}.{}.{}", ip >> 0 & 0xFF, ip >> 8 & 0xFF, ip >> 16 & 0xFF, ip >> 24 & 0xFF);
-                if(port_pos != std::string::npos)
+                if (port_pos != std::string::npos)
                     this->port = std::stoi(identifier.substr(port_pos + 1, version_pos - (port_pos + 1)));
             } else {
                 this->ip = identifier.substr(0, proto_pos);
-                if(proto_pos != std::string::npos)
+                if (proto_pos != std::string::npos)
                     this->port = std::stoi(identifier.substr(proto_pos + 1));
             }
-
-            fmt::print("Server: {}:{}:{}\n", this->ip, this->port, this->version);
         }
     };
 
@@ -61,7 +59,7 @@ namespace ace { namespace net {
         ACE_NO_COPY_MOVE(BaseNetClient)
 
         void update(double dt);
-        void connect(const char *host, int port, uint32_t data=0);
+        void connect(const char *host, int port, uint32_t data = 0);
         void disconnect();
         void send(const void *data, size_t len, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
 
@@ -83,13 +81,13 @@ namespace ace { namespace net {
         NetworkClient(ace::GameClient &client);
 
 //        using BaseNetClient::connect;
-        void connect(const Server &server);
+        void connect(const ServerAddress &server);
 
-        void on_connect(const ENetEvent& event) final;
-        void on_disconnect(const ENetEvent& event) final;
-        void on_receive(const ENetEvent& event) final;
+        void on_connect(const ENetEvent &event) final;
+        void on_disconnect(const ENetEvent &event) final;
+        void on_receive(const ENetEvent &event) final;
 
-        void send_packet(const ByteWriter &data, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
+        void send_packet(const ByteWriter &writer, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const;
         void send_packet(const Loader &pkt, enet_uint32 flags = ENET_PACKET_FLAG_RELIABLE) const {
             ByteWriter writer;
             writer.write(static_cast<uint8_t>(pkt.packet_id()));
