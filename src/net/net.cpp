@@ -166,7 +166,7 @@ namespace ace { namespace net {
         switch (packet_id) {
         case PACKET::MapStart: {
             this->map_writer.clear();
-            this->map_writer.reserve(br.read<uint32_t>());
+            this->map_writer.reserve(std::min<uint32_t>(br.read<uint32_t>(), 1024 * 1024));
             this->set_state(NetState::MAP_TRANSFER);
             break;
         } 
