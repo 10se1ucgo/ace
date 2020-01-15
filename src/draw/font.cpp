@@ -135,7 +135,7 @@ namespace ace { namespace draw {
         FT_Done_Face(face);
     }
 
-    void Font::draw(const glm::mat4 &pv, gl::ShaderProgram &s) {
+    void Font::draw() {
         if (this->vbo->empty()) return;
 
         glActiveTexture(GL_TEXTURE0);
@@ -276,7 +276,7 @@ namespace ace { namespace draw {
     void FontManager::flush(const glm::mat4& pv, gl::ShaderProgram& s) {
         s.uniform("mvp", pv);
         for(auto &kv : this->fonts) {
-            kv.second.draw(pv, s);
+            kv.second.draw();
         }
     }
 }}

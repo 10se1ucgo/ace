@@ -2,3 +2,4 @@ build/
 ext/
 CMakeSettings.json
 *.TMP
+.vs/

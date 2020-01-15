@@ -80,7 +80,7 @@ namespace ace { namespace draw {
         glm::vec2 draw_truncated(float max_length, const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
         glm::vec2 draw_shadowed(const std::string &str, glm::vec2 pos, glm::vec3 color = glm::vec3(1.0f), glm::vec2 scale = glm::vec2(1.0f), Align alignment = Align::BOTTOM_LEFT);
 
-        void draw(const glm::mat4 &pv, gl::ShaderProgram &s);
+        void draw();
 
         glm::vec2 get_aligned_position(glm::vec2 pos, glm::vec2 size, Align alignment) const;
         glm::vec2 measure(const std::string &str, glm::vec2 scale) const;
