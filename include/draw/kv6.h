@@ -46,7 +46,7 @@ namespace ace { namespace draw {
         }
 
         gl::experimental::mesh<detail::KV6Vertex> mesh{ "3f,3f,3f,3f" };
-        KV6Data data;
+        const KV6Data data;
     };
 
 

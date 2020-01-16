@@ -11,6 +11,7 @@
 #include "net/url.h"
 #include "draw/sprite.h"
 #include "scene/scene.h"
+#include "draw/kv6.h"
 
 #ifndef USE_PHYSICS_SUBSTEP
 # define USE_PHYSICS_SUBSTEP 0
@@ -98,6 +99,7 @@ namespace ace {
         sound::SoundManager sound;
         util::TaskScheduler tasks;
         draw::FontManager fonts;
+        draw::KV6Manager models;
         GameConfig config;
 
         // Input state

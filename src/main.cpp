@@ -1,6 +1,6 @@
-#include "SDL.h"
-
 #include <iostream>
+
+#include "SDL.h"
 
 #include "game_client.h"
 #include "scene/menu.h"
@@ -10,7 +10,6 @@ int main(int argc, char **argv) {
     try {
 #endif
         ace::GameClient client("ACE: \"Ace of Spades\" CliEnt");
-        std::string ip(argc > 1 ? argv[1] : "aos://180274501:32887:0.75");
         client.set_scene<ace::scene::MainMenuScene>();
         client.run();
         return 0;

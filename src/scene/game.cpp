@@ -28,6 +28,7 @@ namespace ace { namespace scene {
         Scene(client),
         shaders(*client.shaders),
         uniforms(this->shaders.create_ubo<Uniforms3D>("SceneUniforms")),
+        models(client.models),
         cam(*this, { 256, 0, 256 }, { 0, -1, 0 }),
         world(*this, buf),
         hud(*this),
@@ -44,6 +45,7 @@ namespace ace { namespace scene {
     }
 
     GameScene::~GameScene() {
+        this->client.sound.set_listener({ 0, 0, 0 }, { 0, 0, 1 }, { 0, 1, 0 });
         this->client.set_exclusive_mouse(false);
         fmt::print("~GameScene()\n");
     }

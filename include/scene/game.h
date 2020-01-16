@@ -98,7 +98,7 @@ namespace ace { namespace scene {
         gl::experimental::ubo<Uniforms3D> uniforms;
         draw::BillboardManager billboards;
         draw::DebugDraw debug;
-        draw::KV6Manager models; // todo move this to GameClient, no point re-loading every single KV6 every new map.
+        draw::KV6Manager &models;
         Camera cam;
 
         world::World world;
