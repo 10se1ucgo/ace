@@ -9,7 +9,6 @@ namespace ace { namespace draw {
     }
 
     void GUIWidget::fire(const std::string &event) {
-        
         const auto handler(this->handlers.find(event));
         if (handler != this->handlers.end()) {
             handler->second();

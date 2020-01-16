@@ -274,11 +274,11 @@ namespace ace { namespace world {
     void DrawPlayer::update(double dt) {
         if (!this->alive || this->_team == net::TEAM::SPECTATOR) return;
 
-        if (this->local_player && !this->get_tool()->available()) {
-            this->set_tool(net::TOOL(uint8_t(this->held_tool) - 1));
-        }
-
         if (this->local_player) {
+            if (!this->get_tool()->available()) {
+                this->set_tool(net::TOOL(uint8_t(this->held_tool) - 1));
+            }
+
             double old_switch = this->switch_time;
             this->switch_time = std::max(old_switch - dt, 0.0);
             if(old_switch > 0 && this->switch_time <= 0.0) {
@@ -395,17 +395,20 @@ namespace ace { namespace world {
 
     void DrawPlayer::set_tool(net::TOOL tool) {
         if (!this->get_tool(tool)->available() && this->local_player) return;
+        if (tool == this->held_tool) return;
 
         this->switch_time = 0.5f;
-        if (tool == this->held_tool) return;
-        
         this->weapon_equipped = tool == net::TOOL::WEAPON;
+
         Tool *t = this->get_tool();
         if (t) t->holster();
+
         this->held_tool = tool;
+
         t = this->get_tool();
-        if(t) t->deploy();
-        
+        if (!t) return;
+
+        t->deploy();
         if(this->local_player) {
             this->play_sound("switch.wav");
             this->scene.hud.update_tool(t->ammo_icon());
