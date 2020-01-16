@@ -3,3 +3,5 @@ ext/
 CMakeSettings.json
 *.TMP
 .vs/
+__pycache__
+*.pyc
