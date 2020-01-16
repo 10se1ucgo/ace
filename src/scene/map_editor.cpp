@@ -4,6 +4,7 @@
 #include <cctype>
 #include <queue>
 #include "vxl.h"
+#include "draw/kv6.h"
 
 using namespace ace::gl::literals;
 namespace py = pybind11;
@@ -17,11 +18,73 @@ namespace ace { namespace scene {
             fseek(f, 0, SEEK_END);
             long len = ftell(f);
             rewind(f);
-            auto buf = std::make_unique<uint8_t[]>(len);
+            auto buf(std::make_unique<uint8_t[]>(len));
             fread(buf.get(), len, 1, f);
             fclose(f);
             return buf;
         }
+    }
+
+    std::unordered_map<glm::ivec3, glm::u8vec3> kv6_to_blocks(const draw::KV6Data &data) {
+        std::unordered_map<glm::ivec3, glm::u8vec3> vxl;
+
+        int p = 0;
+        for (long x = 0; x < data.size.x; x++) {
+            for (long y = 0; y < data.size.y; y++) {
+                uint16_t siz = data.column_lengths[x * data.size.y + y];
+                for (uint16_t i = 0; i < siz; i++) {
+                    draw::KV6Data::KV6Entry &b = data.blocks[p++];
+                    vxl.emplace(glm::ivec3{ x, y, b.z_pos }, b.color);
+                }
+            }
+        }
+
+        return vxl;
+    }
+
+    void FaceSelection::set(glm::ivec3 pos, Face f) {
+        std::function<void(glm::ivec3)> add_neighbor;
+        if (f == Face::FRONT || f == Face::BACK) {
+            add_neighbor = [this, f](glm::ivec3 pos) {
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::LEFT), f);
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::RIGHT), f);
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::TOP), f);
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::BOTTOM), f);
+            };
+        } else if (f == Face::TOP || f == Face::BOTTOM) {
+            add_neighbor = [this, f](glm::ivec3 pos) {
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::LEFT), f);
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::RIGHT), f);
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::FRONT), f);
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::BACK), f);
+            };
+        } else if (f == Face::LEFT || f == Face::RIGHT) {
+            add_neighbor = [this, f](glm::ivec3 pos) {
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::TOP), f);
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::BOTTOM), f);
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::FRONT), f);
+                this->add_node(draw::next_block(pos.x, pos.y, pos.z, Face::BACK), f);
+            };
+        } else {
+            return;
+        }
+
+        this->nodes.clear();
+        this->nodes.emplace_back(pos);
+        this->marked.clear();
+
+        while (!this->nodes.empty()) {
+            glm::ivec3 node = this->nodes.back();
+            this->nodes.pop_back();
+
+            const auto ret = this->marked.emplace(node);
+            if (ret.second) {
+                add_neighbor(node);
+            }
+        }
+
+        this->blocks.clear();
+        this->blocks.assign(this->marked.begin(), this->marked.end());
     }
 
     MapEditor::MapEditor(GameClient &client, const std::string &map_name) :
@@ -31,49 +94,43 @@ namespace ace { namespace scene {
         map_renderer(this->map),
         fonts(this->client.fonts),
         uniforms(this->client.shaders->create_ubo<Uniforms3D>("SceneUniforms")),
-        projection_2d(glm::ortho<float>(0.f, this->client.width(), this->client.height(), 0.0f)), scripts(py::module::import("scripts").attr("ScriptLoader")(this)) {
+        projection_2d(glm::ortho<float>(0.f, this->client.width(), this->client.height(), 0.0f)) {
 
         this->cam.thirdperson = true;
         this->cam.set_projection(75.0f, this->client.width(), this->client.height(), 0.1f, 128.f);
 
         glClearColor(1, 1, 1, 1.0f);
         this->uniforms->light_pos = normalize(glm::vec3{-0.16, 0.8, 0.56});
-        
+        this->uniforms->fog_color = { 1, 1, 1 };
         this->uniforms->fog_start = 64.f;
         this->uniforms->fog_end = 128.f;
 
         // this->color = {random::random(0, 255), random::random(0, 255), random::random(0, 255)};
+        py::module::import("sys").attr("path").cast<py::list>().append("./scripts");
+        this->script_manager = py::module::import("loader").attr("ScriptLoader")(this);
     }
 
     MapEditor::~MapEditor() {
-        script_hook_run("unload_scripts");
+        this->script_hook_run("unload_scripts");
     };
 
     void MapEditor::start() {
         this->client.set_exclusive_mouse(true);
-        script_hook_run("load_scripts", false);
+        this->script_hook_run("load_scripts", false);
     }
 
     void MapEditor::update(double dt) {
         Scene::update(dt);
-
-        glm::ivec3 hit;
-        this->map.hitscan(draw2vox(this->cam.position), draw2vox(this->cam.forward), &hit);
-        glm::u8vec3 color(this->map.get_color(hit.x, hit.y, hit.z));
         
-        auto fnt = this->client.fonts.get("Vera.ttf", 18);
-        // auto p = fnt->draw(fmt::format("Cursor: {}\n", hit), glm::vec2{ 30, 10 }, draw::colors::red(), { 1, 1 }, draw::Align::TOP_LEFT);
-        // p = fnt->draw(fmt::format("Color@Cursor: {}\n", color), p, glm::vec3(color) / 255.f);
-        // p = fnt->draw(fmt::format("Tool: {}\n", this->get_tool().name()), p, draw::colors::red());
-        // p = fnt->draw(fmt::format("Tool Mode: {}\n", this->get_tool().build_mode ? "Build" : "Delete"), p, draw::colors::red());
-        // p = fnt->draw(fmt::format("Tool Color: {}\n", this->color), p, glm::vec3(this->color) / 255.f);
+        auto fnt = this->client.fonts.get("Vera.ttf", 32);
 
         if(this->client.text_input_active()) {
-            auto &bfr(this->client.input_buffer);
-            fnt->draw(fmt::format("Enter Command:\n{}_{}", bfr.substr(0, this->client.input_cursor), bfr.substr(this->client.input_cursor)), glm::vec2(30,  500));
+            auto &bfr = this->client.input_buffer;
+            auto cursor = this->client.input_cursor;
+            fnt->draw(fmt::format("Enter Command:\n{}_{}", bfr.substr(0, cursor), bfr.substr(cursor)), glm::vec2(30, 500));
         }
 
-        script_hook_run("update", dt);
+        this->script_hook_run("update", dt);
 
         this->cam.set_projection(75.0f, this->client.width(), this->client.height(), 0.1f, this->uniforms->fog_end + 16);
         this->cam.thirdperson = !this->client.text_input_active();
@@ -100,12 +157,9 @@ namespace ace { namespace scene {
         this->client.shaders->map.uniforms("model"_u = glm::mat4(1.0), "replacement_color"_u = glm::vec3(0.f), "filter_color"_u = glm::vec3(0.f), "alpha"_u = 1.0f);
         this->map_renderer.draw(this->client.shaders->map, this->cam);
 
+        this->script_hook_run("draw");
+
         glClear(GL_DEPTH_BUFFER_BIT);
-
-        // this->get_tool().draw();
-
-        script_hook_run("draw");
-
         this->client.shaders->line.bind();
         this->debug.flush(this->cam.matrix(), this->client.shaders->line);
 
@@ -126,14 +180,19 @@ namespace ace { namespace scene {
     }
 
     void MapEditor::on_key(SDL_Scancode scancode, int modifiers, bool pressed) {
-        
-
-        script_hook_run("on_key", scancode, SDL_Keymod(modifiers), pressed);
+        this->script_hook_run("on_key", scancode, SDL_Keymod(modifiers), pressed);
 
         if (!pressed) return;
 
         if (scancode == SDL_SCANCODE_ESCAPE) this->client.quit();
-        if (scancode == SDL_SCANCODE_R) script_hook_run("load_scripts", true);
+        if (scancode == SDL_SCANCODE_R) {
+            this->script_hook_run("unload_scripts");
+            pybind11::finalize_interpreter();
+            pybind11::initialize_interpreter();
+            py::module::import("sys").attr("path").cast<py::list>().append("./scripts");
+            this->script_manager = py::module::import("loader").attr("ScriptLoader")(this);
+            this->script_hook_run("load_scripts", false);
+        }
         if (scancode == SDL_SCANCODE_T) {
             this->client.tasks.schedule(0, [this](util::Task &t) { this->client.toggle_text_input(); });
             return;
@@ -143,17 +202,20 @@ namespace ace { namespace scene {
 
     void MapEditor::on_mouse_button(int button, bool pressed) {
         // this->get_tool().on_mouse_button(button, pressed);
-        script_hook_run("on_mouse_button", button, pressed);
+        this->script_hook_run("on_mouse_button", button, pressed);
+    }
+
+    void MapEditor::on_mouse_scroll(int vertical, int horizontal) {
+        this->script_hook_run("on_mouse_scroll", vertical, horizontal);
     }
 
     void MapEditor::on_text_finished(bool cancelled) {
-        script_hook_run("on_text_finished", this->client.input_buffer, cancelled);
+        this->script_hook_run("on_text_finished", this->client.input_buffer, cancelled);
     }
 
     Face MapEditor::hitcast(glm::ivec3 *hit) const {
         return this->map.hitscan(draw2vox(this->cam.position), draw2vox(this->cam.forward), hit);
     }
-
 }}
 
 #endif

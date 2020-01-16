@@ -69,6 +69,12 @@ void bind_gl(py::module &a) {
         else
             glDisable(GL_BLEND);
     });
+    m.def("DepthTest", [](bool depth_test) {
+        if (depth_test)
+            glEnable(GL_DEPTH_TEST);
+        else
+            glDisable(GL_DEPTH_TEST);
+    });
     m.def("DepthMask", [](bool mask) {
         glDepthMask(mask);
     });
