@@ -5,7 +5,7 @@ from typing import Optional
 from ace import glm, map, draw, Button, Key, Keymod, gl
 from ace.gl import ShaderProgram
 from ace.glm import ivec3, vec3
-from ace.editor import kv6_to_blocks, BoxSelection, LineSelection, FaceSelection
+from ace.editor import BoxSelection, LineSelection, FaceSelection
 
 from . import scene
 
@@ -85,7 +85,7 @@ class ModelTool(Tool):
         if not model.endswith(".kv6"): model += ".kv6"
         self.name = f"Model ({model})"
 
-        self.blocks = kv6_to_blocks(f"kv6/{model}")
+        self.blocks = self.parent.editor.kv6_to_blocks(f"kv6/{model}")
         self.max_height = max(self.blocks.keys(), key=lambda b: b.z).z
         self.outline = draw.VXLBlocks(self.blocks, vec3(0, 0, self.max_height))
         self.outline_offset = vec3(0, 0, 0) # for rotation
