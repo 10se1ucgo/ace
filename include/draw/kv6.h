@@ -20,17 +20,33 @@ namespace ace { namespace draw {
 #pragma pack(pop)
     }
 
+    struct KV6Data {
+        explicit KV6Data(const std::string &file);
+
+        glm::i32vec3 size{};
+        glm::vec3 pivot{};
+        int32_t num_voxels{};
+        size_t num_columns;
+
+        struct KV6Entry {
+            glm::u8vec3 color;
+            uint16_t z_pos;
+            uint8_t vis_flags, normal_index;
+        };
+
+        std::unique_ptr<KV6Entry[]> blocks;
+        std::unique_ptr<uint16_t[]> column_lengths;
+    };
+
     struct KV6Mesh {
-        explicit KV6Mesh(const std::string &name);
+        explicit KV6Mesh(const std::string &file);
 
         void draw() const {
             this->mesh.draw();
         }
 
         gl::experimental::mesh<detail::KV6Vertex> mesh{ "3f,3f,3f,3f" };
-
-        int32_t xsiz, ysiz, zsiz, num_voxels;
-        float xpiv, ypiv, zpiv;
+        KV6Data data;
     };
 
 
@@ -80,15 +96,14 @@ namespace ace { namespace draw {
     struct KV6Manager {
         KV6Mesh *get(const std::string &name) {
             try {
-                return &models.at(name);
+                return &this->models.at(name);
             } catch (std::out_of_range &) {
     //            auto x = std::make_unique<KV6Mesh>("kv6/" + name);
-                return &models.emplace(name, get_resource_path("kv6/" + name)).first->second;
+                return &this->models.emplace(name, get_resource_path("kv6/" + name)).first->second;
             }
         }
     private:
         std::unordered_map<std::string, KV6Mesh> models;
     };
 }}
-
 

@@ -16,16 +16,16 @@ namespace ace { namespace draw {
 
     namespace {
         // adapted from SLAB6.C by Ken Silverman (http://advsys.net/ken)
-        constexpr float GOLDRAT = 1 - 1 / glm::golden_ratio<float>();
+        constexpr float GOLDRAT_2PI = (1 - 1 / glm::golden_ratio<float>()) * glm::two_pi<float>();
         constexpr int TABLE_SIZE = 256;
 
         glm::vec3 equiind2vec(long i, float zmulk, float zaddk) {
             float z = i * zmulk + zaddk;
             float r = sqrtf(1.f - z * z);
-            float v = i * (GOLDRAT * glm::pi<float>() * 2);
+            float v = i * GOLDRAT_2PI;
             float x = cos(v) * r;
             float y = sin(v) * r;
-            return { -x, z, -y };
+            return { x, z, y };
         }
 
         template<int N>
@@ -44,12 +44,7 @@ namespace ace { namespace draw {
 
         const auto NORMAL_TABLE = equimemset<TABLE_SIZE>();
 
-        struct KV6Vox {
-            uint8_t r, g, b, vis, normal;
-            uint16_t height;
-        };
-
-        void gen_faces(float x, float y, float z, glm::vec3 color, glm::vec3 kv6norm, uint8_t vis, ace::gl::experimental::mesh<KV6Vertex> &mesh) {
+        void gen_faces(float x, float y, float z, glm::vec3 color, glm::vec3 kv6norm, uint8_t vis, gl::experimental::mesh<KV6Vertex> &mesh) {
             const float x0 = x - 0.5f, x1 = x + 0.5f;
             const float y0 = y - 0.5f, y1 = y + 0.5f;
             const float z0 = z - 0.5f, z1 = z + 0.5f;
@@ -114,52 +109,68 @@ namespace ace { namespace draw {
         }
     }
 
-
-    KV6Mesh::KV6Mesh(const std::string &name) {
-        FILE *f = fopen(name.c_str(), "rb");
-        if (!f) THROW_ERROR("COULDN'T OPEN KV6Mesh FILE {}", name);
+    KV6Data::KV6Data(const std::string &file) {
+        FILE *f = fopen(file.c_str(), "rb");
+        if (!f)
+            THROW_ERROR("COULD NOT OPEN KV6 FILE {}", file);
 
         char magic[5];
         fread(magic, 4, 1, f);
         magic[4] = '\0';
-        if (strcmp(magic, "Kvxl") != 0) THROW_ERROR("INVALID KV6Mesh FILE MAGIC {}", name);
 
-        fread(&this->xsiz, sizeof(this->xsiz), 1, f); fread(&this->ysiz, sizeof(this->ysiz), 1, f); fread(&this->zsiz, sizeof(this->zsiz), 1, f);
-        fread(&this->xpiv, sizeof(this->xpiv), 1, f); fread(&this->ypiv, sizeof(this->ypiv), 1, f); fread(&this->zpiv, sizeof(this->zpiv), 1, f);
+        if (strcmp(magic, "Kvxl") != 0)
+            THROW_ERROR("INVALID KV6 FILE MAGIC {}", file);
+
+        constexpr auto ssize = sizeof(decltype(this->size)::value_type);
+        fread(glm::value_ptr(this->size), ssize, decltype(this->size)::length(), f);
+        
+        if (any(lessThan(this->size, {1, 1, 1})) || this->size.z > std::numeric_limits<uint16_t>::max())
+            THROW_ERROR("INVALID DIMENSIONS FOR KV6 {}: {}", file, this->size);
+        
+        constexpr auto psize = sizeof(decltype(this->pivot)::value_type);
+        fread(glm::value_ptr(this->pivot), psize, decltype(this->pivot)::length(), f);
+
         fread(&this->num_voxels, sizeof(this->num_voxels), 1, f);
+        
+        if (this->num_voxels < 0)
+            THROW_ERROR("INVALID NUMBER OF VOXELS FOR KV6 {}: {}", file, this->num_voxels);
 
-
-
-    //    KV6Vox *blocks = new KV6Vox[num_voxels];
-        std::unique_ptr<KV6Vox[]> blocks(std::make_unique<KV6Vox[]>(this->num_voxels));
-
-        for (long i = 0; i < this->num_voxels; i++) {
+        this->blocks = std::make_unique<KV6Entry[]>(this->num_voxels);
+        for (int i = 0; i < this->num_voxels; i++) {
             uint8_t b = fgetc(f);
             uint8_t g = fgetc(f);
             uint8_t r = fgetc(f);
-            uint8_t a = fgetc(f);
-            uint16_t height;
-            fread(&height, sizeof(height), 1, f);
-            uint8_t visibility = fgetc(f);
+            uint8_t a = fgetc(f); // dummy, always 128
+
+            uint16_t z;
+            fread(&z, sizeof(z), 1, f);
+
+            uint8_t visflags = fgetc(f);
             uint8_t normal = fgetc(f);
-            blocks[i] = { r, g, b, visibility, normal, height };
+
+            this->blocks[i] = {{r, g, b}, z, visflags, normal };
         }
 
-        fseek(f, xsiz * 4, SEEK_CUR);
-        std::unique_ptr<uint16_t[]> xyoffset(std::make_unique<uint16_t[]>(xsiz * ysiz));
-        fread(xyoffset.get(), sizeof(xyoffset[0]), xsiz * ysiz, f);
+        // skip x plane surface voxel length
+        fseek(f, this->size.x * 4, SEEK_CUR);
+
+        // number of voxels in column (x, y) = column_length[x * size.y + y]
+        this->num_columns = size_t(this->size.x) * size_t(this->size.y);
+        this->column_lengths = std::make_unique<uint16_t[]>(this->num_columns);
+        fread(this->column_lengths.get(), sizeof(this->column_lengths[0]), this->num_columns, f);
 
         fclose(f);
+    }
 
-
+    KV6Mesh::KV6Mesh(const std::string &file) : data(file) {
         int p = 0;
-        for (long x = 0; x < this->xsiz; x++) {
-            for (long y = 0; y < this->ysiz; y++) {
-                uint16_t siz = xyoffset[x * this->ysiz + y];
+        for (long x = 0; x < this->data.size.x; x++) {
+            for (long y = 0; y < this->data.size.y; y++) {
+                uint16_t siz = this->data.column_lengths[x * this->data.size.y + y];
                 for (uint16_t i = 0; i < siz; i++) {
-                    KV6Vox &b = blocks[p];
-                    gen_faces(x - this->xpiv, -b.height + this->zpiv, y - this->ypiv, glm::vec3{ b.r, b.g, b.b } / 255.f, NORMAL_TABLE[b.normal], b.vis, this->mesh);
-                    p++;
+                    auto &b = this->data.blocks[p++];
+                    gen_faces(x - this->data.pivot.x, -b.z_pos + this->data.pivot.z, y - this->data.pivot.y,
+                              glm::vec3{ b.color } / 255.f, NORMAL_TABLE[b.normal_index], b.vis_flags, this->mesh);
                 }
             }
         }
@@ -168,17 +179,17 @@ namespace ace { namespace draw {
     }
 
     bool KV6::sprhitscan(glm::vec3 ray_origin, glm::vec3 ray_direction, glm::vec3 *h) const {
-        auto piv = glm::vec3{ this->mesh->xpiv, this->mesh->ypiv, this->mesh->zpiv };
-        auto siz = glm::vec3{ this->mesh->xsiz, this->mesh->ysiz, this->mesh->zsiz };
+        glm::vec3 piv = this->mesh->data.pivot;
+        glm::vec3 siz = this->mesh->data.size;
 
-        glm::vec3 min = ace::vox2draw(-piv);
-        glm::vec3 max = ace::vox2draw(siz - piv);
+        glm::vec3 min = vox2draw(-piv);
+        glm::vec3 max = vox2draw(siz - piv);
 
         glm::mat4 mm = this->get_model();
         glm::mat4 inverse = glm::inverse(mm);
 
         glm::vec3 r_origin = inverse * glm::vec4(ace::vox2draw(ray_origin), 1.0);
-        glm::vec3 r_direction = glm::normalize(inverse * glm::vec4(ace::vox2draw(ray_direction), 0.0));
+        glm::vec3 r_direction = normalize(inverse * glm::vec4(vox2draw(ray_direction), 0.0));
 
         for (int i = 0; i < decltype(r_direction)::length(); i++) {
             if (r_direction[i] == 0.0f || std::isnan(r_direction[i])) {
@@ -204,7 +215,7 @@ namespace ace { namespace draw {
         assert(!glm::any(glm::isnan(r_origin)));
         assert(!glm::any(glm::isnan(r_direction)));
 
-        *h = ace::draw2vox(glm::vec3(mm * glm::vec4(r_origin + r_direction * tmin, 1.0)));
+        *h = draw2vox(glm::vec3(mm * glm::vec4(r_origin + r_direction * tmin, 1.0)));
         return true;
     }
 }}
