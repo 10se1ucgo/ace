@@ -316,9 +316,9 @@ namespace ace { namespace world {
         if (fabs(this->v.x) > 0.01f || fabs(this->v.y) > 0.01f) {
             if (scene.time >= this->next_footstep && (mf || mb || ml || mr) && !this->airborne && !this->crouch && !this->sneak) {
 
-                int step = this->scene.ms_time & 3;
+                int step = random::random(0, 3);
                 this->play_sound(STEPS[step + int(this->wade) * 4]);
-                this->next_footstep = scene.time + (this->sprint ? 0.386f : 0.512f);
+                this->next_footstep = scene.time + (this->sprint ? 0.386 : 0.512);
             }
         }
 

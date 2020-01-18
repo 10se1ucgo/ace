@@ -77,7 +77,6 @@ namespace ace { namespace scene {
         glEnable(GL_MULTISAMPLE);
         glEnable(GL_CULL_FACE);
         glCullFace(GL_BACK);
-        
 
         this->uniforms.upload();
 

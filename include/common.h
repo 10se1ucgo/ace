@@ -40,8 +40,8 @@ namespace ace {
 
     // Simple, generic wrappers around standard C++ <random>
     namespace random {
-        inline std::default_random_engine &engine() {
-            static std::default_random_engine eng(std::random_device{}());
+        inline std::minstd_rand &engine() {
+            static std::minstd_rand eng(std::random_device{}());
             return eng;
         }
 

@@ -39,7 +39,7 @@ namespace ace { namespace gl {
 
         template <typename T>
         uni_arg<T> operator=(T &&value) const {
-            return { str, std::forward<T>(value) };
+            return { this->str, std::forward<T>(value) };
         }
     };
 
@@ -64,9 +64,9 @@ namespace ace { namespace gl {
         void link();
 
         void bind() const {
-            if (bound_program == this->program) return;
+            if (ShaderProgram::bound_program == this->program) return;
             glUseProgram(this->program);
-            bound_program = this->program;
+            ShaderProgram::bound_program = this->program;
         }
         static void unbind() { glUseProgram(0); }
 
@@ -96,7 +96,7 @@ namespace ace { namespace gl {
 
         GLuint uniform_loc(const std::string &name) {
             try {
-                return uniform_cache.at(name);
+                return this->uniform_cache.at(name);
             } catch (const std::out_of_range &) {
                 const GLuint loc = glGetUniformLocation(this->program, name.c_str());
                 this->uniform_cache[name] = loc;

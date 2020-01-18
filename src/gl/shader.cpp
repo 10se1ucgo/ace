@@ -106,7 +106,3 @@ namespace ace { namespace gl {
 //    const GLint location = this->uniform_loc(name);
 //    glUniformMatrix4fv(location, 1, transpose, value_ptr(mat));
 //}
-
-
-
-#undef DECLARE_UNIFORM_V_FUNC
