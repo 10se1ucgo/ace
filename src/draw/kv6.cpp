@@ -25,20 +25,20 @@ namespace ace { namespace draw {
             float v = i * GOLDRAT_2PI;
             float x = cos(v) * r;
             float y = sin(v) * r;
-            return { x, z, y };
+            return { -x, -y, z };
         }
 
         template<int N>
         std::array<glm::vec3, N> equimemset() {
-            const float zmulk = 2.0f / N;
-            const float zaddk = zmulk * 0.5f - 1.0f;
+            constexpr float zmulk = 2.0f / (N - 1);
+            constexpr float zaddk = zmulk * 0.5f - 1.0f;
 
             std::array<glm::vec3, N> table;
 
             for (long i = N - 2; i >= 0; --i) {
                 table[i] = equiind2vec(i, zmulk, zaddk);
             }
-            table[N - 1] = glm::vec3{ 0, 0, 0 };
+            table[N - 1] = glm::vec3{ -2, 0, 0 };
             return table;
         }
 
