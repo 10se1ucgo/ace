@@ -63,17 +63,29 @@ namespace ace { namespace net {
 
         template<typename T>
         glm::tvec2<T> read_vec2() {
-            return { this->read<T>(), this->read<T>(), this->read<T>() };
+            glm::tvec2<T> res;
+            res.x = this->read<T>();
+            res.y = this->read<T>();
+            return res;
         }
 
         template<typename T>
         glm::tvec3<T> read_vec3() {
-            return { this->read<T>(), this->read<T>(), this->read<T>() };
+            glm::tvec3<T> res;
+            res.x = this->read<T>();
+            res.y = this->read<T>();
+            res.z = this->read<T>();
+            return res;
         }
 
         template<typename T>
         glm::tvec4<T> read_vec4() {
-            return { this->read<T>(), this->read<T>(), this->read<T>(), this->read<T>() };
+            glm::tvec4<T> res;
+            res.x = this->read<T>();
+            res.y = this->read<T>();
+            res.z = this->read<T>();
+            res.w = this->read<T>();
+            return res;
         }
 
         glm::u8vec3 read_color() {
