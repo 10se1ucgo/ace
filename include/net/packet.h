@@ -299,135 +299,77 @@ namespace ace { namespace net {
         NEUTRAL,
     };
 
+    struct PacketHandler;
 
     struct Loader {
         virtual ~Loader() = default;
         virtual void read(ByteReader &reader) = 0;
         virtual void write(ByteWriter &writer) const = 0;
         virtual PACKET packet_id() const = 0;
+        virtual void dispatch(PacketHandler &handler) { }
     };
 
 // BADMACROBADMACROBADMACRO
-#define _PACKET_ID(PacketName) PACKET packet_id() const final { return PACKET::PacketName; }
+#define _PACKET_ID(PacketName) PACKET packet_id() const override { return PACKET::PacketName; }
+#define _DECL_DISPATCH_FUNC void dispatch(PacketHandler &handler) override;
 //    static constexpr PACKET packet_id2 = PACKET::PacketName;
 // BADMACROBADMACROBADMACRO
 
     struct PositionData final : Loader  {
         glm::vec3 position;
 
-        void read(ByteReader &reader) override {
-            this->position = reader.read_vec3<float>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(position);
-        }
-
-        _PACKET_ID(PositionData)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(PositionData);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct OrientationData final : Loader {
         glm::vec3 orientation;
 
-        void read(ByteReader &reader) override {
-            this->orientation = reader.read_vec3<float>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->orientation);
-        }
-
-        _PACKET_ID(OrientationData)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(OrientationData);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct WorldUpdate final : Loader {
         std::vector<std::pair<glm::vec3, glm::vec3>> items;
 
-        void read(ByteReader &reader) override {
-            this->items.clear();
-
-            // sometimes all 32 aren't sent? not sure why.
-            int num = int(reader.remaining_size()) / 24; // 4 bytes per float * 6 floats
-            for (int i = 0; i < num; ++i) {
-                glm::vec3 p = reader.read_vec3<float>();
-                glm::vec3 o = reader.read_vec3<float>();
-                this->items.emplace_back(p, o);
-            }
-        }
-
-        // todo
-        void write(ByteWriter &writer) const override {
-            
-        }
-
-        _PACKET_ID(WorldUpdate)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(WorldUpdate);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct InputData final : Loader {
         uint8_t pid;
         bool up : 1, down : 1, left : 1, right : 1, jump : 1, crouch : 1, sneak : 1, sprint : 1;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            uint8_t flags = reader.read<uint8_t>();
-            this->up = flags & (1 << 0);
-            this->down = flags & (1 << 1);
-            this->left = flags & (1 << 2);
-            this->right = flags & (1 << 3);
-            this->jump = flags & (1 << 4);
-            this->crouch = flags & (1 << 5);
-            this->sneak = flags & (1 << 6);
-            this->sprint = flags & (1 << 7);
-        }
-
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            uint8_t flags =
-                this->up << 0 |
-                this->down << 1 |
-                this->left << 2 |
-                this->right << 3 |
-                this->jump << 4 |
-                this->crouch << 5 |
-                this->sneak << 6 |
-                this->sprint << 7;
-            writer.write(flags);
-        }
-
-        _PACKET_ID(InputData)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(InputData);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct WeaponInput final : Loader {
         uint8_t pid;
         bool primary : 1, secondary : 1;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            uint8_t flags = reader.read<uint8_t>();
-            this->primary = flags & (1 << 0);
-            this->secondary = flags & (1 << 1);
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            uint8_t flags = this->primary << 0 | this->secondary << 1;
-            writer.write(flags);
-        }
-
-        _PACKET_ID(WeaponInput)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(WeaponInput);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct HitPacket final : Loader {
         uint8_t pid;
         HIT value;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->value = reader.read<HIT>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->value);
-        }
-
-        _PACKET_ID(HitPacket)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(HitPacket);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct SetHP final : Loader {
@@ -435,18 +377,10 @@ namespace ace { namespace net {
         DAMAGE type;
         glm::vec3 source;
 
-        void read(ByteReader &reader) override {
-            this->hp = reader.read<uint8_t>();
-            this->type = reader.read<DAMAGE>();
-            this->source = reader.read_vec3<float>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->hp);
-            writer.write(this->type);
-            writer.write(this->source);
-        }
-
-        _PACKET_ID(SetHP)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(SetHP);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct GrenadePacket final : Loader {
@@ -454,52 +388,30 @@ namespace ace { namespace net {
         float fuse;
         glm::vec3 position, velocity;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->fuse = reader.read<float>();
-            this->position = reader.read_vec3<float>();
-            this->velocity = reader.read_vec3<float>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->fuse);
-            writer.write(this->position);
-            writer.write(this->velocity);
-        }
-
-        _PACKET_ID(GrenadePacket)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(GrenadePacket);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct SetTool final : Loader {
         uint8_t pid;
         TOOL tool;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->tool = reader.read<TOOL>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->tool);
-        }
-
-        _PACKET_ID(SetTool)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(SetTool);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct SetColor final : Loader {
         uint8_t pid;
         glm::u8vec3 color;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->color = reader.read_color();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write_color(this->color);
-        }
-
-        _PACKET_ID(SetColor)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(SetColor);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct ExistingPlayer final : Loader {
@@ -511,44 +423,20 @@ namespace ace { namespace net {
         glm::u8vec3 color;
         std::string name;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->team = reader.read<TEAM>();
-            this->weapon = reader.read<WEAPON>();
-            this->tool = reader.read<TOOL>();
-            this->kills = reader.read<uint32_t>();
-            this->color = reader.read_color();
-            this->name = reader.read_str();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->team);
-            writer.write(this->weapon);
-            writer.write(this->tool);
-            writer.write(this->kills);
-            writer.write_color(this->color);
-            writer.write(this->name);
-        }
-
-        _PACKET_ID(ExistingPlayer)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(ExistingPlayer);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct ShortPlayerData final : Loader {
         uint8_t pid, weapon;
         int8_t team;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->team = reader.read<int8_t>();
-            this->weapon = reader.read<uint8_t>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->team);
-            writer.write(this->weapon);
-        }
-
-        _PACKET_ID(ShortPlayerData)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(ShortPlayerData);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct MoveObject final : Loader {
@@ -556,18 +444,10 @@ namespace ace { namespace net {
         TEAM state;
         glm::vec3 position;
 
-        void read(ByteReader &reader) override {
-            this->type = reader.read<OBJECT>();
-            this->state = reader.read<TEAM>();
-            this->position = reader.read_vec3<float>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->type);
-            writer.write(this->state);
-            writer.write(this->position);
-        }
-
-        _PACKET_ID(MoveObject)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(MoveObject);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct CreatePlayer final : Loader {
@@ -577,22 +457,10 @@ namespace ace { namespace net {
         glm::vec3 position;
         std::string name;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->weapon = reader.read<WEAPON>();
-            this->team = reader.read<TEAM>();
-            this->position = reader.read_vec3<float>();
-            this->name = reader.read_str();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->weapon);
-            writer.write(this->team);
-            writer.write(this->position);
-            writer.write(this->name);
-        }
-
-        _PACKET_ID(CreatePlayer)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(CreatePlayer);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct BlockAction final : Loader {
@@ -600,36 +468,20 @@ namespace ace { namespace net {
         ACTION value;
         glm::i32vec3 position;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->value = reader.read<ACTION>();
-            this->position = reader.read_vec3<uint32_t>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->value);
-            writer.write(this->position);
-        }
-
-        _PACKET_ID(BlockAction)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(BlockAction);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct BlockLine final : Loader {
         uint8_t pid;
         glm::i32vec3 start, end;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->start = reader.read_vec3<uint32_t>();
-            this->end = reader.read_vec3<uint32_t>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->start);
-            writer.write(this->end);
-        }
-
-        _PACKET_ID(BlockLine)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(BlockLine);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct CTFState {
@@ -638,36 +490,7 @@ namespace ace { namespace net {
         uint8_t team1_carrier, team2_carrier;
         glm::vec3 team1_flag, team2_flag, team1_base, team2_base;
 
-        void read(ByteReader &r) {
-            this->team1_score = r.read<uint8_t>();
-            this->team2_score = r.read<uint8_t>();
-            this->cap_limit = r.read<uint8_t>();
-            uint8_t intel_flags = r.read<uint8_t>();
-            this->team1_has_intel = intel_flags & (1 << 0);
-            this->team2_has_intel = intel_flags & (1 << 1);
-
-            if(this->team2_has_intel) {
-                this->team1_carrier = r.read<uint8_t>();
-                this->team1_flag = { -1, -1, -1 };
-                r.read(11);
-            } else {
-                this->team1_carrier = 255;
-                this->team1_flag = r.read_vec3<float>();
-            }
-
-            if (this->team1_has_intel) {
-                this->team2_carrier = r.read<uint8_t>();
-                this->team2_flag = { -1, -1, -1 };
-                r.read(11);
-            }
-            else {
-                this->team2_carrier = 255;
-                this->team2_flag = r.read_vec3<float>();
-            }
-
-            this->team1_base = r.read_vec3<float>();
-            this->team2_base = r.read_vec3<float>();
-        }
+        void read(ByteReader &r);
     };
 
     struct TCState {
@@ -679,45 +502,22 @@ namespace ace { namespace net {
     };
 
     struct StateData final : Loader {
-        uint8_t pid{0};
-        glm::u8vec3 fog_color, team1_color, team2_color;
+        uint8_t pid;
+        glm::u8vec3 fog_color;
+
+        glm::u8vec3 team1_color, team2_color;
         std::string team1_name, team2_name;
-        uint8_t mode{0};
+
+        uint8_t mode;
         union ModeState {
             CTFState ctf; TCState tc;
             ModeState() : ctf() { }
         } state;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->fog_color = reader.read_color();
-            this->team1_color = reader.read_color();
-            this->team2_color = reader.read_color();
-            this->team1_name = reader.read_str(10, true);
-            this->team2_name = reader.read_str(10, true);
-
-            this->mode = reader.read<uint8_t>();
-            memset(&this->state, 0, sizeof(this->state));
-            if(mode == 0) {
-                this->state.ctf.read(reader);
-            } else {
-                THROW_ERROR("Territory Control gamemode not supported!");
-                this->state = ModeState();
-                // TODO: territory control state
-            }
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write_color(this->fog_color);
-            writer.write_color(this->team1_color);
-            writer.write_color(this->team2_color);
-            writer.write(this->team1_name, 10);
-            writer.write(this->team2_name, 10);
-            writer.write(this->mode);
-            // TODO: game mode state
-        }
-
-        _PACKET_ID(StateData)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(StateData);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct KillAction final : Loader {
@@ -725,20 +525,10 @@ namespace ace { namespace net {
         KILL type;
         uint8_t respawn_time;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->killer = reader.read<uint8_t>();
-            this->type = reader.read<KILL>();
-            this->respawn_time = reader.read<uint8_t>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->killer);
-            writer.write(this->type);
-            writer.write(this->respawn_time);
-        }
-
-        _PACKET_ID(KillAction)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(KillAction);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct ChatMessage final : Loader {
@@ -746,31 +536,19 @@ namespace ace { namespace net {
         CHAT type;
         std::string message;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->type = reader.read<CHAT>();
-            this->message = reader.read_str();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->type);
-            writer.write(this->message);
-        }
-
-        _PACKET_ID(ChatMessage)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(ChatMessage);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct PlayerLeft final : Loader {
         uint8_t pid;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-        }
-
-        _PACKET_ID(PlayerLeft)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(PlayerLeft);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct TerritoryCapture final : Loader {
@@ -778,18 +556,10 @@ namespace ace { namespace net {
         TEAM winning;
         TEAM state;
 
-        void read(ByteReader &reader) override {
-            this->object = reader.read<OBJECT>();
-            this->winning = reader.read<TEAM>();
-            this->state = reader.read<TEAM>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->object);
-            writer.write(this->winning);
-            writer.write(this->state);
-        }
-
-        _PACKET_ID(TerritoryCapture)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(TerritoryCapture);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct ProgressBar final : Loader {
@@ -798,140 +568,85 @@ namespace ace { namespace net {
         int8_t rate;
         float progress;
 
-        void read(ByteReader &reader) override {
-            this->object = reader.read<uint8_t>();
-            this->team = reader.read<TEAM>();
-            this->rate = reader.read<int8_t>();
-            this->progress = reader.read<float>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->object);
-            writer.write(this->team);
-            writer.write(this->rate);
-            writer.write(this->progress);
-        }
-
-        _PACKET_ID(ProgressBar)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(ProgressBar);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct IntelCapture final : Loader {
         uint8_t pid, winning;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->winning = reader.read<uint8_t>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->winning);
-        }
-
-        _PACKET_ID(IntelCapture)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(IntelCapture);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct IntelPickup final : Loader {
         uint8_t pid;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-        }
-
-        _PACKET_ID(IntelPickup)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(IntelPickup);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct IntelDrop final : Loader {
         uint8_t pid;
         glm::vec3 pos;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->pos = reader.read_vec3<float>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->pos);
-        }
-
-        _PACKET_ID(IntelDrop)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(IntelDrop);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct Restock final : Loader {
         uint8_t pid;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-        }
-
-        _PACKET_ID(Restock)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(Restock);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct FogColor final : Loader {
         glm::u8vec4 color;
 
-        void read(ByteReader &reader) override {
-            this->color = glm::u8vec4(reader.read_color(), reader.read<uint8_t>()); // read BGR into RGB, then read A to form RGBA
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write_color(glm::u8vec3(this->color)); // write RGB as BGR, then write A to form BGRA.
-            writer.write(this->color.a);
-        }
-
-        _PACKET_ID(FogColor)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(FogColor);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct WeaponReload final : Loader {
         uint8_t pid, primary, secondary;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->primary = reader.read<uint8_t>();
-            this->secondary = reader.read<uint8_t>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->primary);
-            writer.write(this->secondary);
-        }
-
-        _PACKET_ID(WeaponReload)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(WeaponReload);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct ChangeTeam final : Loader {
         uint8_t pid;
         TEAM team;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->team = reader.read<TEAM>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->team);
-        }
-
-        _PACKET_ID(ChangeTeam)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(ChangeTeam);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct ChangeWeapon final : Loader {
         uint8_t pid;
         WEAPON weapon;
 
-        void read(ByteReader &reader) override {
-            this->pid = reader.read<uint8_t>();
-            this->weapon = reader.read<WEAPON>();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(this->pid);
-            writer.write(this->weapon);
-        }
-
-        _PACKET_ID(ChangeWeapon)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(ChangeWeapon);
+        _DECL_DISPATCH_FUNC;
     };
 
     struct VersionResponse final : Loader {
@@ -940,25 +655,89 @@ namespace ace { namespace net {
         glm::u8vec3 version;
         std::string os_info;
 
-        void read(ByteReader &reader) override {
-            this->client = static_cast<char>(reader.read<uint8_t>());
-            this->version = reader.read_vec3<uint8_t>();
-            this->os_info = reader.read_str();
-        }
-        void write(ByteWriter &writer) const override {
-            writer.write(static_cast<uint8_t>(this->client));
-            writer.write(this->version);
-            writer.write(this->os_info);
-        }
-
-        _PACKET_ID(VersionResponse)
+        void read(ByteReader &reader) override;
+        void write(ByteWriter &writer) const override;
+        _PACKET_ID(VersionResponse);
+        _DECL_DISPATCH_FUNC;
     };
 
 #undef _PACKET_ID
+#undef _DECL_DISPATCH_FUNC
+
+#define _DECL_HANDLE_FUNC(PacketType) virtual void handle(PacketType &packet) { }
+    struct PacketHandler {
+        virtual ~BasePacketHandler() = default;
+        _DECL_HANDLE_FUNC(PositionData)
+        _DECL_HANDLE_FUNC(OrientationData)
+        _DECL_HANDLE_FUNC(WorldUpdate)
+        _DECL_HANDLE_FUNC(InputData)
+        _DECL_HANDLE_FUNC(WeaponInput)
+        _DECL_HANDLE_FUNC(HitPacket)
+        _DECL_HANDLE_FUNC(SetHP)
+        _DECL_HANDLE_FUNC(GrenadePacket)
+        _DECL_HANDLE_FUNC(SetTool)
+        _DECL_HANDLE_FUNC(SetColor)
+        _DECL_HANDLE_FUNC(ExistingPlayer)
+        _DECL_HANDLE_FUNC(ShortPlayerData)
+        _DECL_HANDLE_FUNC(MoveObject)
+        _DECL_HANDLE_FUNC(CreatePlayer)
+        _DECL_HANDLE_FUNC(BlockAction)
+        _DECL_HANDLE_FUNC(BlockLine)
+        _DECL_HANDLE_FUNC(StateData)
+        _DECL_HANDLE_FUNC(KillAction)
+        _DECL_HANDLE_FUNC(ChatMessage)
+        _DECL_HANDLE_FUNC(PlayerLeft)
+        _DECL_HANDLE_FUNC(TerritoryCapture)
+        _DECL_HANDLE_FUNC(ProgressBar)
+        _DECL_HANDLE_FUNC(IntelCapture)
+        _DECL_HANDLE_FUNC(IntelPickup)
+        _DECL_HANDLE_FUNC(IntelDrop)
+        _DECL_HANDLE_FUNC(Restock)
+        _DECL_HANDLE_FUNC(FogColor)
+        _DECL_HANDLE_FUNC(WeaponReload)
+        _DECL_HANDLE_FUNC(ChangeTeam)
+        _DECL_HANDLE_FUNC(ChangeWeapon)
+        _DECL_HANDLE_FUNC(VersionResponse)
+    };
+#undef _DECL_HANDLE_FUNC
+
+#define _IMPL_DISPATCH_FUNC(PacketType) inline void PacketType::dispatch(BasePacketHandler &handler) { handler.handle(*this); };
+    _IMPL_DISPATCH_FUNC(PositionData);
+    _IMPL_DISPATCH_FUNC(OrientationData);
+    _IMPL_DISPATCH_FUNC(WorldUpdate);
+    _IMPL_DISPATCH_FUNC(InputData);
+    _IMPL_DISPATCH_FUNC(WeaponInput);
+    _IMPL_DISPATCH_FUNC(HitPacket);
+    _IMPL_DISPATCH_FUNC(SetHP);
+    _IMPL_DISPATCH_FUNC(GrenadePacket);
+    _IMPL_DISPATCH_FUNC(SetTool);
+    _IMPL_DISPATCH_FUNC(SetColor);
+    _IMPL_DISPATCH_FUNC(ExistingPlayer);
+    _IMPL_DISPATCH_FUNC(ShortPlayerData);
+    _IMPL_DISPATCH_FUNC(MoveObject);
+    _IMPL_DISPATCH_FUNC(CreatePlayer);
+    _IMPL_DISPATCH_FUNC(BlockAction);
+    _IMPL_DISPATCH_FUNC(BlockLine);
+    _IMPL_DISPATCH_FUNC(StateData);
+    _IMPL_DISPATCH_FUNC(KillAction);
+    _IMPL_DISPATCH_FUNC(ChatMessage);
+    _IMPL_DISPATCH_FUNC(PlayerLeft);
+    _IMPL_DISPATCH_FUNC(TerritoryCapture);
+    _IMPL_DISPATCH_FUNC(ProgressBar);
+    _IMPL_DISPATCH_FUNC(IntelCapture);
+    _IMPL_DISPATCH_FUNC(IntelPickup);
+    _IMPL_DISPATCH_FUNC(IntelDrop);
+    _IMPL_DISPATCH_FUNC(Restock);
+    _IMPL_DISPATCH_FUNC(FogColor);
+    _IMPL_DISPATCH_FUNC(WeaponReload);
+    _IMPL_DISPATCH_FUNC(ChangeTeam);
+    _IMPL_DISPATCH_FUNC(ChangeWeapon);
+    _IMPL_DISPATCH_FUNC(VersionResponse);
+#undef _IMPL_DISPATCH_FUNC
 
     inline std::unique_ptr<Loader> get_loader(PACKET id) {
         switch(id) {
-            case PACKET::PositionData: return std::make_unique<PositionData>();
+            case PACKET::PositionData:  return std::make_unique<PositionData>();
             case PACKET::OrientationData: return std::make_unique<OrientationData>();
             case PACKET::WorldUpdate: return std::make_unique<WorldUpdate>();
             case PACKET::InputData: return std::make_unique<InputData>();
