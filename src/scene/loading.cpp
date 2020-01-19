@@ -127,7 +127,7 @@ namespace ace { namespace scene {
     }
 
     void LoadingScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> packet) {
-        if(type == net::PACKET::StateData) {
+        if (type == net::PACKET::StateData) {
             auto buf(net::inflate(this->client.net.map_writer.data(), this->client.net.map_writer.size()));
             this->game_scene = std::make_unique<GameScene>(this->client, *reinterpret_cast<net::StateData *>(packet.get()), buf.data());
             this->frame.start_button->enable(true);

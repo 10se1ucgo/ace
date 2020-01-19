@@ -136,7 +136,11 @@ namespace ace { namespace net {
         }
     }
 
-    NetworkClient::NetworkClient(ace::GameClient &client) : BaseNetClient(), client(client), disconnect_reason(DISCONNECT::INVALID), state(NetState::UNCONNECTED) {
+    NetworkClient::NetworkClient(ace::GameClient &client) :
+        BaseNetClient(),
+        client(client),
+        disconnect_reason(DISCONNECT::INVALID),
+        state(NetState::UNCONNECTED) {
         enet_host_compress_with_range_coder(this->host);
     }
 

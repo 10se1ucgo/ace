@@ -53,6 +53,10 @@ namespace ace { namespace net {
         }
     };
 
+    // struct PacketHandler : BasePacketHandler {
+    //     virtual void on_net_event(net::NetState event) { };
+    // };
+
     struct BaseNetClient {
         BaseNetClient();
         virtual ~BaseNetClient();
