@@ -22,6 +22,8 @@
 
 
 namespace ace { namespace scene {
+    class GameScene;
+
     struct Team {
         Team() : Team("Neutral", {255, 255, 255}, net::TEAM::NEUTRAL) {}
         Team(std::string name, glm::ivec3 color, net::TEAM id) :
@@ -47,6 +49,40 @@ namespace ace { namespace scene {
         world::DrawPlayer *ply;
         net::HIT type;
         glm::vec3 hit;
+    };
+
+    // Eventually it would be super nice if I could encapsulate all networked state into this struct
+    // Then this class would puppeteer the world and the rest of the world could be completely unaware of network state.
+    struct GamePacketHandler : net::PacketHandler {
+        GamePacketHandler(GameScene &scene) : scene(scene) { }
+
+        void handle(net::PositionData &packet) override;
+        void handle(net::WorldUpdate &packet) override;
+        void handle(net::InputData &packet) override;
+        void handle(net::WeaponInput &packet) override;
+        void handle(net::SetHP &packet) override;
+        void handle(net::GrenadePacket &packet) override;
+        void handle(net::SetTool &packet) override;
+        void handle(net::SetColor &packet) override;
+        void handle(net::ExistingPlayer &packet) override;
+        void handle(net::MoveObject &packet) override;
+        void handle(net::CreatePlayer &packet) override;
+        void handle(net::BlockAction &packet) override;
+        void handle(net::BlockLine &packet) override;
+        void handle(net::StateData &packet) override;
+        void handle(net::KillAction &packet) override;
+        void handle(net::ChatMessage &packet) override;
+        void handle(net::PlayerLeft &packet) override;
+        void handle(net::IntelCapture &packet) override;
+        void handle(net::IntelPickup &packet) override;
+        void handle(net::IntelDrop &packet) override;
+        void handle(net::Restock &packet) override;
+        void handle(net::FogColor &packet) override;
+        void handle(net::WeaponReload &packet) override;
+        void handle(net::ChangeTeam &packet) override;
+        void handle(net::ChangeWeapon &packet) override;
+
+        GameScene &scene;
     };
 
     class GameScene final : public Scene {
@@ -106,6 +142,7 @@ namespace ace { namespace scene {
         HUD hud;
         world::DrawPlayer *ply{nullptr};
         net::StateData state_data;
+        GamePacketHandler pkt_handler;
 
         bool &thirdperson;
 
@@ -142,5 +179,7 @@ namespace ace { namespace scene {
                 id = id == net::TEAM::TEAM1 ? net::TEAM::TEAM2 : net::TEAM::TEAM1;
             return this->teams[id];
         }
+
+        friend GamePacketHandler;
     };
 }}

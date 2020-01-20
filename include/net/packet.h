@@ -666,7 +666,7 @@ namespace ace { namespace net {
 
 #define _DECL_HANDLE_FUNC(PacketType) virtual void handle(PacketType &packet) { }
     struct PacketHandler {
-        virtual ~BasePacketHandler() = default;
+        virtual ~PacketHandler() = default;
         _DECL_HANDLE_FUNC(PositionData)
         _DECL_HANDLE_FUNC(OrientationData)
         _DECL_HANDLE_FUNC(WorldUpdate)
@@ -701,7 +701,7 @@ namespace ace { namespace net {
     };
 #undef _DECL_HANDLE_FUNC
 
-#define _IMPL_DISPATCH_FUNC(PacketType) inline void PacketType::dispatch(BasePacketHandler &handler) { handler.handle(*this); };
+#define _IMPL_DISPATCH_FUNC(PacketType) inline void PacketType::dispatch(PacketHandler &handler) { handler.handle(*this); };
     _IMPL_DISPATCH_FUNC(PositionData);
     _IMPL_DISPATCH_FUNC(OrientationData);
     _IMPL_DISPATCH_FUNC(WorldUpdate);

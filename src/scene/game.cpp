@@ -33,6 +33,7 @@ namespace ace { namespace scene {
         world(*this, buf),
         hud(*this),
         state_data(state_data),
+        pkt_handler(*this),
         thirdperson(this->cam.thirdperson),
         teams({ {net::TEAM::TEAM1, Team(state_data.team1_name, state_data.team1_color, net::TEAM::TEAM1)},
             {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }) {
@@ -193,243 +194,8 @@ namespace ace { namespace scene {
         }
     }
 
-    void GameScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> ploader) {
-        // this is bad I KNOW dont flame thanks :))
-        net::Loader *loader = ploader.get();
-
-        switch(type) {
-        case net::PACKET::CreatePlayer: {
-            auto *pkt = static_cast<net::CreatePlayer *>(loader);
-            auto *ply = this->get_ply(pkt->pid, true, pkt->pid == this->state_data.pid);
-            if (ply->local_player) this->ply = ply; // this->ply() should be a function tbh
-            ply->pid = pkt->pid;
-            ply->set_team(pkt->team);
-            ply->name = pkt->name;
-            ply->set_weapon(pkt->weapon);
-            ply->set_tool(net::TOOL::WEAPON);
-            ply->set_position(pkt->position);
-            ply->set_alive(ply->team().id != net::TEAM::SPECTATOR);
-        } break;
-        case net::PACKET::ExistingPlayer: {
-            auto *pkt = static_cast<net::ExistingPlayer *>(loader);
-            auto *ply = this->get_ply(pkt->pid);
-            ply->pid = pkt->pid;
-            ply->set_team(pkt->team);
-            ply->name = pkt->name;
-            ply->set_weapon(pkt->weapon);
-            ply->set_tool(pkt->tool);
-            ply->set_color(pkt->color);
-            ply->score = pkt->kills;
-        } break;
-        case net::PACKET::WorldUpdate: {
-            auto *pkt = static_cast<net::WorldUpdate *>(loader);
-            for(int i = 0; i < 32; i++) {
-                if (i == this->state_data.pid) continue;
-                auto *p = this->get_ply(i, false);
-                if (p == nullptr || !p->alive || p == this->ply) continue;
-
-                const auto &wud = pkt->items.at(i);
-                p->set_position(wud.first);
-                p->set_orientation(wud.second);
-            }
-        } break;
-        case net::PACKET::BlockAction: {
-            auto *pkt = static_cast<net::BlockAction *>(loader);
-            auto *ply = this->get_ply(pkt->pid);
-            if(pkt->value == net::ACTION::BUILD) {
-                this->build_point(pkt->position.x, pkt->position.y, pkt->position.z, ply ? ply->color : this->block_colors[pkt->pid], true);
-                ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - 1);
-            } else {
-                this->destroy_point(pkt->position.x, pkt->position.y, pkt->position.z, pkt->value, true);
-                if(pkt->value == net::ACTION::DESTROY) {
-                    ply->blocks.primary_ammo = std::min(ply->blocks.max_primary(), ply->blocks.primary_ammo + 1);
-                }
-            }
-        } break;
-        case net::PACKET::BlockLine: {
-            auto *pkt = static_cast<net::BlockLine *>(loader);
-            auto *ply = this->get_ply(pkt->pid);
-            std::vector<glm::ivec3> blocks = ace::block_line(pkt->start, pkt->end);
-            ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
-            for(auto &block : blocks) {
-                this->build_point(block.x, block.y, block.z, ply ? ply->color : this->block_colors[pkt->pid], true);
-            }
-        } break;
-        case net::PACKET::InputData: {
-            auto *pkt = static_cast<net::InputData *>(loader);
-            auto *ply = this->get_ply(pkt->pid, false);
-            if (ply == nullptr) break;
-            ply->mf = pkt->up; ply->mb = pkt->down; ply->ml = pkt->left; ply->mr = pkt->right;
-            ply->jump = pkt->jump; ply->sneak = pkt->sneak; ply->sprint = pkt->sprint;
-            ply->set_crouch(pkt->crouch);
-        } break;
-        case net::PACKET::KillAction: {
-            auto *pkt = static_cast<net::KillAction *>(loader);
-            auto *ply = this->get_ply(pkt->pid, false);
-            auto *killer = this->get_ply(pkt->killer, false);
-            if (ply == nullptr || killer == nullptr) break;
-            ply->set_alive(false);
-            fmt::print("{} killed {}. Respawning in {}\n", killer->name, ply->name, pkt->respawn_time);
-            this->hud.add_killfeed_message(*killer, *ply, pkt->type);
-
-            if(this->ply && ply->pid == this->ply->pid) {
-                this->hud.respawn_time = pkt->respawn_time;
-            }
-
-            if(ply != killer) {
-                killer->score++;
-            }
-        } break;
-        case net::PACKET::PositionData: {
-            if (this->ply) {
-                this->ply->set_position(static_cast<net::PositionData *>(loader)->position);
-            }
-        } break;
-        case net::PACKET::WeaponInput: {
-            auto *pkt = static_cast<net::WeaponInput *>(loader);
-            auto *ply = this->get_ply(pkt->pid, false);
-            if (ply == nullptr) break;
-            ply->primary_fire = pkt->primary;
-            ply->secondary_fire = pkt->secondary;
-        } break;
-        case net::PACKET::SetHP: {
-            auto *pkt = static_cast<net::SetHP *>(loader);
-            if (!this->ply) break;
-
-            this->ply->health = pkt->hp;
-            if (pkt->type != net::DAMAGE::FALL) {
-                this->client.sound.play("hitplayer.wav", {}, 100, true);
-
-                this->hud.set_hit(pkt->source);
-            }
-        }  break;
-        case net::PACKET::GrenadePacket: {
-            auto *pkt = static_cast<net::GrenadePacket *>(loader);
-            this->world.create_object<world::Grenade>(pkt->position, pkt->velocity, pkt->fuse);
-        } break;
-        case net::PACKET::SetTool: {
-            auto *pkt = static_cast<net::SetTool *>(loader);
-            auto *ply = this->get_ply(pkt->pid, false);
-            if (ply == nullptr) break;
-            ply->set_tool(pkt->tool);
-        } break;
-        case net::PACKET::SetColor: {
-            auto *pkt = static_cast<net::SetColor *>(loader);
-            auto *ply = this->get_ply(pkt->pid, false);
-            if (ply == nullptr) {
-                this->block_colors[pkt->pid] = pkt->color;
-            } else {
-                ply->set_color(pkt->color);
-            }
-        } break;
-        case net::PACKET::ChatMessage: {
-            auto *pkt = static_cast<net::ChatMessage *>(loader);
-            if (pkt->pid >= 32 || pkt->type == net::CHAT::SYSTEM) {
-                this->hud.add_chat_message(fmt::format("[*]: {}", pkt->message), {1, 0, 0});
-                break;
-            }
-
-            auto *ply = this->get_ply(pkt->pid, false);
-            
-            if (ply == nullptr) {
-                fmt::print("chat missed from {}: {}\n", pkt->pid, pkt->message);
-                break;
-            }
-
-            std::string msg;
-            glm::vec3 color;
-            if(pkt->type == net::CHAT::ALL) {
-                msg = fmt::format("{} ({}): {}", ply->name, ply->team().name, pkt->message);
-                color = {1, 1, 1};
-            } else {
-                msg = fmt::format("{}: {}", ply->name, pkt->message);
-                color = ply->team().float_color;
-            }
-            this->hud.add_chat_message(msg, color);
-            fmt::print("{}\n", msg);
-        } break;
-        case net::PACKET::MoveObject: {
-            auto *pkt = static_cast<net::MoveObject *>(loader);
-            auto *ent = this->get_ent(uint8_t(pkt->type));
-
-            if (ent == nullptr) break; // ??? prob wrong gamemode
-            ent->set_team(pkt->state);
-            ent->set_position(pkt->position);
-        } break;
-        case net::PACKET::PlayerLeft: {
-            auto *pkt = static_cast<net::PlayerLeft *>(loader);
-            this->players.erase(pkt->pid);
-        } break;
-        case net::PACKET::TerritoryCapture: break;
-        case net::PACKET::ProgressBar: break;
-        case net::PACKET::IntelCapture: {
-            auto *pkt = static_cast<net::IntelCapture *>(loader);
-            auto *ply = this->get_ply(pkt->pid, false);
-
-            if (pkt->winning) {
-                this->hud.set_big_message(fmt::format("{} Team Wins!", ply->team().name));
-            } else if (ply != nullptr) {
-                ply->score += 10;
-                ply->team().score++;
-
-                auto msg = fmt::format("{} captured the {} team Intel!", ply->name, ply->team(true).name);
-                this->hud.add_chat_message(msg, { 1, 0, 0 });
-            }
-
-            this->client.sound.play_local(pkt->winning ? "horn.wav" : "pickup.wav");
-        } break;
-        case net::PACKET::IntelPickup: {
-            auto *pkt = static_cast<net::IntelPickup *>(loader);
-            auto *ply = this->get_ply(pkt->pid, false);
-
-            if (ply != nullptr) {
-                auto msg = fmt::format("{} has the {} Intel", ply->name, ply->team(true).name);
-                this->hud.add_chat_message(msg, { 1, 0, 0 });
-
-                auto id = uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG);
-                auto *ent = this->get_ent(id);
-                if (ent != nullptr)
-                    ent->set_carrier(ply->pid);
-            }
-
-            this->client.sound.play_local("pickup.wav");
-        } break;
-        case net::PACKET::IntelDrop: {
-            auto *pkt = static_cast<net::IntelDrop *>(loader);
-            auto *ply = this->get_ply(pkt->pid, false);
-
-            if (ply != nullptr) {
-                auto msg = fmt::format("{} has dropped the {} Intel", ply->name, ply->team(true).name);
-                this->hud.add_chat_message(msg, { 1, 0, 0 });
-
-                auto id = uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG);
-                auto *ent = this->get_ent(id);
-
-                if (ent != nullptr) {
-                    ent->set_carrier(-1);
-                    ent->set_position(pkt->pos);
-                }
-            }
-        } break;
-        case net::PACKET::Restock: {
-            // net::Restock *pkt = static_cast<net::Restock *>(loader);
-            // auto *ply = this->get_ply(pkt->pid, false);
-            // why does Restock have a pid field if it's never used??
-            if (this->ply) {
-                this->ply->restock();
-            }
-        } break;
-        case net::PACKET::FogColor: {
-            this->set_fog_color(glm::vec3(static_cast<net::FogColor *>(loader)->color) / 255.f);
-        } break;
-        case net::PACKET::WeaponReload: {
-            auto *pkt = static_cast<net::WeaponReload *>(loader);
-            auto *ply = this->get_ply(pkt->pid, false);
-            if (ply && ply->weapon_obj)
-                ply->weapon_obj->on_reload(pkt);
-        } break;
-        default: break;
-        }
+    void GameScene::on_packet(net::PACKET type, std::unique_ptr<net::Loader> loader) {
+        loader->dispatch(this->pkt_handler);
     }
 
     bool GameScene::on_text_typing(const std::string& text) {
@@ -594,6 +360,242 @@ namespace ace { namespace scene {
     void GameScene::save_map_to(const std::string &file_name) {
         this->world.save_to(file_name);
         this->hud.set_big_message(fmt::format("Map saved to {}", file_name));
+    }
+
+    void GamePacketHandler::handle(net::PositionData &pkt) {
+        if (this->scene.ply) {
+            this->scene.ply->set_position(pkt.position);
+        }
+    }
+
+    void GamePacketHandler::handle(net::WorldUpdate &pkt) {
+        for (int i = 0; i < 32; i++) {
+            if (i == this->scene.state_data.pid) continue;
+            auto *p = this->scene.get_ply(i, false);
+            if (p == nullptr || !p->alive || p == this->scene.ply) continue;
+
+            const auto &wud = pkt.items.at(i);
+            p->set_position(wud.first);
+            p->set_orientation(wud.second);
+        }
+    }
+
+    void GamePacketHandler::handle(net::InputData &packet) {
+    }
+
+    void GamePacketHandler::handle(net::WeaponInput &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        if (!ply) return;
+
+        ply->primary_fire = pkt.primary;
+        ply->secondary_fire = pkt.secondary;
+    }
+
+    void GamePacketHandler::handle(net::SetHP &pkt) {
+        if (!this->scene.ply) return;
+
+        this->scene.ply->health = pkt.hp;
+        if (pkt.type != net::DAMAGE::FALL) {
+            this->scene.client.sound.play_local("hitplayer.wav", 100);
+            this->scene.hud.set_hit(pkt.source);
+        }
+    }
+
+    void GamePacketHandler::handle(net::GrenadePacket &pkt) {
+        this->scene.world.create_object<world::Grenade>(pkt.position, pkt.velocity, pkt.fuse);
+    }
+
+    void GamePacketHandler::handle(net::SetTool &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        if (!ply) return;
+
+        ply->set_tool(pkt.tool);
+    }
+
+    void GamePacketHandler::handle(net::SetColor &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        if (ply) {
+            ply->set_color(pkt.color);
+        } else {
+            this->scene.block_colors[pkt.pid] = pkt.color;
+        }
+    }
+
+    void GamePacketHandler::handle(net::ExistingPlayer &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid);
+        ply->pid = pkt.pid;
+        ply->set_team(pkt.team);
+        ply->name = pkt.name;
+        ply->set_weapon(pkt.weapon);
+        ply->set_tool(pkt.tool);
+        ply->set_color(pkt.color);
+        ply->score = pkt.kills;
+    }
+
+    void GamePacketHandler::handle(net::MoveObject &pkt) {
+        auto *ent = this->scene.get_ent(uint8_t(pkt.type));
+        if (!ent) return; // ??? prob wrong gamemode
+
+        ent->set_team(pkt.state);
+        ent->set_position(pkt.position);
+    }
+
+    void GamePacketHandler::handle(net::CreatePlayer &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, true, pkt.pid == this->scene.state_data.pid);
+        if (ply->local_player) this->scene.ply = ply; // this->ply() should be a function tbh
+        ply->pid = pkt.pid;
+        ply->set_team(pkt.team);
+        ply->name = pkt.name;
+        ply->set_weapon(pkt.weapon);
+        ply->set_tool(net::TOOL::WEAPON);
+        ply->set_position(pkt.position);
+        ply->set_alive(ply->team().id != net::TEAM::SPECTATOR);
+    }
+
+    void GamePacketHandler::handle(net::BlockAction &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid);
+        if (!ply) return;
+
+
+        if (pkt.value == net::ACTION::BUILD) {
+            this->scene.build_point(pkt.position.x, pkt.position.y, pkt.position.z, ply ? ply->color : this->scene.block_colors[pkt.pid], true);
+            ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - 1);
+        } else {
+            this->scene.destroy_point(pkt.position.x, pkt.position.y, pkt.position.z, pkt.value, true);
+            if (pkt.value == net::ACTION::DESTROY) {
+                ply->blocks.primary_ammo = std::min(ply->blocks.max_primary(), ply->blocks.primary_ammo + 1);
+            }
+        }
+    }
+
+    void GamePacketHandler::handle(net::BlockLine &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid);
+        if (!ply) return;
+
+        std::vector<glm::ivec3> blocks = ace::block_line(pkt.start, pkt.end);
+        ply->blocks.primary_ammo = std::max(0, ply->blocks.primary_ammo - int(blocks.size()));
+        for (auto &block : blocks) {
+            this->scene.build_point(block.x, block.y, block.z, ply ? ply->color : this->scene.block_colors[pkt.pid], true);
+        }
+    }
+
+    void GamePacketHandler::handle(net::StateData &packet) {
+        // should never happen
+    }
+
+    void GamePacketHandler::handle(net::KillAction &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        auto *killer = this->scene.get_ply(pkt.killer, false);
+        if (!ply || !killer) return;
+
+        ply->set_alive(false);
+        fmt::print("{} killed {}. Respawning in {}\n", killer->name, ply->name, pkt.respawn_time);
+        this->scene.hud.add_killfeed_message(*killer, *ply, pkt.type);
+
+        if (this->scene.ply && ply->pid == this->scene.ply->pid) {
+            this->scene.hud.respawn_time = pkt.respawn_time;
+        }
+
+        if (ply != killer) {
+            killer->score++;
+        }
+    }
+
+    void GamePacketHandler::handle(net::ChatMessage &pkt) {
+        if (pkt.pid >= 32 || pkt.type == net::CHAT::SYSTEM) {
+            this->scene.hud.add_chat_message(fmt::format("[*]: {}", pkt.message), { 1, 0, 0 });
+            return;
+        }
+
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        if (ply == nullptr) {
+            fmt::print("chat missed from {}: {}\n", pkt.pid, pkt.message);
+            return;
+        }
+
+        std::string msg;
+        glm::vec3 color;
+        if (pkt.type == net::CHAT::ALL) {
+            msg = fmt::format("{} ({}): {}", ply->name, ply->team().name, pkt.message);
+            color = { 1, 1, 1 };
+        } else {
+            msg = fmt::format("{}: {}", ply->name, pkt.message);
+            color = ply->team().float_color;
+        }
+        this->scene.hud.add_chat_message(msg, color);
+        fmt::print("{}\n", msg);
+    }
+
+    void GamePacketHandler::handle(net::PlayerLeft &pkt) {
+        this->scene.players.erase(pkt.pid);
+    }
+
+    void GamePacketHandler::handle(net::IntelCapture &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        if (!ply) return;
+
+        ply->score += 10;
+        ply->team().score++;
+
+        auto msg = fmt::format("{} captured the {} team Intel!", ply->name, ply->team(true).name);
+        this->scene.hud.add_chat_message(msg, { 1, 0, 0 });
+
+        if (pkt.winning) {
+            this->scene.hud.set_big_message(fmt::format("{} Team Wins!", ply->team().name));
+        }
+
+        this->scene.client.sound.play_local(pkt.winning ? "horn.wav" : "pickup.wav");
+    }
+
+    void GamePacketHandler::handle(net::IntelPickup &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        if (!ply) return;
+
+        auto msg = fmt::format("{} has the {} Intel", ply->name, ply->team(true).name);
+        this->scene.hud.add_chat_message(msg, { 1, 0, 0 });
+
+        auto id = uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG);
+        auto *ent = this->scene.get_ent(id);
+        if (ent != nullptr)
+            ent->set_carrier(ply->pid);
+
+        this->scene.client.sound.play_local("pickup.wav");
+    }
+
+    void GamePacketHandler::handle(net::IntelDrop &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        if (!ply) return;
+
+        auto msg = fmt::format("{} has dropped the {} Intel", ply->name, ply->team(true).name);
+        this->scene.hud.add_chat_message(msg, { 1, 0, 0 });
+
+        auto id = uint8_t(ply->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG);
+        auto *ent = this->scene.get_ent(id);
+        if (ent != nullptr) {
+            ent->set_carrier(-1);
+            ent->set_position(pkt.pos);
+        }
+    }
+
+    void GamePacketHandler::handle(net::Restock &pkt) {
+        if (this->scene.ply)
+            this->scene.ply->restock();
+    }
+
+    void GamePacketHandler::handle(net::FogColor &pkt) {
+        this->scene.set_fog_color(glm::vec3(pkt.color) / 255.f);
+    }
+
+    void GamePacketHandler::handle(net::WeaponReload &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        if (ply && ply->weapon_obj)
+            ply->weapon_obj->on_reload(&pkt);
+    }
+
+    void GamePacketHandler::handle(net::ChangeTeam &packet) {
+    }
+
+    void GamePacketHandler::handle(net::ChangeWeapon &packet) {
     }
 
     void GameScene::set_fog_color(glm::vec3 color) {
