@@ -70,10 +70,14 @@ namespace ace {
         }
 
         void toggle_text_input() const {
-            if (SDL_IsTextInputActive())
-                SDL_StopTextInput();
-            else
+            this->set_text_input(!this->text_input_active());
+        }
+
+        void set_text_input(bool enable) const {
+            if (enable)
                 SDL_StartTextInput();
+            else
+                SDL_StopTextInput();
         }
 
         bool text_input_active() const {

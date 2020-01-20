@@ -392,6 +392,9 @@ namespace ace {
                 this->ply.play_sound(this->reload_sound());
             }
         }
+
+        if (!this->reloading)
+            this->ply.switch_time += 0.25;
     }
 
     namespace {

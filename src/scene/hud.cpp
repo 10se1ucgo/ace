@@ -389,10 +389,10 @@ namespace ace { namespace scene {
         if (!pressed) return;
         this->update_color(scancode);
 
-        if(scancode == this->scene.client.config.get_key("all_chat", SDL_SCANCODE_T)) {
+        if (scancode == this->scene.client.config.get_key("all_chat", SDL_SCANCODE_T) && this->first_join == FirstJoin::No) {
             this->cur_chat_type = net::CHAT::ALL;
             this->scene.client.tasks.schedule(0, [this](util::Task &t) { this->scene.client.toggle_text_input(); });
-        } else if(scancode == this->scene.client.config.get_key("team_chat", SDL_SCANCODE_Y)) {
+        } else if(scancode == this->scene.client.config.get_key("team_chat", SDL_SCANCODE_Y) && this->first_join == FirstJoin::No) {
             this->cur_chat_type = net::CHAT::TEAM;
             this->scene.client.tasks.schedule(0, [this](util::Task &t) { this->scene.client.toggle_text_input(); });
         } else if(scancode == this->scene.client.config.get_key("map", SDL_SCANCODE_M)) {

@@ -39,10 +39,8 @@ namespace ace { namespace scene {
             {net::TEAM::TEAM2, Team(state_data.team2_name, state_data.team2_color, net::TEAM::TEAM2)} }) {
 
         this->set_fog_color(glm::vec3(state_data.fog_color) / 255.f);
-
-        this->respawn_entities();
-
         this->set_zoom(false);
+        this->respawn_entities();
     }
 
     GameScene::~GameScene() {
@@ -66,6 +64,8 @@ namespace ace { namespace scene {
         this->client.tasks.schedule(1.0 / 30, [this](util::Task &t) {
             this->send_orientation_update(); t.keep_going();
         });
+
+        this->client.set_text_input(false);
     }
 
     void GameScene::draw() {
