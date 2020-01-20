@@ -380,7 +380,13 @@ namespace ace { namespace scene {
         }
     }
 
-    void GamePacketHandler::handle(net::InputData &packet) {
+    void GamePacketHandler::handle(net::InputData &pkt) {
+        auto *ply = this->scene.get_ply(pkt.pid, false);
+        if (!ply) return;
+
+        ply->mf = pkt.up; ply->mb = pkt.down; ply->ml = pkt.left; ply->mr = pkt.right;
+        ply->jump = pkt.jump; ply->sneak = pkt.sneak; ply->sprint = pkt.sprint;
+        ply->set_crouch(pkt.crouch);
     }
 
     void GamePacketHandler::handle(net::WeaponInput &pkt) {
