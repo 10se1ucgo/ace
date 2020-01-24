@@ -158,6 +158,7 @@ namespace ace { namespace scene {
         }
         auto overview = this->hud.sprites.get("map_overview", SDL_CreateRGBSurfaceFrom(pixels.get(), MAP_X, MAP_Y, 24, 3 * MAP_X, 0xFF, 0xFF << 8, 0xFF << 16, 0));
         overview->set_antialias(false);
+        overview->tex.set_wrap_mode(GL_REPEAT);
         return overview;
     }
 

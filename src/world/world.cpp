@@ -18,7 +18,7 @@ namespace ace { namespace world {
 
     void World::draw() {
         this->scene.shaders.map.bind();
-        this->scene.shaders.map.uniforms("model"_u = glm::mat4(1.0), "replacement_color"_u = glm::vec3(0.f), "filter_color"_u = glm::vec3(0.f), "alpha"_u = 1.0f);
+        this->scene.shaders.map.uniforms("replacement_color"_u = glm::vec3(0.f), "filter_color"_u = glm::vec3(0.f), "alpha"_u = 1.0f);
         this->map_renderer.draw(this->scene.client.shaders->map, this->scene.cam);
 
         this->scene.shaders.model.bind();

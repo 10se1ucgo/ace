@@ -1,8 +1,11 @@
 #include "draw/map.h"
 
+#include <glm/gtx/norm.hpp>
+
 #include "game_client.h"
 #include "draw/sprite.h"
 #include "scene/game.h"
+
 
 namespace ace { namespace draw {
     using namespace ace::draw::detail;
@@ -256,7 +259,11 @@ namespace ace { namespace draw {
         gen_faces(vert.x, vert.y, vert.z, visibility, color, this->mesh);
     }
 
-    Pillar::Pillar(AceMap &map, size_t x, size_t y) : dirty(true), map(map), x(x), y(y) {
+    Pillar::Pillar(AceMap &map, size_t x, size_t y) :
+        dirty(true),
+        map(map),
+        x(x), y(y),
+        model(ace::model_matrix({ x, 0, y }, {})) {
     }
 
     void Pillar::update(bool use_ao, bool use_sunblock) {
@@ -274,9 +281,9 @@ namespace ace { namespace draw {
 
                     if(use_ao) {
                         get_surrounding(this->map, ax, ay, az, surrounding);
-                        gen_faces_with_ao(ax, ay, az, vis, color, this->mesh, surrounding);
+                        gen_faces_with_ao(ax - this->x, ay - this->y, az, vis, color, this->mesh, surrounding);
                     } else {
-                        gen_faces(ax, ay, az, vis, color, this->mesh);
+                        gen_faces(ax - this->x, ay - this->y, az, vis, color, this->mesh);
                     }
                 }
             }
@@ -310,14 +317,19 @@ namespace ace { namespace draw {
     }
 
     void MapRenderer::draw(gl::ShaderProgram &shader, Camera &camera) {
-        for (auto &p : this->pillars) {
+        std::sort(this->sorted_pillars.begin(), this->sorted_pillars.end(), [p = draw2vox(camera.position)](Pillar *a, Pillar *b) {
+            return glm::distance2(p, a->center()) > glm::distance2(p, b->center());
+        });
+
+        for (auto p : this->sorted_pillars) {
 // #ifndef NDEBUG
 //             if (p.contains(draw2vox(this->scene.cam.position))) {
 //                 this->scene.debug.draw_cube({ p.x + 8, -32, p.y + 8 }, { PILLAR_SIZE, 64, PILLAR_SIZE }, { 1, 0, 0 });
 //             }
 // #endif
-            if (camera.box_in_frustum(p.x, 0, p.y, p.x + PILLAR_SIZE, -64, p.y + PILLAR_SIZE)) {
-                p.draw(this->use_ao, this->use_sunblock);
+            if (camera.box_in_frustum(p->x, 0, p->y, p->x + PILLAR_SIZE, -64, p->y + PILLAR_SIZE)) {
+                shader.uniform("model", p->model);
+                p->draw(this->use_ao, this->use_sunblock);
             }
         }
     }
@@ -337,21 +349,15 @@ namespace ace { namespace draw {
 
     void MapRenderer::gen_pillars() {
         this->pillars.clear();
-        this->pillars.reserve((MAP_X / PILLAR_SIZE) * (MAP_Y / PILLAR_SIZE));
+        this->pillars.reserve(NUM_PILLARS);
+
+        int i = 0;
         for (size_t x = 0; x < MAP_X / PILLAR_SIZE; x++) {
             for (size_t y = 0; y < MAP_Y / PILLAR_SIZE; y++) {
+                assert(i < NUM_PILLARS);
                 this->pillars.emplace_back(this->map, x * PILLAR_SIZE, y * PILLAR_SIZE);
+                this->sorted_pillars[i++] = &this->pillars.back();
             }
         }
     }
-
-//     bool DrawMap::build_point(const int x, const int y, const int z, glm::u8vec3 color, bool force) {
-//         if (!force) {
-//             if (!valid_build_pos(x, y, z)) return false;
-//
-//             std::vector<glm::ivec3> neighbors;
-//             this->add_neighbors(neighbors, x, y, z);
-//             if (neighbors.empty()) return false;
-//         }
-//
 }}

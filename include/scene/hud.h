@@ -77,6 +77,7 @@ namespace ace { namespace scene {
         
         void set_hit(glm::vec3 source);
 
+        // ugly hack
         void update_weapon(const std::string &sight);
         void update_tool(const std::string &ammo_icon);
 

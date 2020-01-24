@@ -376,8 +376,7 @@ namespace ace { namespace world {
     void DrawPlayer::set_crouch(bool value) {
         if (this->crouch && !value) {
             this->try_uncrouch();
-        }
-        else {
+        } else {
             if (value != this->crouch && value)
                 this->p.z += 0.8f;
             this->crouch = value;

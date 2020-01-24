@@ -112,7 +112,7 @@ namespace ace {
     }
 
     // Generate a model matrix from `model` translated by `m_position`, rotated by `m_rotation` and scaled by `m_scale`. 
-    inline glm::mat4 model_matrix(glm::vec3 m_position, glm::vec3 m_rotation, glm::vec3 m_scale, glm::mat4 model = glm::mat4(1.0f)) {
+    inline glm::mat4 model_matrix(glm::vec3 m_position, glm::vec3 m_rotation, glm::vec3 m_scale = glm::vec3(1.0f), glm::mat4 model = glm::mat4(1.0f)) {
         glm::vec3 rot(glm::radians(m_rotation));
         model = glm::translate(model, m_position);
         model = glm::rotate(model, rot.z, { 0, 0, 1 });

@@ -24,6 +24,7 @@ namespace ace { namespace draw {
 #pragma pack(pop)
     }
     constexpr size_t PILLAR_SIZE = 16;
+    constexpr auto NUM_PILLARS = (MAP_X / PILLAR_SIZE) * (MAP_Y / PILLAR_SIZE);
 
     constexpr bool valid_build_pos(const int x, const int y, const int z) {
         return z < MAP_Z - 2 && is_valid_pos(x, y, z);
@@ -69,12 +70,17 @@ namespace ace { namespace draw {
             return this->x <= pos.x && pos.x <= this->x + PILLAR_SIZE && this->y <= pos.y && pos.y <= this->y + PILLAR_SIZE;
         }
 
+        glm::vec3 center() {
+            return glm::vec3(this->x + PILLAR_SIZE / 2, MAP_Z / 2, this->y + PILLAR_SIZE / 2);
+        }
+
         int sunblock(int x, int y, int z) const;
 
-        bool dirty;
+        bool dirty = false;
         AceMap &map;
-        size_t x, y;
+        size_t x = 0, y = 0;
         gl::experimental::mesh<detail::VXLVertex> mesh{ "3f,3Bn,1B,1B", GL_DYNAMIC_DRAW };
+        glm::mat4 model;
     };
 
     struct MapRenderer : MapListener {
@@ -96,6 +102,7 @@ namespace ace { namespace draw {
 
         AceMap &map;
         std::vector<Pillar> pillars;
+        std::array<Pillar *, NUM_PILLARS> sorted_pillars;
         bool use_ao, use_sunblock;
     };
 
