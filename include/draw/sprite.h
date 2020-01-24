@@ -127,6 +127,25 @@ namespace ace { namespace draw {
 
         void flush(gl::ShaderProgram &s);
     private:
+        // ugly
+        template<typename TKey, typename TValue>
+        SpriteGroup *insert_or_assign(TKey &&key, TValue &&value) {
+            auto it = this->sprites.find(key);
+            if (it == this->sprites.end()) {
+                auto sprite = &this->sprites.emplace(std::forward<TKey>(key), std::forward<TValue>(value)).first->second;
+                this->sorted_sprites.push_back(sprite);
+                return sprite;
+            }
+
+            this->sorted_sprites.erase(std::remove_if(this->sorted_sprites.begin(), this->sorted_sprites.end(), [rem = &it->second](SpriteGroup *spr) {
+                return spr == rem;
+            }));
+
+            it->second = std::forward<TValue>(value);
+            return &it->second;
+        }
+
         std::unordered_map<std::string, SpriteGroup> sprites;
+        std::vector<SpriteGroup *> sorted_sprites;
     };
 }}

@@ -88,41 +88,29 @@ namespace ace { namespace draw {
 
     // YIKES
     // this is a C++17 feature so lemme reimplement it here real quick
-    template<typename TMap, typename TKey, typename TValue>
-    std::pair<typename TMap::iterator, bool> insert_or_assign(TMap &map, TKey &&key, TValue &&value) {
-        auto it = map.find(key);
-        if (it == map.end())
-            return (map.emplace(std::forward<TKey>(key), std::forward<TValue>(value)));
-        it->second = std::forward<TValue>(value);
-        return (std::pair<typename TMap::iterator, bool>(it, false));
-    }
+
 
     SpriteGroup *SpriteManager::get(const std::string &name) {
         try {
             return &this->sprites.at(name);
         } catch (std::out_of_range &) {
-            return &this->sprites.emplace(name, get_resource_path("png/" + name)).first->second;
+            auto sprite = &this->sprites.emplace(name, get_resource_path("png/" + name)).first->second;
+            this->sorted_sprites.push_back(sprite);
+            return sprite;
         }
     }
 
     SpriteGroup *SpriteManager::get(const std::string &name, SDL_Surface *data) {
-        return &insert_or_assign(this->sprites, name, SpriteGroup{ name, data }).first->second;
+        return this->insert_or_assign(name, SpriteGroup{ name, data });
     }
 
     SpriteGroup *SpriteManager::get(const std::string &name, gl::experimental::texture2d tex) {
-        return &insert_or_assign(this->sprites, name, SpriteGroup{ name, std::move(tex) }).first->second;
+        return this->insert_or_assign(name, SpriteGroup{ name, std::move(tex) });
     }
 
     void SpriteManager::flush(gl::ShaderProgram &s) {
-        std::vector<SpriteGroup *> groups;
-        groups.reserve(this->sprites.size());
-
-        for (auto &kv : this->sprites) {
-            groups.push_back(&kv.second);
-        }
-
-        std::sort(groups.begin(), groups.end(), [](const SpriteGroup *lhs, const SpriteGroup *rhs) { return lhs->order < rhs->order; });
-        for(auto &x : groups) {
+        std::sort(this->sorted_sprites.begin(), this->sorted_sprites.end(), [](const SpriteGroup *lhs, const SpriteGroup *rhs) { return lhs->order < rhs->order; });
+        for(auto &x : this->sorted_sprites) {
             x->flush(s);
         }
 //        for (auto &x : sorted_view(this->sprites.begin(), this->sprites.end(), [](auto *lhs, auto *rhs) { return lhs->second.order < rhs->second.order; })) {
