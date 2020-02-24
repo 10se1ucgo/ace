@@ -499,8 +499,10 @@ namespace ace { namespace world {
 
             auto id = uint8_t(this->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG);
             auto *ent = this->scene.get_ent(id);
-            if (ent && ent->carrier() == this)
+            if (ent && ent->carrier() == this) {
+                this->scene.shaders.model.uniform("replacement_color", ent->team().desaturated_color);
                 this->mdl_intel.draw_local(this->scene.shaders.model, false);
+            }
         }
     }
 
