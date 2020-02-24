@@ -251,7 +251,7 @@ namespace ace { namespace world {
             this->e.z += (f + 0.25f) / 0.25f;
     }
 
-    DrawPlayer::DrawPlayer(scene::GameScene& scene, bool local_player):
+    DrawPlayer::DrawPlayer(scene::GameScene &scene, bool local_player):
         AcePlayer(scene),
         mdl_head(scene.models.get("playerhead.kv6")),
         mdl_torso(scene.models.get("playertorso.kv6")),
@@ -259,11 +259,14 @@ namespace ace { namespace world {
         mdl_legl(scene.models.get("playerleg.kv6")),
         mdl_arms(scene.models.get("playerarms.kv6")),
         mdl_dead(scene.models.get("playerdead.kv6")),
+        mdl_intel(scene.models.get("intel.kv6")),
         local_player(local_player),
         blocks(*this), spade(*this), grenades(*this) {
         this->set_weapon(net::WEAPON::SEMI);
         this->set_tool(net::TOOL::WEAPON);
         this->restock(true);
+
+        this->mdl_intel.position = { -2.2f, 0.f, -3.f };
     }
 
     constexpr const char *STEPS[] = {
@@ -488,9 +491,16 @@ namespace ace { namespace world {
             this->mdl_legr.draw(this->scene.shaders.model);
             this->mdl_arms.draw(this->scene.shaders.model);
             tool->draw();
-        } else if(!this->sprint && this->switch_time < 0.5f && this->get_tool()->drawable() && !(this->secondary_fire && this->weapon_equipped)) {
-            this->mdl_arms.draw_local(this->scene.shaders.model);
-            tool->draw();
+        } else {
+            if (!this->sprint && this->switch_time < 0.5f && this->get_tool()->drawable() && !(this->secondary_fire && this->weapon_equipped)) {
+                this->mdl_arms.draw_local(this->scene.shaders.model);
+                tool->draw();
+            }
+
+            auto id = uint8_t(this->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG);
+            auto *ent = this->scene.get_ent(id);
+            if (ent && ent->carrier() == this)
+                this->mdl_intel.draw_local(this->scene.shaders.model, false);
         }
     }
 

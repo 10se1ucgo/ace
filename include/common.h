@@ -127,7 +127,7 @@ namespace ace {
     }
 
     inline float triwave(float x, float a, float b, float linger = 0) {
-        return glm::clamp(glm::abs(glm::mod(x, 2.f) - 1.f) * ((a + linger) - (b - linger)) + (b - linger), a, b);
+        return glm::clamp(glm::abs(glm::mod(x, 2.f) - 1.f) * (a - b + (2 * linger)) + (b - linger), a, b);
     }
 
     constexpr uint32_t pack_bytes(uint8_t a, uint8_t r, uint8_t g, uint8_t b) {

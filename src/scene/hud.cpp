@@ -321,8 +321,6 @@ namespace ace { namespace scene {
 
         if (this->scene.client.keyboard.keys[SDL_SCANCODE_F6]) return;
 
-        
-
         if(this->scene.ply && this->scene.ply->team().id != net::TEAM::SPECTATOR) {
             if(this->scene.ply->alive) {
                 this->sys48->draw_shadowed(std::to_string(this->scene.ply->health), { scene.client.width() / 2.f, scene.client.height() - 20 }, scene.ply->health <= 20 ? glm::vec3{ 1, 0, 0 } : glm::vec3{ 1, 1, 1 }, { 1, 1 }, draw::Align::BOTTOM_CENTER);

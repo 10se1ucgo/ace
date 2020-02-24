@@ -3,7 +3,6 @@
 #include "scene/game.h"
 
 namespace ace { namespace world {
-
     Entity::Entity(scene::GameScene& scene, uint8_t id, glm::vec3 position, net::TEAM team, uint8_t carrier, const std::string& mesh, float scale):
         WorldObject(scene),
         id(id),
