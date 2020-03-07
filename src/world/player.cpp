@@ -259,14 +259,12 @@ namespace ace { namespace world {
         mdl_legl(scene.models.get("playerleg.kv6")),
         mdl_arms(scene.models.get("playerarms.kv6")),
         mdl_dead(scene.models.get("playerdead.kv6")),
-        mdl_intel(scene.models.get("intel.kv6")),
+        msh_intel(*scene.models.get("intel.kv6")),
         local_player(local_player),
         blocks(*this), spade(*this), grenades(*this) {
         this->set_weapon(net::WEAPON::SEMI);
         this->set_tool(net::TOOL::WEAPON);
         this->restock(true);
-
-        this->mdl_intel.position = { -2.2f, 0.f, -3.f };
     }
 
     constexpr const char *STEPS[] = {
@@ -461,7 +459,7 @@ namespace ace { namespace world {
         if (value) {
             this->restock(true);
         } else {
-            if(this->local_player && this->alive) {
+            if (this->local_player && this->alive) {
                 this->play_sound("death.wav");
                 this->play_sound("hitplayer.wav");
             }
@@ -478,30 +476,33 @@ namespace ace { namespace world {
         auto tool = this->get_tool();
         tool->transform();
 
-        this->scene.shaders.model.uniform("replacement_color", this->team().desaturated_color);
-        if(!this->alive) {
-            if(!this->local_player) this->mdl_dead.draw(this->scene.shaders.model);
+        auto &s = this->scene.shaders.model;
+
+        s.uniform("replacement_color", this->team().desaturated_color);
+        if (!this->alive) {
+            if (!this->local_player) 
+                this->mdl_dead.draw(s);
             return;
         }
 
-        if(!this->local_player || this->scene.thirdperson) {
-            this->mdl_head.draw(this->scene.shaders.model);
-            this->mdl_torso.draw(this->scene.shaders.model);
-            this->mdl_legl.draw(this->scene.shaders.model);
-            this->mdl_legr.draw(this->scene.shaders.model);
-            this->mdl_arms.draw(this->scene.shaders.model);
+        if (!this->local_player || this->scene.thirdperson) {
+            this->mdl_head.draw(s);
+            this->mdl_torso.draw(s);
+            this->mdl_legl.draw(s);
+            this->mdl_legr.draw(s);
+            this->mdl_arms.draw(s);
             tool->draw();
         } else {
             if (!this->sprint && this->switch_time < 0.5f && this->get_tool()->drawable() && !(this->secondary_fire && this->weapon_equipped)) {
-                this->mdl_arms.draw_local(this->scene.shaders.model);
+                this->mdl_arms.draw_local(s);
                 tool->draw();
             }
 
             auto id = uint8_t(this->team().id == net::TEAM::TEAM1 ? net::OBJECT::GREEN_FLAG : net::OBJECT::BLUE_FLAG);
             auto *ent = this->scene.get_ent(id);
             if (ent && ent->carrier() == this) {
-                this->scene.shaders.model.uniform("replacement_color", ent->team().desaturated_color);
-                this->mdl_intel.draw_local(this->scene.shaders.model, false);
+                s.uniform("replacement_color", ent->team().desaturated_color);
+                this->msh_intel.draw(s, model_matrix({ -2.2f, 0.f, -3.f }, { 0, 180, 0 }, glm::vec3{ 0.1f }), true);
             }
         }
     }

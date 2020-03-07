@@ -33,7 +33,7 @@ namespace ace { namespace scene {
             refresh_button(this->add<draw::Button>("REFRESH", this->frame.offset() + glm::vec2{ 415, 725 } * this->frame.scale(), glm::vec2{ 150, 50 } * this->frame.scale(), 18 * this->frame.scale().y)),
             fav_button(this->add<draw::Button>("FAVORITE", this->frame.offset() + glm::vec2{ 570, 725 } * this->frame.scale(), glm::vec2{ 180, 50 } * this->frame.scale(), 18 * this->frame.scale().y)),
             connect_button(this->add<draw::Button>("CONNECT", this->frame.offset() + glm::vec2{ 780, 680 } * this->frame.scale(), glm::vec2{ 305, 100 } * this->frame.scale(), 36 * this->frame.scale().y)),
-            server_count_label(scene.client.fonts.get("Vera.ttf", 20 * this->frame.scale().y), "Received XXX Servers") {
+            server_count_label(scene.client.fonts.get("Vera.ttf", 20 * this->frame.scale().y), "Retrieving Servers...") {
 
             this->background->order = draw::Layer::BACKGROUND;
 

@@ -41,11 +41,11 @@ namespace ace { namespace draw {
     struct KV6Mesh {
         explicit KV6Mesh(const std::string &file);
 
-        void draw(gl::ShaderProgram &s, const glm::mat4 &model, bool local = false) {
+        void draw(gl::ShaderProgram &s, const glm::mat4 &model, bool local = false) const {
             this->draw(s, model, glm::mat3(transpose(inverse(model))), local);
         }
 
-        void draw(gl::ShaderProgram &s, const glm::mat4 &model, const glm::mat3 &normal, bool local = false) {
+        void draw(gl::ShaderProgram &s, const glm::mat4 &model, const glm::mat3 &normal, bool local = false) const {
             s.uniform("model", model);
             s.uniform("normal_matrix", normal);
             s.uniform("local", local);
