@@ -41,6 +41,17 @@ namespace ace { namespace draw {
     struct KV6Mesh {
         explicit KV6Mesh(const std::string &file);
 
+        void draw(gl::ShaderProgram &s, const glm::mat4 &model, bool local = false) {
+            this->draw(s, model, glm::mat3(transpose(inverse(model))), local);
+        }
+
+        void draw(gl::ShaderProgram &s, const glm::mat4 &model, const glm::mat3 &normal, bool local = false) {
+            s.uniform("model", model);
+            s.uniform("normal_matrix", normal);
+            s.uniform("local", local);
+            this->mesh.draw();
+        }
+
         void draw() const {
             this->mesh.draw();
         }
@@ -70,22 +81,16 @@ namespace ace { namespace draw {
         }
 
         void draw(ace::gl::ShaderProgram &s) const {
-            const glm::mat4 model(this->get_model());
-            s.uniform("model", model);
-            s.uniform("normal_matrix", glm::mat3(transpose(inverse(model))));
-            s.uniform("local", false);
-            this->mesh->draw();
+            this->mesh->draw(s, this->get_model());
         }
 
         void draw_local(ace::gl::ShaderProgram &s, bool use_lighting_rotation = true) const {
             const glm::mat4 m(this->get_local_model());
-            const glm::mat3 nm(transpose(inverse(use_lighting_rotation ? ace::model_matrix(position, lighting_rotation, scale) : m)));
-
-
-            s.uniform("model", m);
-            s.uniform("normal_matrix", nm); // for lighting and stuff. WHAT AM I DOING
-            s.uniform("local", true);
-            this->mesh->draw();
+            if (use_lighting_rotation) {
+                this->mesh->draw(s, m, transpose(inverse(ace::model_matrix(position, lighting_rotation, scale))), true);
+            } else {
+                this->mesh->draw(s, m, true);
+            }
         }
 
         glm::vec3 scale, rotation, position, lighting_rotation;
@@ -106,4 +111,3 @@ namespace ace { namespace draw {
         std::unordered_map<std::string, KV6Mesh> models;
     };
 }}
-
