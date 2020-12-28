@@ -48,5 +48,5 @@ void main() {
     gl_Position = proj * view_space;
     color = (vertex_color == filter_color ? replacement_color : vertex_color) * shading[face];
     ao_mult = ao[ao_level];
-    fog = 1.0 - clamp((fog_end - length(view_space)) / fog_start, 0.0, 1.0);
+    fog = 1.0 - clamp((fog_end - length(view_space.xz)) / fog_start, 0.0, 1.0);
 }
